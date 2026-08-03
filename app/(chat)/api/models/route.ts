@@ -1,6 +1,7 @@
 import { auth } from "@/app/(auth)/auth";
 import {
-  chatModels,
+  discoverProviderModels,
+  getAvailableBuiltinModels,
   getCapabilities,
   getCustomCapabilitiesForUser,
   getCustomModelsForUser,
@@ -8,13 +9,29 @@ import {
 
 export async function GET() {
   const session = await auth();
+  const availableBuiltin = getAvailableBuiltinModels();
   const builtinCapabilities = getCapabilities();
-  const builtinModels = chatModels;
+
+  const availableBuiltinIds = new Set(availableBuiltin.map((m) => m.id));
+  const filteredBuiltinCapabilities = Object.fromEntries(
+    Object.entries(builtinCapabilities).filter(([id]) =>
+      availableBuiltinIds.has(id)
+    )
+  );
+
+  const { models: discoveredModels, capabilities: discoveredCapabilities } =
+    await discoverProviderModels();
+
+  const allBuiltinModels = [...availableBuiltin, ...discoveredModels];
+  const allBuiltinCapabilities = {
+    ...filteredBuiltinCapabilities,
+    ...discoveredCapabilities,
+  };
 
   if (!session?.user || session.user.type === "guest") {
     return Response.json(
-      { capabilities: builtinCapabilities, models: builtinModels },
-      { headers: { "Cache-Control": "public, max-age=86400, s-maxage=86400" } }
+      { capabilities: allBuiltinCapabilities, models: allBuiltinModels },
+      { headers: { "Cache-Control": "public, max-age=300, s-maxage=300" } }
     );
   }
 
@@ -25,8 +42,8 @@ export async function GET() {
 
   return Response.json(
     {
-      capabilities: { ...builtinCapabilities, ...customCapabilities },
-      models: [...builtinModels, ...customModels],
+      capabilities: { ...allBuiltinCapabilities, ...customCapabilities },
+      models: [...allBuiltinModels, ...customModels],
     },
     { headers: { "Cache-Control": "no-cache" } }
   );
