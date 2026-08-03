@@ -25,3 +25,4 @@ yarn-error.log*
 /playwright/*
 next-env.d.ts
 tsconfig.tsbuildinfo
+.opencode/
