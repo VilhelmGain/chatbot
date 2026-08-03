@@ -1,0 +1,184 @@
+"use client";
+
+import { Loader2 } from "lucide-react";
+import { useCallback, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+type ProviderFormProps = {
+  onCreated: () => void;
+  initialData?: {
+    id?: string;
+    name: string;
+    type: "openai" | "anthropic";
+    baseURL: string;
+  };
+  isEdit?: boolean;
+};
+
+export function ProviderForm({
+  onCreated,
+  initialData,
+  isEdit = false,
+}: ProviderFormProps) {
+  const [name, setName] = useState(initialData?.name ?? "");
+  const [type, setType] = useState<"openai" | "anthropic">(
+    initialData?.type ?? "openai"
+  );
+  const [baseURL, setBaseURL] = useState(initialData?.baseURL ?? "");
+  const [apiKey, setApiKey] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const url = isEdit
+          ? `/api/settings/providers/${(initialData as { id: string }).id}`
+          : "/api/settings/providers";
+        const method = isEdit ? "PUT" : "POST";
+
+        const body: Record<string, string> = { baseURL, name, type };
+        if (apiKey) {
+          body.apiKey = apiKey;
+        }
+
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}${url}`,
+          {
+            body: JSON.stringify(body),
+            headers: { "Content-Type": "application/json" },
+            method,
+          }
+        );
+
+        if (!response.ok) {
+          const data = await response.json();
+          throw new Error(data.message || "Failed to save provider");
+        }
+
+        onCreated();
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "An error occurred");
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [apiKey, baseURL, initialData, isEdit, name, onCreated, type]
+  );
+
+  const handleNameChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setName(e.target.value);
+    },
+    []
+  );
+
+  const handleTypeChange = useCallback((v: string) => {
+    setType(v as "openai" | "anthropic");
+  }, []);
+
+  const handleBaseURLChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setBaseURL(e.target.value);
+    },
+    []
+  );
+
+  const handleApiKeyChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setApiKey(e.target.value);
+    },
+    []
+  );
+
+  return (
+    <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
+      <div className="flex flex-col gap-2">
+        <Label htmlFor="name">Provider Name</Label>
+        <Input
+          id="name"
+          onChange={handleNameChange}
+          placeholder="My OpenAI Proxy"
+          required
+          value={name}
+        />
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <Label htmlFor="type">Provider Type</Label>
+        <Select onValueChange={handleTypeChange} value={type}>
+          <SelectTrigger id="type">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="openai">OpenAI Compatible</SelectItem>
+            <SelectItem value="anthropic">Anthropic Compatible</SelectItem>
+          </SelectContent>
+        </Select>
+        <p className="text-xs text-muted-foreground">
+          {type === "openai"
+            ? "For endpoints compatible with the OpenAI API (e.g., Ollama, vLLM, LM Studio)"
+            : "For endpoints compatible with the Anthropic Messages API"}
+        </p>
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <Label htmlFor="baseURL">Base URL</Label>
+        <Input
+          id="baseURL"
+          onChange={handleBaseURLChange}
+          placeholder={
+            type === "openai"
+              ? "http://localhost:11434/v1"
+              : "https://api.anthropic.com/v1"
+          }
+          required
+          type="url"
+          value={baseURL}
+        />
+        <p className="text-xs text-muted-foreground">
+          {type === "openai"
+            ? "The base URL of your OpenAI-compatible endpoint (without trailing slash)"
+            : "The base URL of your Anthropic-compatible endpoint (without trailing slash)"}
+        </p>
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <Label htmlFor="apiKey">API Key</Label>
+        <Input
+          id="apiKey"
+          onChange={handleApiKeyChange}
+          placeholder={isEdit ? "Leave blank to keep current" : "sk-..."}
+          required={!isEdit}
+          type="password"
+          value={apiKey}
+        />
+        {isEdit ? (
+          <p className="text-xs text-muted-foreground">
+            Leave blank to keep the current API key
+          </p>
+        ) : null}
+      </div>
+
+      {error ? <p className="text-sm text-destructive">{error}</p> : null}
+
+      <Button className="mt-2" disabled={isLoading} type="submit">
+        {isLoading ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
+        {isEdit ? "Update Provider" : "Add Provider"}
+      </Button>
+    </form>
+  );
+}
