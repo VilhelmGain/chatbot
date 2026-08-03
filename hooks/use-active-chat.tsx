@@ -22,7 +22,7 @@ import { getChatHistoryPaginationKey } from "@/components/chat/sidebar-history";
 import { toast } from "@/components/chat/toast";
 import type { VisibilityType } from "@/components/chat/visibility-selector";
 import { useAutoResume } from "@/hooks/use-auto-resume";
-import { DEFAULT_CHAT_MODEL } from "@/lib/ai/models";
+import { DEFAULT_CHAT_MODEL } from "@/lib/ai/models.client";
 import type { Vote } from "@/lib/db/schema";
 import { ChatbotError } from "@/lib/errors";
 import type { ChatMessage } from "@/lib/types";

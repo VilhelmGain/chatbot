@@ -76,23 +76,6 @@ export function getActiveModels(): ChatModel[] {
 
 export const allowedModelIds = new Set(chatModels.map((m) => m.id));
 
-export async function isAllowedModelId(modelId: string): Promise<boolean> {
-  if (allowedModelIds.has(modelId)) {
-    return true;
-  }
-
-  if (modelId.startsWith("custom-")) {
-    const { getCustomModelsByProviderId } = await import("../db/queries");
-    const [providerPart] = modelId.split("/");
-    const providerId = providerPart.slice(7);
-    const models = await getCustomModelsByProviderId({ providerId });
-    const modelName = modelId.split("/").slice(1).join("/");
-    return models.some((m) => m.modelId === modelName);
-  }
-
-  return false;
-}
-
 export const modelsByProvider = chatModels.reduce(
   (acc, model) => {
     if (!acc[model.provider]) {
@@ -108,50 +91,4 @@ export type ModelAvailability = "healthy" | "impacted" | "unknown";
 
 export function getModelAvailability(_modelId: string): ModelAvailability {
   return "healthy";
-}
-
-export async function getCustomModelsForUser(
-  userId: string
-): Promise<ChatModel[]> {
-  const { getCustomModelsByProviderId, getCustomProvidersByUserId } =
-    await import("../db/queries");
-  const providers = await getCustomProvidersByUserId({ userId });
-  const allModels = await Promise.all(
-    providers.map(async (provider) => {
-      const models = await getCustomModelsByProviderId({
-        providerId: provider.id,
-      });
-      return models.map((model) => ({
-        description: `${provider.name} (${provider.type})`,
-        id: `custom-${provider.id}/${model.modelId}`,
-        name: model.name,
-        provider: `custom-${provider.id}`,
-      }));
-    })
-  );
-
-  return allModels.flat();
-}
-
-export async function getCustomCapabilitiesForUser(
-  userId: string
-): Promise<Record<string, ModelCapabilities>> {
-  const { getCustomModelsByProviderId, getCustomProvidersByUserId } =
-    await import("../db/queries");
-  const providers = await getCustomProvidersByUserId({ userId });
-  const allEntries = await Promise.all(
-    providers.map(async (provider) => {
-      const models = await getCustomModelsByProviderId({
-        providerId: provider.id,
-      });
-      return models.map((model) => ({
-        key: `custom-${provider.id}/${model.modelId}`,
-        value: model.capabilities as ModelCapabilities,
-      }));
-    })
-  );
-
-  return Object.fromEntries(
-    allEntries.flat().map(({ key, value }) => [key, value])
-  );
 }
