@@ -1,8 +1,4 @@
-import { OpenTelemetry } from "@ai-sdk/otel";
-import { registerOTel } from "@vercel/otel";
-import { registerTelemetry } from "ai";
-
+// Telemetry disabled for self-hosted deployment
 export function register() {
-  registerOTel({ serviceName: "chatbot" });
-  registerTelemetry(new OpenTelemetry());
+  // no-op
 }
