@@ -3,13 +3,7 @@
 import type { UseChatHelpers } from "@ai-sdk/react";
 import type { UIMessage } from "ai";
 import equal from "fast-deep-equal";
-import {
-  ArrowUpIcon,
-  BrainIcon,
-  EyeIcon,
-  LockIcon,
-  WrenchIcon,
-} from "lucide-react";
+import { ArrowUpIcon, BrainIcon, EyeIcon, WrenchIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import {
@@ -683,40 +677,29 @@ const AttachmentsButton = memo(PureAttachmentsButton);
 
 function ModelSelectorOption({
   capabilities,
-  curated,
   model,
   onModelChange,
   selectedModelId,
   setOpen,
 }: {
   capabilities: Record<string, ModelCapabilities> | undefined;
-  curated: boolean;
   model: ChatModel;
   onModelChange?: (modelId: string) => void;
   selectedModelId: string;
   setOpen: Dispatch<SetStateAction<boolean>>;
 }) {
   const [logoProvider] = model.id.split("/");
-  const maybeWithTooltip = (icon: ReactNode, label: string) => {
-    if (!curated) {
-      return icon;
-    }
-
-    return (
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <span className="inline-flex">{icon}</span>
-        </TooltipTrigger>
-        <TooltipContent side="top" sideOffset={8}>
-          {label}
-        </TooltipContent>
-      </Tooltip>
-    );
-  };
+  const maybeWithTooltip = (icon: ReactNode, label: string) => (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span className="inline-flex">{icon}</span>
+      </TooltipTrigger>
+      <TooltipContent side="top" sideOffset={8}>
+        {label}
+      </TooltipContent>
+    </Tooltip>
+  );
   const handleSelect = useCallback(() => {
-    if (!curated) {
-      return;
-    }
     onModelChange?.(model.id);
     setCookie("chat-model", model.id);
     setOpen(false);
@@ -725,18 +708,15 @@ function ModelSelectorOption({
         .querySelector<HTMLTextAreaElement>("[data-testid='multimodal-input']")
         ?.focus();
     }, 50);
-  }, [curated, model.id, onModelChange, setOpen]);
+  }, [model.id, onModelChange, setOpen]);
 
-  const option = (
+  return (
     <ModelSelectorItem
-      aria-disabled={!curated}
       className={cn(
         "flex w-full transition-colors",
         model.id === selectedModelId &&
           "border-b border-dashed border-foreground/50",
-        curated
-          ? "data-[selected=true]:bg-muted data-[selected=true]:text-foreground"
-          : "cursor-not-allowed opacity-40 data-[selected=true]:bg-transparent data-[selected=true]:opacity-60 data-[selected=true]:ring-1 data-[selected=true]:ring-muted-foreground/30 data-[selected=true]:ring-inset"
+        "data-[selected=true]:bg-muted data-[selected=true]:text-foreground"
       )}
       onSelect={handleSelect}
       value={model.id}
@@ -762,24 +742,8 @@ function ModelSelectorOption({
               "Supports reasoning"
             )
           : null}
-        {!curated && <LockIcon className="size-3 text-muted-foreground/50" />}
       </div>
     </ModelSelectorItem>
-  );
-
-  if (curated) {
-    return option;
-  }
-
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <div className="w-full cursor-not-allowed">{option}</div>
-      </TooltipTrigger>
-      <TooltipContent side="right" sideOffset={8}>
-        This model is not available in the demo.
-      </TooltipContent>
-    </Tooltip>
   );
 }
 
@@ -824,39 +788,18 @@ function PureModelSelectorCompact({
         <ModelSelectorInput placeholder="Search models..." />
         <ModelSelectorList>
           {(() => {
-            const curatedIds = new Set(chatModels.map((m) => m.id));
-            const isCurated = (model: ChatModel) =>
-              curatedIds.has(model.id) || model.id.startsWith("custom-");
-            const allModels = dynamicModels
-              ? [...chatModels, ...dynamicModels.filter((m) => !isCurated(m))]
-              : chatModels;
-
-            const grouped: Record<
-              string,
-              { model: ChatModel; curated: boolean }[]
-            > = {};
-            for (const model of allModels) {
-              const curated = isCurated(model);
-              const key = curated
-                ? model.id.startsWith("custom-")
-                  ? model.provider
-                  : "_available"
-                : model.provider;
+            const grouped: Record<string, ChatModel[]> = {};
+            for (const model of activeModels) {
+              const key = model.provider;
               if (!grouped[key]) {
                 grouped[key] = [];
               }
-              grouped[key].push({ curated, model });
+              grouped[key].push(model);
             }
 
-            const sortedKeys = Object.keys(grouped).sort((a, b) => {
-              if (a === "_available") {
-                return -1;
-              }
-              if (b === "_available") {
-                return 1;
-              }
-              return a.localeCompare(b);
-            });
+            const sortedKeys = Object.keys(grouped).sort((a, b) =>
+              a.localeCompare(b)
+            );
 
             const providerNames: Record<string, string> = {
               alibaba: "Alibaba",
@@ -884,18 +827,10 @@ function PureModelSelectorCompact({
             };
 
             return sortedKeys.map((key) => (
-              <ModelSelectorGroup
-                heading={
-                  key === "_available"
-                    ? "Available"
-                    : (providerNames[key] ?? key)
-                }
-                key={key}
-              >
-                {grouped[key].map(({ model, curated }) => (
+              <ModelSelectorGroup heading={providerNames[key] ?? key} key={key}>
+                {grouped[key].map((model) => (
                   <ModelSelectorOption
                     capabilities={capabilities}
-                    curated={curated}
                     key={model.id}
                     model={model}
                     onModelChange={onModelChange}
