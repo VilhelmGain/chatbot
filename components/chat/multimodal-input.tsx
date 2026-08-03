@@ -42,7 +42,7 @@ import {
   chatModels,
   DEFAULT_CHAT_MODEL,
   type ModelCapabilities,
-} from "@/lib/ai/models";
+} from "@/lib/ai/models.client";
 import type { Attachment, ChatMessage } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import {
@@ -825,11 +825,10 @@ function PureModelSelectorCompact({
         <ModelSelectorList>
           {(() => {
             const curatedIds = new Set(chatModels.map((m) => m.id));
+            const isCurated = (model: ChatModel) =>
+              curatedIds.has(model.id) || model.id.startsWith("custom-");
             const allModels = dynamicModels
-              ? [
-                  ...chatModels,
-                  ...dynamicModels.filter((m) => !curatedIds.has(m.id)),
-                ]
+              ? [...chatModels, ...dynamicModels.filter((m) => !isCurated(m))]
               : chatModels;
 
             const grouped: Record<
@@ -837,13 +836,16 @@ function PureModelSelectorCompact({
               { model: ChatModel; curated: boolean }[]
             > = {};
             for (const model of allModels) {
-              const key = curatedIds.has(model.id)
-                ? "_available"
+              const curated = isCurated(model);
+              const key = curated
+                ? model.id.startsWith("custom-")
+                  ? model.provider
+                  : "_available"
                 : model.provider;
               if (!grouped[key]) {
                 grouped[key] = [];
               }
-              grouped[key].push({ curated: curatedIds.has(model.id), model });
+              grouped[key].push({ curated, model });
             }
 
             const sortedKeys = Object.keys(grouped).sort((a, b) => {

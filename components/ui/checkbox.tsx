@@ -1,0 +1,45 @@
+"use client";
+
+import * as React from "react";
+import { Check } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+type CheckboxProps = {
+  checked?: boolean;
+  className?: string;
+  disabled?: boolean;
+  id?: string;
+  onCheckedChange?: (checked: boolean) => void;
+};
+
+function Checkbox({
+  checked = false,
+  className,
+  disabled,
+  id,
+  onCheckedChange,
+}: CheckboxProps) {
+  return (
+    <button
+      type="button"
+      id={id}
+      role="checkbox"
+      aria-checked={checked}
+      data-state={checked ? "checked" : "unchecked"}
+      disabled={disabled}
+      className={cn(
+        "peer size-4 shrink-0 rounded-[4px] border border-primary shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground",
+        className
+      )}
+      onClick={() => onCheckedChange?.(!checked)}
+    >
+      {checked ? (
+        <span className="flex items-center justify-center text-current">
+          <Check className="size-3" />
+        </span>
+      ) : null}
+    </button>
+  );
+}
+
+export { Checkbox };

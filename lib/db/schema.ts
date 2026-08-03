@@ -134,3 +134,32 @@ export const stream = pgTable(
 );
 
 export type Stream = InferSelectModel<typeof stream>;
+
+export const customProvider = pgTable("CustomProvider", {
+  baseURL: varchar("baseURL", { length: 512 }).notNull(),
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+  encryptedApiKey: text("encryptedApiKey").notNull(),
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  iv: varchar("iv", { length: 32 }).notNull(),
+  name: varchar("name", { length: 128 }).notNull(),
+  type: varchar("type", { enum: ["openai", "anthropic"] }).notNull(),
+  updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+  userId: uuid("userId")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+});
+
+export type CustomProvider = InferSelectModel<typeof customProvider>;
+
+export const customModel = pgTable("CustomModel", {
+  capabilities: json("capabilities").notNull(),
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  modelId: varchar("modelId", { length: 256 }).notNull(),
+  name: varchar("name", { length: 256 }).notNull(),
+  providerId: uuid("providerId")
+    .notNull()
+    .references(() => customProvider.id, { onDelete: "cascade" }),
+});
+
+export type CustomModel = InferSelectModel<typeof customModel>;
