@@ -12,7 +12,7 @@ export const textDocumentHandler = createDocumentHandler<"text">({
       experimental_transform: smoothStream({ chunking: "word" }),
       instructions:
         "Write about the given topic. Markdown is supported. Use headings wherever appropriate.",
-      model: getLanguageModel(modelId),
+      model: await getLanguageModel(modelId),
       prompt: title,
     });
 
@@ -35,7 +35,7 @@ export const textDocumentHandler = createDocumentHandler<"text">({
     const { stream } = streamText({
       experimental_transform: smoothStream({ chunking: "word" }),
       instructions: updateDocumentPrompt(document.content, "text"),
-      model: getLanguageModel(modelId),
+      model: await getLanguageModel(modelId),
       prompt: description,
     });
 
