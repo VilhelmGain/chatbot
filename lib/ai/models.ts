@@ -66,6 +66,28 @@ const staticCapabilities: Record<string, ModelCapabilities> = {
   "xai/grok-4.1-fast": { reasoning: false, tools: true, vision: false },
 };
 
+const PROVIDER_ENV_KEYS: Record<string, string> = {
+  anthropic: "ANTHROPIC_API_KEY",
+  google: "GOOGLE_API_KEY",
+  openai: "OPENAI_API_KEY",
+  xai: "XAI_API_KEY",
+};
+
+export function getConfiguredProviders(): Set<string> {
+  const configured = new Set<string>();
+  for (const [provider, envKey] of Object.entries(PROVIDER_ENV_KEYS)) {
+    if (process.env[envKey]) {
+      configured.add(provider);
+    }
+  }
+  return configured;
+}
+
+export function getAvailableBuiltinModels(): ChatModel[] {
+  const configured = getConfiguredProviders();
+  return chatModels.filter((m) => configured.has(m.provider));
+}
+
 export function getCapabilities(): Record<string, ModelCapabilities> {
   return staticCapabilities;
 }
@@ -108,6 +130,213 @@ export type ModelAvailability = "healthy" | "impacted" | "unknown";
 
 export function getModelAvailability(_modelId: string): ModelAvailability {
   return "healthy";
+}
+
+function inferCapabilities(modelId: string): ModelCapabilities {
+  const [, name] = modelId.split("/");
+  const lower = name.toLowerCase();
+  const isReasoning =
+    /^o[1-9]/.test(name) ||
+    lower.includes("reasoning") ||
+    lower.includes("thinking");
+  const isVision =
+    lower.includes("4o") ||
+    lower.includes("vision") ||
+    lower.includes("gemini");
+  return {
+    reasoning: isReasoning,
+    tools: true,
+    vision: isVision,
+  };
+}
+
+const DISCOVERY_CACHE_TTL = 60 * 60 * 1000;
+
+type DiscoveryCacheEntry = {
+  models: ChatModel[];
+  expiresAt: number;
+};
+
+const discoveryCache = new Map<string, DiscoveryCacheEntry>();
+
+function getCachedDiscovery(provider: string): ChatModel[] | null {
+  const entry = discoveryCache.get(provider);
+  if (entry && entry.expiresAt > Date.now()) {
+    return entry.models;
+  }
+  discoveryCache.delete(provider);
+  return null;
+}
+
+function setDiscoveryCache(provider: string, models: ChatModel[]) {
+  discoveryCache.set(provider, {
+    expiresAt: Date.now() + DISCOVERY_CACHE_TTL,
+    models,
+  });
+}
+
+async function discoverOpenAIModels(): Promise<ChatModel[]> {
+  const cached = getCachedDiscovery("openai");
+  if (cached) {
+    return cached;
+  }
+
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) {
+    return [];
+  }
+
+  try {
+    const res = await fetch("https://api.openai.com/v1/models", {
+      headers: { Authorization: `Bearer ${apiKey}` },
+      signal: AbortSignal.timeout(10_000),
+    });
+    if (!res.ok) {
+      return [];
+    }
+    const data = (await res.json()) as { data: { id: string }[] };
+    const models = data.data
+      .map((m) => m.id)
+      .filter(
+        (id) =>
+          id.startsWith("gpt-") ||
+          id.startsWith("o1") ||
+          id.startsWith("o3") ||
+          id.startsWith("o4")
+      )
+      .map((id) => ({
+        description: `OpenAI ${id}`,
+        id: `openai/${id}`,
+        name: id,
+        provider: "openai",
+      }));
+    setDiscoveryCache("openai", models);
+    return models;
+  } catch {
+    return [];
+  }
+}
+
+async function discoverGoogleModels(): Promise<ChatModel[]> {
+  const cached = getCachedDiscovery("google");
+  if (cached) {
+    return cached;
+  }
+
+  const apiKey = process.env.GOOGLE_API_KEY;
+  if (!apiKey) {
+    return [];
+  }
+
+  try {
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`,
+      { signal: AbortSignal.timeout(10_000) }
+    );
+    if (!res.ok) {
+      return [];
+    }
+    const data = (await res.json()) as {
+      models: { name: string; supportedGenerationMethods?: string[] }[];
+    };
+    const models = data.models
+      .filter(
+        (m) =>
+          m.name.toLowerCase().includes("gemini") &&
+          (!m.supportedGenerationMethods ||
+            m.supportedGenerationMethods.includes("generateContent"))
+      )
+      .map((m) => {
+        const id = m.name.replace(/^models\//, "");
+        return {
+          description: `Google ${id}`,
+          id: `google/${id}`,
+          name: id,
+          provider: "google",
+        };
+      });
+    setDiscoveryCache("google", models);
+    return models;
+  } catch {
+    return [];
+  }
+}
+
+async function discoverXaiModels(): Promise<ChatModel[]> {
+  const cached = getCachedDiscovery("xai");
+  if (cached) {
+    return cached;
+  }
+
+  const apiKey = process.env.XAI_API_KEY;
+  if (!apiKey) {
+    return [];
+  }
+
+  try {
+    const res = await fetch("https://api.x.ai/v1/models", {
+      headers: { Authorization: `Bearer ${apiKey}` },
+      signal: AbortSignal.timeout(10_000),
+    });
+    if (!res.ok) {
+      return [];
+    }
+    const data = (await res.json()) as { data: { id: string }[] };
+    const models = data.data
+      .map((m) => m.id)
+      .filter((id) => id.startsWith("grok"))
+      .map((id) => ({
+        description: `xAI ${id}`,
+        id: `xai/${id}`,
+        name: id,
+        provider: "xai",
+      }));
+    setDiscoveryCache("xai", models);
+    return models;
+  } catch {
+    return [];
+  }
+}
+
+export async function discoverProviderModels(): Promise<{
+  models: ChatModel[];
+  capabilities: Record<string, ModelCapabilities>;
+}> {
+  const configured = getConfiguredProviders();
+  const allModels: ChatModel[] = [];
+  const allCapabilities: Record<string, ModelCapabilities> = {};
+
+  const builtinIds = new Set(chatModels.map((m) => m.id));
+
+  const tasks: Promise<ChatModel[]>[] = [];
+
+  if (configured.has("openai")) {
+    tasks.push(discoverOpenAIModels());
+  }
+  if (configured.has("google")) {
+    tasks.push(discoverGoogleModels());
+  }
+  if (configured.has("xai")) {
+    tasks.push(discoverXaiModels());
+  }
+
+  const results = await Promise.allSettled(tasks);
+  for (const result of results) {
+    if (result.status === "fulfilled") {
+      for (const model of result.value) {
+        if (!builtinIds.has(model.id)) {
+          allModels.push(model);
+          allCapabilities[model.id] = inferCapabilities(model.id);
+        }
+      }
+    }
+  }
+
+  return { capabilities: allCapabilities, models: allModels };
+}
+
+export function clearDiscoveryCache() {
+  discoveryCache.clear();
 }
 
 export async function getCustomModelsForUser(
