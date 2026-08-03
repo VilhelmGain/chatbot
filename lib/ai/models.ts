@@ -73,10 +73,30 @@ const PROVIDER_ENV_KEYS: Record<string, string> = {
   xai: "XAI_API_KEY",
 };
 
+function isValidApiKey(value: string | undefined): boolean {
+  if (!value) {
+    return false;
+  }
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return false;
+  }
+  if (/^[*x\-_]+$/.test(trimmed)) {
+    return false;
+  }
+  if (
+    trimmed.toLowerCase().includes("your-") ||
+    trimmed.toLowerCase().includes("example")
+  ) {
+    return false;
+  }
+  return true;
+}
+
 export function getConfiguredProviders(): Set<string> {
   const configured = new Set<string>();
   for (const [provider, envKey] of Object.entries(PROVIDER_ENV_KEYS)) {
-    if (process.env[envKey]) {
+    if (isValidApiKey(process.env[envKey])) {
       configured.add(provider);
     }
   }
