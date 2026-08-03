@@ -12,11 +12,11 @@ import { createResumableStreamContext } from "resumable-stream";
 import { auth, type UserType } from "@/app/(auth)/auth";
 import { entitlementsByUserType } from "@/lib/ai/entitlements";
 import {
-  allowedModelIds,
   chatModels,
   DEFAULT_CHAT_MODEL,
   getCapabilities,
   getModelAvailability,
+  isAllowedModelId,
 } from "@/lib/ai/models";
 import { type RequestHints, systemPrompt } from "@/lib/ai/prompts";
 import { getLanguageModel } from "@/lib/ai/providers";
@@ -30,6 +30,7 @@ import {
   createStreamId,
   deleteChatById,
   getChatById,
+  getCustomProviderById,
   getMessageCountByUserId,
   getMessagesByChatId,
   saveChat,
@@ -86,9 +87,16 @@ export async function POST(request: Request) {
       return new ChatbotError("unauthorized:chat").toResponse();
     }
 
-    const chatModel = allowedModelIds.has(selectedChatModel)
-      ? selectedChatModel
-      : DEFAULT_CHAT_MODEL;
+    const isAllowed = await isAllowedModelId(selectedChatModel);
+    const chatModel = isAllowed ? selectedChatModel : DEFAULT_CHAT_MODEL;
+
+    if (chatModel.startsWith("custom-")) {
+      const providerId = chatModel.split("/")[0].slice(7);
+      const provider = await getCustomProviderById({ id: providerId });
+      if (!provider || provider.userId !== session.user.id) {
+        return new ChatbotError("forbidden:chat").toResponse();
+      }
+    }
 
     await checkIpRateLimit(getClientIp(request));
 
@@ -266,7 +274,7 @@ export async function POST(request: Request) {
                 ],
           instructions: systemPrompt({ requestHints, supportsTools }),
           messages: modelMessages,
-          model: getLanguageModel(chatModel),
+          model: await getLanguageModel(chatModel),
           onAbort() {
             stopWaitingStatus();
           },

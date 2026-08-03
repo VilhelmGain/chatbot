@@ -15,7 +15,8 @@ export type Surface =
   | "history"
   | "vote"
   | "document"
-  | "suggestions";
+  | "suggestions"
+  | "provider";
 
 export type ErrorCode = `${ErrorType}:${Surface}`;
 
@@ -28,6 +29,7 @@ export const visibilityBySurface: Record<Surface, ErrorVisibility> = {
   database: "log",
   document: "response",
   history: "response",
+  provider: "response",
   stream: "response",
   suggestions: "response",
   vote: "response",
@@ -110,6 +112,13 @@ export function getMessageByErrorCode(errorCode: ErrorCode): string {
       return "You need to sign in to view this document. Please sign in and try again.";
     case "bad_request:document":
       return "The request to create or update the document was invalid. Please check your input and try again.";
+
+    case "not_found:provider":
+      return "The requested provider was not found. It may have been deleted.";
+    case "forbidden:provider":
+      return "This provider belongs to another user.";
+    case "bad_request:provider":
+      return "The provider configuration is invalid. Please check your settings and try again.";
 
     default:
       return "Something went wrong. Please try again later.";

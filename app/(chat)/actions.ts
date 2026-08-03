@@ -26,7 +26,7 @@ export async function generateTitleFromUserMessage({
 }) {
   const { text } = await generateText({
     instructions: titlePrompt,
-    model: getTitleModel(),
+    model: await getTitleModel(),
     prompt: getTextFromMessage(message),
   });
   return text
