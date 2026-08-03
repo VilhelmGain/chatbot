@@ -1,8 +1,11 @@
-import { put } from "@vercel/blob";
+import { mkdir, writeFile } from "node:fs/promises";
+import { join } from "node:path";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { auth } from "@/app/(auth)/auth";
+
+const UPLOAD_DIR = process.env.UPLOAD_DIR ?? "./uploads";
 
 const FileSchema = z.object({
   file: z
@@ -45,15 +48,22 @@ export async function POST(request: Request) {
     }
 
     const filename = (formData.get("file") as File).name;
-    const safeName = filename.replace(/[^a-zA-Z0-9._-]/g, "_");
-    const fileBuffer = await file.arrayBuffer();
+    const safeName = `${Date.now()}-${filename.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
+    const fileBuffer = Buffer.from(await file.arrayBuffer());
 
     try {
-      const data = await put(`${safeName}`, fileBuffer, {
-        access: "public",
-      });
+      const uploadDir = join(process.cwd(), UPLOAD_DIR);
+      await mkdir(uploadDir, { recursive: true });
+      const filePath = join(uploadDir, safeName);
+      await writeFile(filePath, fileBuffer);
 
-      return NextResponse.json(data);
+      const baseUrl =
+        process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+      return NextResponse.json({
+        pathname: safeName,
+        size: fileBuffer.length,
+        url: `${baseUrl}/api/files/${safeName}`,
+      });
     } catch {
       return NextResponse.json({ error: "Upload failed" }, { status: 500 });
     }

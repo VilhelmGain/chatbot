@@ -1,11 +1,10 @@
-export const DEFAULT_CHAT_MODEL = "moonshotai/kimi-k2.5";
+export const DEFAULT_CHAT_MODEL = "openai/gpt-4o";
 
 export const titleModel = {
   description: "Fast model for title generation",
-  gatewayOrder: ["fireworks", "bedrock"],
-  id: "moonshotai/kimi-k2.5",
-  name: "Kimi K2.5",
-  provider: "moonshotai",
+  id: "openai/gpt-4o-mini",
+  name: "GPT-4o Mini",
+  provider: "openai",
 };
 
 export type ModelCapabilities = {
@@ -19,134 +18,56 @@ export type ChatModel = {
   name: string;
   provider: string;
   description: string;
-  gatewayOrder?: string[];
   reasoningEffort?: "none" | "minimal" | "low" | "medium" | "high";
 };
 
 export const chatModels: ChatModel[] = [
   {
-    description: "Fast and capable model with tool use",
-    gatewayOrder: ["bedrock", "deepinfra"],
-    id: "deepseek/deepseek-v3.2",
-    name: "DeepSeek V3.2",
-    provider: "deepseek",
-  },
-  {
-    description: "Moonshot AI flagship model",
-    gatewayOrder: ["fireworks", "bedrock"],
-    id: "moonshotai/kimi-k2.5",
-    name: "Kimi K2.5",
-    provider: "moonshotai",
-  },
-  {
-    description: "Compact reasoning model",
-    gatewayOrder: ["groq", "bedrock"],
-    id: "openai/gpt-oss-20b",
-    name: "GPT OSS 20B",
+    description: "OpenAI GPT-4o",
+    id: "openai/gpt-4o",
+    name: "GPT-4o",
     provider: "openai",
-    reasoningEffort: "low",
   },
   {
-    description: "Open-source 120B parameter model",
-    gatewayOrder: ["fireworks", "bedrock"],
-    id: "openai/gpt-oss-120b",
-    name: "GPT OSS 120B",
+    description: "OpenAI GPT-4o Mini (fast)",
+    id: "openai/gpt-4o-mini",
+    name: "GPT-4o Mini",
     provider: "openai",
-    reasoningEffort: "low",
   },
   {
-    description: "Fast non-reasoning model with tool use",
-    gatewayOrder: ["xai"],
-    id: "xai/grok-4.1-fast-non-reasoning",
+    description: "Anthropic Claude Sonnet 4",
+    id: "anthropic/claude-sonnet-4-20250514",
+    name: "Claude Sonnet 4",
+    provider: "anthropic",
+  },
+  {
+    description: "Google Gemini 2.5 Flash",
+    id: "google/gemini-2.5-flash",
+    name: "Gemini 2.5 Flash",
+    provider: "google",
+  },
+  {
+    description: "xAI Grok 4.1 Fast",
+    id: "xai/grok-4.1-fast",
     name: "Grok 4.1 Fast",
     provider: "xai",
   },
 ];
 
-export async function getCapabilities(): Promise<
-  Record<string, ModelCapabilities>
-> {
-  const results = await Promise.all(
-    chatModels.map(async (model) => {
-      try {
-        const res = await fetch(
-          `https://ai-gateway.vercel.sh/v1/models/${model.id}/endpoints`,
-          { next: { revalidate: 86_400 } }
-        );
-        if (!res.ok) {
-          return [model.id, { reasoning: false, tools: false, vision: false }];
-        }
-
-        const json = await res.json();
-        const endpoints = json.data?.endpoints ?? [];
-        const params = new Set(
-          endpoints.flatMap(
-            (e: { supported_parameters?: string[] }) =>
-              e.supported_parameters ?? []
-          )
-        );
-        const inputModalities = new Set(
-          json.data?.architecture?.input_modalities ?? []
-        );
-
-        return [
-          model.id,
-          {
-            reasoning: params.has("reasoning"),
-            tools: params.has("tools"),
-            vision: inputModalities.has("image"),
-          },
-        ];
-      } catch {
-        return [model.id, { reasoning: false, tools: false, vision: false }];
-      }
-    })
-  );
-
-  return Object.fromEntries(results);
-}
-
-export const isDemo = process.env.IS_DEMO === "1";
-
-type GatewayModel = {
-  id: string;
-  name: string;
-  type?: string;
-  tags?: string[];
+const staticCapabilities: Record<string, ModelCapabilities> = {
+  "anthropic/claude-sonnet-4-20250514": {
+    reasoning: false,
+    tools: true,
+    vision: true,
+  },
+  "google/gemini-2.5-flash": { reasoning: true, tools: true, vision: true },
+  "openai/gpt-4o": { reasoning: false, tools: true, vision: true },
+  "openai/gpt-4o-mini": { reasoning: false, tools: true, vision: true },
+  "xai/grok-4.1-fast": { reasoning: false, tools: true, vision: false },
 };
 
-export type GatewayModelWithCapabilities = ChatModel & {
-  capabilities: ModelCapabilities;
-};
-
-export async function getAllGatewayModels(): Promise<
-  GatewayModelWithCapabilities[]
-> {
-  try {
-    const res = await fetch("https://ai-gateway.vercel.sh/v1/models", {
-      next: { revalidate: 86_400 },
-    });
-    if (!res.ok) {
-      return [];
-    }
-
-    const json = await res.json();
-    return (json.data ?? [])
-      .filter((m: GatewayModel) => m.type === "language")
-      .map((m: GatewayModel) => ({
-        capabilities: {
-          reasoning: m.tags?.includes("reasoning") ?? false,
-          tools: m.tags?.includes("tool-use") ?? false,
-          vision: m.tags?.includes("vision") ?? false,
-        },
-        description: "",
-        id: m.id,
-        name: m.name,
-        provider: m.id.split("/")[0],
-      }));
-  } catch {
-    return [];
-  }
+export function getCapabilities(): Record<string, ModelCapabilities> {
+  return staticCapabilities;
 }
 
 export function getActiveModels(): ChatModel[] {
@@ -168,62 +89,6 @@ export const modelsByProvider = chatModels.reduce(
 
 export type ModelAvailability = "healthy" | "impacted" | "unknown";
 
-type GatewayEndpoint = {
-  provider_name?: string;
-  status?: number;
-  uptime_last_15m?: number;
-  uptime_last_1h?: number;
-  latency_last_1h?: {
-    p50?: number;
-    p95?: number;
-  };
-};
-
-const PROVIDER_IMPACTED_UPTIME_THRESHOLD = 99;
-const PROVIDER_IMPACTED_P50_MS = 10_000;
-const PROVIDER_IMPACTED_P95_MS = 30_000;
-
-function isEndpointImpacted(endpoint: GatewayEndpoint) {
-  return (
-    (endpoint.status !== undefined && endpoint.status !== 0) ||
-    (endpoint.uptime_last_15m !== undefined &&
-      endpoint.uptime_last_15m < PROVIDER_IMPACTED_UPTIME_THRESHOLD) ||
-    (endpoint.uptime_last_1h !== undefined &&
-      endpoint.uptime_last_1h < PROVIDER_IMPACTED_UPTIME_THRESHOLD) ||
-    (endpoint.latency_last_1h?.p50 !== undefined &&
-      endpoint.latency_last_1h.p50 > PROVIDER_IMPACTED_P50_MS) ||
-    (endpoint.latency_last_1h?.p95 !== undefined &&
-      endpoint.latency_last_1h.p95 > PROVIDER_IMPACTED_P95_MS)
-  );
-}
-
-export async function getModelAvailability(
-  modelId: string
-): Promise<ModelAvailability> {
-  const model = chatModels.find((item) => item.id === modelId);
-
-  if (!model) {
-    return "unknown";
-  }
-
-  try {
-    const res = await fetch(
-      `https://ai-gateway.vercel.sh/v1/models/${model.id}/endpoints`,
-      { next: { revalidate: 60 } }
-    );
-    if (!res.ok) {
-      return "unknown";
-    }
-
-    const json = await res.json();
-    const endpoints = (json.data?.endpoints ?? []) as GatewayEndpoint[];
-
-    if (endpoints.length === 0) {
-      return "unknown";
-    }
-
-    return endpoints.some(isEndpointImpacted) ? "impacted" : "healthy";
-  } catch {
-    return "unknown";
-  }
+export function getModelAvailability(_modelId: string): ModelAvailability {
+  return "healthy";
 }
