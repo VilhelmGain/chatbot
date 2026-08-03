@@ -21,15 +21,16 @@ RUN adduser --system --uid 1001 nextjs
 COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-COPY --from=builder /app/lib/db/migrations ./lib/db/migrations
-COPY --from=builder /app/lib/db/schema.ts ./lib/db/schema.ts
-COPY --from=builder /app/drizzle.config.ts ./drizzle.config.ts
-COPY --from=builder /app/node_modules/drizzle-orm ./node_modules/drizzle-orm
-COPY --from=builder /app/node_modules/postgres ./node_modules/postgres
-COPY --from=builder /app/node_modules/dotenv ./node_modules/dotenv
+COPY --from=builder --chown=nextjs:nodejs /app/lib/db/migrations ./lib/db/migrations
+COPY --from=builder --chown=nextjs:nodejs /app/lib/db/schema.ts ./lib/db/schema.ts
+COPY --from=builder --chown=nextjs:nodejs /app/drizzle.config.ts ./drizzle.config.ts
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/drizzle-orm ./node_modules/drizzle-orm
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/postgres ./node_modules/postgres
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/dotenv ./node_modules/dotenv
+RUN chown -R nextjs:nodejs ./lib/db/migrations
 
 COPY docker-entrypoint.sh ./docker-entrypoint.sh
-RUN chmod +x docker-entrypoint.sh
+RUN chmod 755 docker-entrypoint.sh
 
 USER nextjs
 EXPOSE 3000
