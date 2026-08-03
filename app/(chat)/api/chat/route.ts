@@ -1,4 +1,3 @@
-import { geolocation, ipAddress } from "@vercel/functions";
 import {
   convertToModelMessages,
   createUIMessageStream,
@@ -8,7 +7,6 @@ import {
   streamText,
   toUIMessageStream,
 } from "ai";
-import { checkBotId } from "botid/server";
 import { after } from "next/server";
 import { createResumableStreamContext } from "resumable-stream";
 import { auth, type UserType } from "@/app/(auth)/auth";
@@ -42,6 +40,7 @@ import {
 import type { DBMessage } from "@/lib/db/schema";
 import { ChatbotError } from "@/lib/errors";
 import { checkIpRateLimit } from "@/lib/ratelimit";
+import { getClientIp, getRequestHints } from "@/lib/server/request-utils";
 import type { ChatMessage, WaitingStatusData } from "@/lib/types";
 import { convertToUIMessages, generateUUID } from "@/lib/utils";
 import { generateTitleFromUserMessage } from "../../actions";
@@ -81,14 +80,7 @@ export async function POST(request: Request) {
     const { id, message, messages, selectedChatModel, selectedVisibilityType } =
       requestBody;
 
-    const [botIdResult, session] = await Promise.all([
-      checkBotId().catch(() => null),
-      auth(),
-    ]);
-
-    if (botIdResult?.isBot) {
-      return new ChatbotError("forbidden:api").toResponse();
-    }
+    const session = await auth();
 
     if (!session?.user) {
       return new ChatbotError("unauthorized:chat").toResponse();
@@ -98,7 +90,7 @@ export async function POST(request: Request) {
       ? selectedChatModel
       : DEFAULT_CHAT_MODEL;
 
-    await checkIpRateLimit(ipAddress(request));
+    await checkIpRateLimit(getClientIp(request));
 
     const userType: UserType = session.user.type;
 
@@ -170,7 +162,7 @@ export async function POST(request: Request) {
       ];
     }
 
-    const { longitude, latitude, city, country } = geolocation(request);
+    const { longitude, latitude, city, country } = getRequestHints(request);
 
     const requestHints: RequestHints = {
       city,
@@ -236,20 +228,15 @@ export async function POST(request: Request) {
         writeWaitingStatus("waiting", "Waiting...");
 
         healthCheckTimer = setTimeout(() => {
-          getModelAvailability(chatModel)
-            .then((availability) => {
-              if (availability === "impacted") {
-                writeWaitingStatus(
-                  "health",
-                  `${modelName} may be slow or unavailable right now...`
-                );
-              } else {
-                writeWaitingStatus("still-waiting", "Still waiting...");
-              }
-            })
-            .catch(() => {
-              writeWaitingStatus("still-waiting", "Still waiting...");
-            });
+          const availability = getModelAvailability(chatModel);
+          if (availability === "impacted") {
+            writeWaitingStatus(
+              "health",
+              `${modelName} may be slow or unavailable right now...`
+            );
+          } else {
+            writeWaitingStatus("still-waiting", "Still waiting...");
+          }
         }, HEALTH_CHECK_DELAY_MS);
 
         const markModelActive = () => {
@@ -295,9 +282,6 @@ export async function POST(request: Request) {
             stopWaitingStatus();
           },
           providerOptions: {
-            ...(modelConfig?.gatewayOrder && {
-              gateway: { order: modelConfig.gatewayOrder },
-            }),
             ...(modelConfig?.reasoningEffort && {
               openai: { reasoningEffort: modelConfig.reasoningEffort },
             }),
@@ -388,17 +372,7 @@ export async function POST(request: Request) {
           });
         }
       },
-      onError: (error) => {
-        if (
-          error instanceof Error &&
-          error.message?.includes(
-            "AI Gateway requires a valid credit card on file to service requests"
-          )
-        ) {
-          return "AI Gateway requires a valid credit card on file to service requests. Please visit https://vercel.com/d?to=%2F%5Bteam%5D%2F%7E%2Fai%3Fmodal%3Dadd-credit-card to add a card and unlock your free credits.";
-        }
-        return "Oops, an error occurred!";
-      },
+      onError: () => "Oops, an error occurred!",
       originalMessages: isToolApprovalFlow ? uiMessages : undefined,
     });
 
@@ -424,22 +398,11 @@ export async function POST(request: Request) {
       stream,
     });
   } catch (error) {
-    const vercelId = request.headers.get("x-vercel-id");
-
     if (error instanceof ChatbotError) {
       return error.toResponse();
     }
 
-    if (
-      error instanceof Error &&
-      error.message?.includes(
-        "AI Gateway requires a valid credit card on file to service requests"
-      )
-    ) {
-      return new ChatbotError("bad_request:activate_gateway").toResponse();
-    }
-
-    console.error("Unhandled error in chat API:", error, { vercelId });
+    console.error("Unhandled error in chat API:", error);
     return new ChatbotError("offline:chat").toResponse();
   }
 }

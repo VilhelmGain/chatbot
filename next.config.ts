@@ -1,4 +1,3 @@
-import { withBotId } from "botid/next/config";
 import type { NextConfig } from "next";
 
 const basePath = process.env.IS_DEMO === "1" ? "/demo" : "";
@@ -33,11 +32,10 @@ const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
       {
-        hostname: "avatar.vercel.sh",
+        hostname: "localhost",
       },
       {
-        hostname: "*.public.blob.vercel-storage.com",
-        protocol: "https",
+        hostname: "127.0.0.1",
       },
     ],
   },
@@ -47,8 +45,9 @@ const nextConfig: NextConfig = {
     },
     incomingRequests: false,
   },
+  output: "standalone",
   poweredByHeader: false,
   reactCompiler: true,
 };
 
-export default withBotId(nextConfig);
+export default nextConfig;
