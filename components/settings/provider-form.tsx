@@ -280,10 +280,15 @@ function CatalogProviderItem({
     onSelect(provider);
   }, [onSelect, provider]);
 
+  const handlePointerDown = useCallback(
+    (e: React.PointerEvent) => e.stopPropagation(),
+    []
+  );
+
   return (
     <CommandItem
+      onPointerDown={handlePointerDown}
       onSelect={handleSelect}
-      onPointerDown={(e) => e.stopPropagation()}
       value={provider.key}
     >
       <ModelSelectorLogo provider={provider.key} />

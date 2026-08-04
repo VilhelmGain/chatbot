@@ -745,6 +745,11 @@ function ModelSelectorOption({
     }, 50);
   }, [model.id, onModelChange, setOpen]);
 
+  const handlePointerDown = useCallback(
+    (e: React.PointerEvent) => e.stopPropagation(),
+    []
+  );
+
   return (
     <ModelSelectorItem
       className={cn(
@@ -753,6 +758,7 @@ function ModelSelectorOption({
           "border-b border-dashed border-foreground/50",
         "data-[selected=true]:bg-muted data-[selected=true]:text-foreground"
       )}
+      onPointerDown={handlePointerDown}
       onSelect={handleSelect}
       value={model.id}
     >
