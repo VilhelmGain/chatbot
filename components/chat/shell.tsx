@@ -28,6 +28,8 @@ export function ChatShell() {
     addToolApprovalResponse,
     input,
     setInput,
+    reasoningEffort,
+    setReasoningEffort,
     visibilityType,
     isReadonly,
     isLoading,
@@ -132,6 +134,7 @@ export function ChatShell() {
                   messages={messages}
                   onCancelEdit={handleCancelEdit}
                   onModelChange={setCurrentModelId}
+                  reasoningEffort={reasoningEffort}
                   selectedModelId={currentModelId}
                   selectedVisibilityType={visibilityType}
                   sendMessage={
@@ -140,6 +143,7 @@ export function ChatShell() {
                   setAttachments={setAttachments}
                   setInput={setInput}
                   setMessages={setMessages}
+                  setReasoningEffort={setReasoningEffort}
                   status={status}
                   stop={stop}
                 />

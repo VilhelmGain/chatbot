@@ -19,6 +19,13 @@ export async function saveChatModelAsCookie(model: string) {
   cookieStore.set("chat-model", model);
 }
 
+export async function saveReasoningEffortAsCookie(effort: string) {
+  const cookieStore = await cookies();
+  cookieStore.set("reasoning-effort", effort, {
+    maxAge: 60 * 60 * 24 * 365,
+  });
+}
+
 export async function saveTitleModelAsCookie(model: string) {
   const cookieStore = await cookies();
   cookieStore.set("title-model", model);
