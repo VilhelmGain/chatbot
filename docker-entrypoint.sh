@@ -1,5 +1,12 @@
 #!/bin/sh
 set -e
+
+if [ -z "$AUTH_SECRET" ]; then
+  echo "ERROR: AUTH_SECRET is not set. NextAuth requires a secret in production."
+  echo "Generate one with: openssl rand -base64 32"
+  exit 1
+fi
+
 echo "Running database migrations..."
 node -e "
 const { config } = require('dotenv');
