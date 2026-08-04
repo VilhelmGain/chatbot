@@ -3,7 +3,7 @@
 import type { UseChatHelpers } from "@ai-sdk/react";
 import type { UIMessage } from "ai";
 import equal from "fast-deep-equal";
-import { ArrowUpIcon, BrainIcon, EyeIcon, WrenchIcon } from "lucide-react";
+import { ArrowUpIcon, BrainIcon, EyeIcon, Loader2, WrenchIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import {
@@ -33,7 +33,6 @@ import {
 } from "@/components/ai-elements/model-selector";
 import {
   type ChatModel,
-  chatModels,
   DEFAULT_CHAT_MODEL,
   type ModelCapabilities,
 } from "@/lib/ai/models.client";
@@ -755,7 +754,7 @@ function PureModelSelectorCompact({
   onModelChange?: (modelId: string) => void;
 }) {
   const [open, setOpen] = useState(false);
-  const { data: modelsData } = useSWR(
+  const { data: modelsData, isLoading } = useSWR(
     `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/api/models`,
     (url: string) => fetch(url).then((r) => r.json()),
     { dedupingInterval: 3_600_000, revalidateOnFocus: false }
@@ -764,13 +763,40 @@ function PureModelSelectorCompact({
   const capabilities: Record<string, ModelCapabilities> | undefined =
     modelsData?.capabilities ?? modelsData;
   const dynamicModels: ChatModel[] | undefined = modelsData?.models;
-  const activeModels = dynamicModels ?? chatModels;
+  const activeModels = dynamicModels ?? [];
 
   const selectedModel =
     activeModels.find((m: ChatModel) => m.id === selectedModelId) ??
     activeModels.find((m: ChatModel) => m.id === DEFAULT_CHAT_MODEL) ??
     activeModels[0];
-  const [provider] = selectedModel.id.split("/");
+  const [provider] = selectedModel?.id.split("/") ?? [];
+
+  if (isLoading) {
+    return (
+      <Button
+        className="h-7 max-w-[200px] justify-between gap-1.5 rounded-lg px-2 text-[12px] text-muted-foreground"
+        data-testid="model-selector"
+        variant="ghost"
+        disabled
+      >
+        <Loader2 className="h-3 w-3 animate-spin" />
+        <ModelSelectorName>Loading...</ModelSelectorName>
+      </Button>
+    );
+  }
+
+  if (activeModels.length === 0) {
+    return (
+      <Button
+        className="h-7 max-w-[200px] justify-between gap-1.5 rounded-lg px-2 text-[12px] text-muted-foreground"
+        data-testid="model-selector"
+        variant="ghost"
+        disabled
+      >
+        <ModelSelectorName>No models available</ModelSelectorName>
+      </Button>
+    );
+  }
 
   return (
     <ModelSelector onOpenChange={setOpen} open={open}>
