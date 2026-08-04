@@ -21,7 +21,16 @@ export async function isAllowedModelId(modelId: string): Promise<boolean> {
     const providerId = providerPart.slice(7);
     const models = await getCustomModelsByProviderId({ providerId });
     const modelName = modelId.split("/").slice(1).join("/");
-    return models.some((m) => m.modelId === modelName);
+    const isAllowed = models.some((m) => m.modelId === modelName);
+    if (!isAllowed) {
+      console.error("isAllowedModelId: model not found", {
+        availableModels: models.map((m) => m.modelId),
+        modelId,
+        modelName,
+        providerId,
+      });
+    }
+    return isAllowed;
   }
 
   return false;

@@ -117,6 +117,7 @@ export async function POST(request: Request) {
 
     const isAllowed = await isAllowedModelId(selectedChatModel);
     if (!isAllowed) {
+      console.error("Model not allowed:", selectedChatModel);
       return new ChatbotError("bad_request:chat").toResponse();
     }
 

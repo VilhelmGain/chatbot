@@ -93,6 +93,8 @@ export function getMessageByErrorCode(errorCode: ErrorCode): string {
     case "forbidden:auth":
       return "Your account does not have access to this feature.";
 
+    case "bad_request:chat":
+      return "The selected model is not available. Please check your model settings.";
     case "rate_limit:chat":
       return "You've reached the message limit. Come back in 1 hour to continue chatting.";
     case "not_found:chat":
