@@ -1,30 +1,11 @@
 import { createAnthropic } from "@ai-sdk/anthropic";
-import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { createOpenAI } from "@ai-sdk/openai";
 import type { LanguageModelV4 } from "@ai-sdk/provider";
-import { createXai } from "@ai-sdk/xai";
 import { customProvider as aiCustomProvider } from "ai";
 import { ChatbotError } from "@/lib/errors";
 import { isTestEnvironment } from "../constants";
 import { getCustomProviderById } from "../db/queries";
 import { decrypt } from "./encryption";
-import { titleModel } from "./models";
-
-function getOpenAI() {
-  return createOpenAI({ apiKey: process.env.OPENAI_API_KEY });
-}
-
-function getAnthropic() {
-  return createAnthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-}
-
-function getGoogle() {
-  return createGoogleGenerativeAI({ apiKey: process.env.GOOGLE_API_KEY });
-}
-
-function getXai() {
-  return createXai({ apiKey: process.env.XAI_API_KEY });
-}
 
 export const myProvider = isTestEnvironment
   ? (() => {
@@ -135,18 +116,7 @@ function resolveModel(modelId: string) {
     return resolveCustomProvider(providerId, modelName);
   }
 
-  switch (providerName) {
-    case "openai":
-      return getOpenAI().languageModel(modelName);
-    case "anthropic":
-      return getAnthropic().languageModel(modelName);
-    case "google":
-      return getGoogle().languageModel(modelName);
-    case "xai":
-      return getXai().languageModel(modelName);
-    default:
-      throw new Error(`Unknown provider: ${providerName}`);
-  }
+  throw new Error(`Unknown provider: ${providerName}`);
 }
 
 export function getLanguageModel(modelId: string) {
@@ -155,13 +125,6 @@ export function getLanguageModel(modelId: string) {
   }
 
   return resolveModel(modelId);
-}
-
-export function getTitleModel() {
-  if (isTestEnvironment && myProvider) {
-    return myProvider.languageModel("title-model");
-  }
-  return resolveModel(titleModel.id);
 }
 
 export function invalidateProviderCache(providerId: string) {

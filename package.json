@@ -3,20 +3,23 @@
   "version": "3.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbo",
     "build": "next build",
-    "start": "next start",
     "check": "ultracite check",
-    "fix": "ultracite fix",
-    "prepare": "husky",
+    "db:check": "drizzle-kit check",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "npx tsx lib/db/migrate.ts",
-    "db:studio": "drizzle-kit studio",
-    "db:push": "drizzle-kit push",
     "db:pull": "drizzle-kit pull",
-    "db:check": "drizzle-kit check",
+    "db:push": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio",
     "db:up": "drizzle-kit up",
+    "dev": "next dev --turbo",
+    "fix": "ultracite fix",
+    "prepare": "husky",
+    "start": "next start",
     "test": "export PLAYWRIGHT=True && pnpm exec playwright test"
+  },
+  "lint-staged": {
+    "*": "pnpm run fix --"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^4.0.0",
@@ -102,9 +105,6 @@
     "tsx": "^4.23.0",
     "typescript": "^5.6.3",
     "ultracite": "^7.8.4"
-  },
-  "lint-staged": {
-    "*": "pnpm run fix --"
   },
   "packageManager": "pnpm@10.32.1"
 }
