@@ -2,6 +2,7 @@
 
 import { ArrowLeft, Plus, Server } from "lucide-react";
 import Link from "next/link";
+import { useTheme } from "next-themes";
 import { useCallback, useEffect, useState } from "react";
 import useSWR from "swr";
 import { toast } from "@/components/chat/toast";
@@ -16,6 +17,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
 
 type CustomProvider = {
@@ -31,6 +40,7 @@ type CustomProvider = {
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 export default function SettingsPage() {
+  const { theme, setTheme } = useTheme();
   const {
     data: providers,
     error,
@@ -101,6 +111,22 @@ export default function SettingsPage() {
       <div className="flex flex-col gap-4">
         <h2 className="text-lg font-medium">Preferences</h2>
         <TitleModelSelector />
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="theme">Theme</Label>
+          <Select onValueChange={setTheme} value={theme}>
+            <SelectTrigger id="theme">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="light">Light</SelectItem>
+              <SelectItem value="dark">Dark</SelectItem>
+              <SelectItem value="system">System</SelectItem>
+            </SelectContent>
+          </Select>
+          <p className="text-xs text-muted-foreground">
+            Choose your preferred color scheme.
+          </p>
+        </div>
       </div>
 
       <div className="flex items-center justify-between">

@@ -11,7 +11,6 @@ import {
   WrenchIcon,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useTheme } from "next-themes";
 import {
   type ChangeEvent,
   type Dispatch,
@@ -115,7 +114,6 @@ function PureMultimodalInput({
   ) => void;
 }) {
   const router = useRouter();
-  const { setTheme, resolvedTheme } = useTheme();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { width } = useWindowSize();
   const hasAutoFocused = useRef(false);
@@ -189,9 +187,6 @@ function PureMultimodalInput({
           modelBtn?.click();
           break;
         }
-        case "theme":
-          setTheme(resolvedTheme === "dark" ? "light" : "dark");
-          break;
         case "delete":
           toast("Delete this chat?", {
             action: {
@@ -228,7 +223,7 @@ function PureMultimodalInput({
           break;
       }
     },
-    [chatId, resolvedTheme, router, setInput, setMessages, setTheme]
+    [chatId, router, setInput, setMessages]
   );
 
   const submitForm = useCallback(() => {
