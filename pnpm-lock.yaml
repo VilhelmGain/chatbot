@@ -38,6 +38,9 @@ importers:
       '@codemirror/view':
         specifier: ^6.43.5
         version: 6.43.5
+      '@opencode-ai/models':
+        specifier: ^0.0.33
+        version: 0.0.33
       '@radix-ui/react-use-controllable-state':
         specifier: ^1.2.3
         version: 1.2.3(@types/react@18.3.31)(react@19.2.7)
@@ -1244,6 +1247,15 @@ packages:
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [win32]
+
+  '@opencode-ai/models@0.0.33':
+    resolution: {integrity: sha512-dHeXpRhW0P8tGgpPQm58hLquNmzg078PpM4wXhKwDzr4ccQkSygjEX1tjMm104jdTmc06Jc5CeQwZVUQxx2Q/Q==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      effect: 4.0.0-beta.83
+    peerDependenciesMeta:
+      effect:
+        optional: true
 
   '@opentelemetry/api@1.9.1':
     resolution: {integrity: sha512-gLyJlPHPZYdAk1JENA9LeHejZe1Ti77/pTeFm/nMXmQH/HFZlcS/O2XJB+L8fkbrNSqhdtlvjBVjxwUYanNH5Q==}
@@ -5236,6 +5248,8 @@ snapshots:
 
   '@next/swc-win32-x64-msvc@16.2.10':
     optional: true
+
+  '@opencode-ai/models@0.0.33': {}
 
   '@opentelemetry/api@1.9.1':
     optional: true

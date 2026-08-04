@@ -8,6 +8,7 @@ export type ChatModel = {
   id: string;
   name: string;
   provider: string;
+  providerKey?: string | null;
   description: string;
   reasoningEffort?: "none" | "minimal" | "low" | "medium" | "high";
 };
@@ -41,6 +42,7 @@ export async function getCustomModelsForUser(
         id: `custom-${provider.id}/${model.modelId}`,
         name: model.name,
         provider: `custom-${provider.id}`,
+        providerKey: provider.providerKey,
       }));
     })
   );
@@ -69,4 +71,25 @@ export async function getCustomCapabilitiesForUser(
   return Object.fromEntries(
     allEntries.flat().map(({ key, value }) => [key, value])
   );
+}
+
+export async function getProviderNamesForUser(
+  userId: string
+): Promise<Record<string, string>> {
+  const { getCustomProvidersByUserId } = await import("../db/queries");
+  const { getCatalogProvider } = await import("./catalog");
+  const providers = await getCustomProvidersByUserId({ userId });
+
+  const names: Record<string, string> = {};
+  for (const provider of providers) {
+    const key = `custom-${provider.id}`;
+    if (provider.providerKey) {
+      const catalogProvider = getCatalogProvider(provider.providerKey);
+      names[key] = catalogProvider?.name ?? provider.name;
+    } else {
+      names[key] = provider.name;
+    }
+  }
+
+  return names;
 }

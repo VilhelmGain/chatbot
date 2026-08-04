@@ -15,6 +15,13 @@
       "when": 1785776925844,
       "tag": "0001_majestic_owl",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1785842696149,
+      "tag": "0002_blue_chat",
+      "breakpoints": true
     }
   ]
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2, Plus, Sparkles, Trash2 } from "lucide-react";
+import { Download, Loader2, Plus, Sparkles, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import useSWR from "swr";
 import { toast } from "@/components/chat/toast";
@@ -19,11 +19,12 @@ type CustomModel = {
 
 type ModelManagerProps = {
   providerId: string;
+  providerKey: string | null;
 };
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
-export function ModelManager({ providerId }: ModelManagerProps) {
+export function ModelManager({ providerId, providerKey }: ModelManagerProps) {
   const {
     data: models,
     error,
@@ -36,6 +37,7 @@ export function ModelManager({ providerId }: ModelManagerProps) {
 
   const [showAddModel, setShowAddModel] = useState(false);
   const [isDetecting, setIsDetecting] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
 
   const handleModelAdded = useCallback(() => {
     setShowAddModel(false);
@@ -73,6 +75,31 @@ export function ModelManager({ providerId }: ModelManagerProps) {
     }
   }, [mutate, providerId]);
 
+  const handleImportCatalog = useCallback(async () => {
+    setIsImporting(true);
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/api/settings/providers/${providerId}/import-catalog`,
+        { method: "POST" }
+      );
+      const data = await response.json();
+
+      if (data.error) {
+        toast({ description: data.error, type: "error" });
+      } else {
+        toast({
+          description: `Imported ${data.imported} model(s) from catalog`,
+          type: "success",
+        });
+        mutate();
+      }
+    } catch {
+      toast({ description: "Catalog import failed", type: "error" });
+    } finally {
+      setIsImporting(false);
+    }
+  }, [mutate, providerId]);
+
   const handleToggleAddModel = useCallback(() => {
     setShowAddModel((prev) => !prev);
   }, []);
@@ -86,21 +113,44 @@ export function ModelManager({ providerId }: ModelManagerProps) {
   return (
     <div className="ml-10 mt-2 rounded-lg border bg-muted/30 p-3">
       <div className="mb-3 flex items-center justify-between">
-        <h3 className="text-sm font-medium">Models</h3>
+        <h3 className="text-sm font-medium">
+          Models
+          {providerKey ? (
+            <span className="ml-2 text-xs font-normal text-muted-foreground">
+              from models.dev
+            </span>
+          ) : null}
+        </h3>
         <div className="flex items-center gap-2">
-          <Button
-            disabled={isDetecting}
-            onClick={handleAutoDetect}
-            size="sm"
-            variant="outline"
-          >
-            {isDetecting ? (
-              <Loader2 className="mr-1.5 size-3 animate-spin" />
-            ) : (
-              <Sparkles className="mr-1.5 size-3" />
-            )}
-            Auto-detect
-          </Button>
+          {providerKey ? (
+            <Button
+              disabled={isImporting}
+              onClick={handleImportCatalog}
+              size="sm"
+              variant="outline"
+            >
+              {isImporting ? (
+                <Loader2 className="mr-1.5 size-3 animate-spin" />
+              ) : (
+                <Download className="mr-1.5 size-3" />
+              )}
+              Refresh from catalog
+            </Button>
+          ) : (
+            <Button
+              disabled={isDetecting}
+              onClick={handleAutoDetect}
+              size="sm"
+              variant="outline"
+            >
+              {isDetecting ? (
+                <Loader2 className="mr-1.5 size-3 animate-spin" />
+              ) : (
+                <Sparkles className="mr-1.5 size-3" />
+              )}
+              Auto-detect
+            </Button>
+          )}
           <Button onClick={handleToggleAddModel} size="sm">
             <Plus className="mr-1.5 size-3" />
             Add Model

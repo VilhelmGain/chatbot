@@ -723,7 +723,7 @@ function ModelSelectorOption({
   selectedModelId: string;
   setOpen: Dispatch<SetStateAction<boolean>>;
 }) {
-  const [logoProvider] = model.id.split("/");
+  const logoProvider = model.providerKey ?? model.id.split("/")[0];
   const maybeWithTooltip = (icon: ReactNode, label: string) => (
     <Tooltip>
       <TooltipTrigger asChild>
@@ -805,12 +805,14 @@ function PureModelSelectorCompact({
   const capabilities: Record<string, ModelCapabilities> | undefined =
     modelsData?.capabilities ?? modelsData;
   const dynamicModels: ChatModel[] | undefined = modelsData?.models;
+  const providerNames: Record<string, string> = modelsData?.providerNames ?? {};
   const activeModels = dynamicModels ?? [];
 
   const selectedModel =
     activeModels.find((m: ChatModel) => m.id === selectedModelId) ??
     activeModels[0];
-  const [provider] = selectedModel?.id.split("/") ?? [];
+  const provider =
+    selectedModel?.providerKey ?? selectedModel?.id.split("/")[0];
   const isReasoningModel = capabilities?.[selectedModelId]?.reasoning === true;
 
   if (isLoading) {
@@ -868,31 +870,6 @@ function PureModelSelectorCompact({
             const sortedKeys = Object.keys(grouped).sort((a, b) =>
               a.localeCompare(b)
             );
-
-            const providerNames: Record<string, string> = {
-              alibaba: "Alibaba",
-              anthropic: "Anthropic",
-              "arcee-ai": "Arcee AI",
-              bytedance: "ByteDance",
-              cohere: "Cohere",
-              deepseek: "DeepSeek",
-              google: "Google",
-              inception: "Inception",
-              kwaipilot: "Kwaipilot",
-              meituan: "Meituan",
-              meta: "Meta",
-              minimax: "MiniMax",
-              mistral: "Mistral",
-              moonshotai: "Moonshot",
-              morph: "Morph",
-              nvidia: "Nvidia",
-              openai: "OpenAI",
-              perplexity: "Perplexity",
-              "prime-intellect": "Prime Intellect",
-              xai: "xAI",
-              xiaomi: "Xiaomi",
-              zai: "Zai",
-            };
 
             return sortedKeys.map((key) => (
               <ModelSelectorGroup heading={providerNames[key] ?? key} key={key}>

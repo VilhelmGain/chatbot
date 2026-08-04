@@ -2,7 +2,17 @@
 
 import { Loader2 } from "lucide-react";
 import { useCallback, useState } from "react";
+import useSWR from "swr";
+import { ModelSelectorLogo } from "@/components/ai-elements/model-selector";
 import { Button } from "@/components/ui/button";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -13,16 +23,27 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+type CatalogProvider = {
+  baseURL: string;
+  key: string;
+  modelCount: number;
+  name: string;
+  type: "openai" | "anthropic";
+};
+
 type ProviderFormProps = {
   onCreated: () => void;
   initialData?: {
     id?: string;
     name: string;
+    providerKey?: string | null;
     type: "openai" | "anthropic";
     baseURL: string;
   };
   isEdit?: boolean;
 };
+
+const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 export function ProviderForm({
   onCreated,
@@ -35,8 +56,19 @@ export function ProviderForm({
   );
   const [baseURL, setBaseURL] = useState(initialData?.baseURL ?? "");
   const [apiKey, setApiKey] = useState("");
+  const [providerKey, setProviderKey] = useState<string | null>(
+    initialData?.providerKey ?? null
+  );
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isManualMode, setIsManualMode] = useState(isEdit || !!initialData);
+
+  const { data: catalogData } = useSWR<{ providers: CatalogProvider[] }>(
+    isManualMode
+      ? null
+      : `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/api/settings/catalog`,
+    fetcher
+  );
 
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
@@ -53,6 +85,9 @@ export function ProviderForm({
         const body: Record<string, string> = { baseURL, name, type };
         if (apiKey) {
           body.apiKey = apiKey;
+        }
+        if (providerKey && !isEdit) {
+          body.providerKey = providerKey;
         }
 
         const response = await fetch(
@@ -76,8 +111,25 @@ export function ProviderForm({
         setIsLoading(false);
       }
     },
-    [apiKey, baseURL, initialData, isEdit, name, onCreated, type]
+    [apiKey, baseURL, initialData, isEdit, name, onCreated, providerKey, type]
   );
+
+  const handleSelectCatalogProvider = useCallback(
+    (catalogProvider: CatalogProvider) => {
+      setProviderKey(catalogProvider.key);
+      setName(catalogProvider.name);
+      setBaseURL(catalogProvider.baseURL);
+      setType(catalogProvider.type);
+    },
+    []
+  );
+
+  const handleSwitchToManual = useCallback(() => {
+    setIsManualMode(true);
+    setProviderKey(null);
+    setName("");
+    setBaseURL("");
+  }, []);
 
   const handleNameChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -103,6 +155,40 @@ export function ProviderForm({
     },
     []
   );
+
+  if (!isManualMode && !isEdit) {
+    return (
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-2">
+          <Label>Select a provider</Label>
+          <p className="text-xs text-muted-foreground">
+            Choose from known providers or switch to manual entry for custom
+            endpoints.
+          </p>
+        </div>
+
+        <Command className="border rounded-lg">
+          <CommandInput placeholder="Search providers..." />
+          <CommandList>
+            <CommandEmpty>No providers found.</CommandEmpty>
+            <CommandGroup heading="Known Providers">
+              {catalogData?.providers.map((p) => (
+                <CatalogProviderItem
+                  key={p.key}
+                  onSelect={handleSelectCatalogProvider}
+                  provider={p}
+                />
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+
+        <Button onClick={handleSwitchToManual} type="button" variant="outline">
+          Custom provider
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
@@ -180,5 +266,29 @@ export function ProviderForm({
         {isEdit ? "Update Provider" : "Add Provider"}
       </Button>
     </form>
+  );
+}
+
+function CatalogProviderItem({
+  provider,
+  onSelect,
+}: {
+  provider: CatalogProvider;
+  onSelect: (provider: CatalogProvider) => void;
+}) {
+  const handleSelect = useCallback(() => {
+    onSelect(provider);
+  }, [onSelect, provider]);
+
+  return (
+    <CommandItem onSelect={handleSelect} value={provider.key}>
+      <ModelSelectorLogo provider={provider.key} />
+      <div className="flex flex-col">
+        <span className="text-sm font-medium">{provider.name}</span>
+        <span className="text-xs text-muted-foreground">
+          {provider.modelCount} models
+        </span>
+      </div>
+    </CommandItem>
   );
 }

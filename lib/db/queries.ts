@@ -607,6 +607,7 @@ export async function getCustomProvidersByUserId({
         createdAt: customProvider.createdAt,
         id: customProvider.id,
         name: customProvider.name,
+        providerKey: customProvider.providerKey,
         type: customProvider.type,
         updatedAt: customProvider.updatedAt,
         userId: customProvider.userId,
@@ -643,12 +644,14 @@ export async function createCustomProvider({
   apiKey,
   baseURL,
   name,
+  providerKey,
   type,
   userId,
 }: {
   apiKey: string;
   baseURL: string;
   name: string;
+  providerKey?: string | null;
   type: "openai" | "anthropic";
   userId: string;
 }): Promise<CustomProvider> {
@@ -664,6 +667,7 @@ export async function createCustomProvider({
         id: generateUUID(),
         iv,
         name,
+        providerKey,
         type,
         updatedAt: new Date(),
         userId,

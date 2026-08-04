@@ -142,6 +142,7 @@ export const customProvider = pgTable("CustomProvider", {
   id: uuid("id").primaryKey().notNull().defaultRandom(),
   iv: varchar("iv", { length: 32 }).notNull(),
   name: varchar("name", { length: 128 }).notNull(),
+  providerKey: varchar("providerKey", { length: 128 }),
   type: varchar("type", { enum: ["openai", "anthropic"] }).notNull(),
   updatedAt: timestamp("updatedAt").notNull().defaultNow(),
   userId: uuid("userId")

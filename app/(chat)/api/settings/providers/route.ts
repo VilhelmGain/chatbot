@@ -1,6 +1,8 @@
 import { z } from "zod";
 import { auth } from "@/app/(auth)/auth";
+import { getCatalogModelsForProvider } from "@/lib/ai/catalog";
 import {
+  createCustomModels,
   createCustomProvider,
   getCustomProvidersByUserId,
 } from "@/lib/db/queries";
@@ -10,6 +12,7 @@ const createProviderSchema = z.object({
   apiKey: z.string().min(1),
   baseURL: z.string().url().max(512),
   name: z.string().min(1).max(128),
+  providerKey: z.string().max(128).optional(),
   type: z.enum(["openai", "anthropic"]),
 });
 
@@ -47,9 +50,20 @@ export async function POST(request: Request) {
     apiKey: body.apiKey,
     baseURL: body.baseURL,
     name: body.name,
+    providerKey: body.providerKey ?? null,
     type: body.type,
     userId: session.user.id,
   });
+
+  if (body.providerKey) {
+    const catalogModels = getCatalogModelsForProvider(body.providerKey);
+    if (catalogModels.length > 0) {
+      await createCustomModels({
+        models: catalogModels,
+        providerId: provider.id,
+      });
+    }
+  }
 
   return Response.json(
     {
@@ -57,6 +71,7 @@ export async function POST(request: Request) {
       createdAt: provider.createdAt,
       id: provider.id,
       name: provider.name,
+      providerKey: provider.providerKey,
       type: provider.type,
       updatedAt: provider.updatedAt,
       userId: provider.userId,
