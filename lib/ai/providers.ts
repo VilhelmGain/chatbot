@@ -44,6 +44,7 @@ export const myProvider = isTestEnvironment
 const CACHE_TTL_MS = 5 * 60 * 1000;
 
 type CachedProvider = {
+  apiKey: string;
   baseURL: string;
   expiresAt: number;
   type: "openai" | "anthropic";
@@ -60,13 +61,13 @@ function createModelFromConfig(
     // The default "languageModel" uses the Responses API, which most custom
     // endpoints (OpenRouter, local proxies, etc.) do not support.
     return createOpenAI({
-      apiKey: "unused",
+      apiKey: config.apiKey,
       baseURL: config.baseURL,
     }).chat(modelName);
   }
   if (config.type === "anthropic") {
     return createAnthropic({
-      apiKey: "unused",
+      apiKey: config.apiKey,
       baseURL: config.baseURL,
     }).languageModel(modelName);
   }
@@ -100,6 +101,7 @@ async function resolveCustomProvider(providerId: string, modelName: string) {
       baseURL: provider.baseURL,
     }).chat(modelName);
     providerCache.set(providerId, {
+      apiKey,
       baseURL: provider.baseURL,
       expiresAt: Date.now() + CACHE_TTL_MS,
       type: provider.type,
@@ -113,6 +115,7 @@ async function resolveCustomProvider(providerId: string, modelName: string) {
       baseURL: provider.baseURL,
     }).languageModel(modelName);
     providerCache.set(providerId, {
+      apiKey,
       baseURL: provider.baseURL,
       expiresAt: Date.now() + CACHE_TTL_MS,
       type: provider.type,
