@@ -3,7 +3,13 @@
 import type { UseChatHelpers } from "@ai-sdk/react";
 import type { UIMessage } from "ai";
 import equal from "fast-deep-equal";
-import { ArrowUpIcon, BrainIcon, EyeIcon, Loader2, WrenchIcon } from "lucide-react";
+import {
+  ArrowUpIcon,
+  BrainIcon,
+  EyeIcon,
+  Loader2,
+  WrenchIcon,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import {
@@ -776,8 +782,8 @@ function PureModelSelectorCompact({
       <Button
         className="h-7 max-w-[200px] justify-between gap-1.5 rounded-lg px-2 text-[12px] text-muted-foreground"
         data-testid="model-selector"
-        variant="ghost"
         disabled
+        variant="ghost"
       >
         <Loader2 className="h-3 w-3 animate-spin" />
         <ModelSelectorName>Loading...</ModelSelectorName>
@@ -790,8 +796,8 @@ function PureModelSelectorCompact({
       <Button
         className="h-7 max-w-[200px] justify-between gap-1.5 rounded-lg px-2 text-[12px] text-muted-foreground"
         data-testid="model-selector"
-        variant="ghost"
         disabled
+        variant="ghost"
       >
         <ModelSelectorName>No models available</ModelSelectorName>
       </Button>
