@@ -217,7 +217,7 @@ function PureMultimodalInput({
           break;
       }
     },
-    [chatId, resolvedTheme, router, setInput, setMessages, setTheme]
+    [chatId, router, setInput, setMessages]
   );
 
   const submitForm = useCallback(() => {
