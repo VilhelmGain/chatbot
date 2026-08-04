@@ -158,11 +158,14 @@ function inferCapabilities(modelId: string): ModelCapabilities {
   const isReasoning =
     /^o[1-9]/.test(name) ||
     lower.includes("reasoning") ||
-    lower.includes("thinking");
+    lower.includes("thinking") ||
+    lower.includes("deepseek-r1") ||
+    lower.includes("qwq");
   const isVision =
     lower.includes("4o") ||
     lower.includes("vision") ||
-    lower.includes("gemini");
+    lower.includes("gemini") ||
+    lower.includes("claude-3");
   return {
     reasoning: isReasoning,
     tools: true,

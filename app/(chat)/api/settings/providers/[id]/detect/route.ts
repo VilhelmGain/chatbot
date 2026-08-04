@@ -6,6 +6,30 @@ import {
 } from "@/lib/db/queries";
 import { ChatbotError } from "@/lib/errors";
 
+function inferCapabilities(modelId: string): {
+  reasoning: boolean;
+  tools: boolean;
+  vision: boolean;
+} {
+  const lower = modelId.toLowerCase();
+  const isReasoning =
+    /^o[1-9]/.test(modelId) ||
+    lower.includes("reasoning") ||
+    lower.includes("thinking") ||
+    lower.includes("deepseek-r1") ||
+    lower.includes("qwq");
+  const isVision =
+    lower.includes("4o") ||
+    lower.includes("vision") ||
+    lower.includes("gemini") ||
+    lower.includes("claude-3");
+  return {
+    reasoning: isReasoning,
+    tools: true,
+    vision: isVision,
+  };
+}
+
 export async function POST(
   _request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -57,11 +81,7 @@ export async function POST(
     const models = data.data ?? [];
 
     const modelEntries = models.map((m: { id: string }) => ({
-      capabilities: {
-        reasoning: false,
-        tools: true,
-        vision: false,
-      },
+      capabilities: inferCapabilities(m.id),
       modelId: m.id,
       name: m.id,
     }));
