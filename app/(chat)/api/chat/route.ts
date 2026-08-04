@@ -323,7 +323,10 @@ export async function POST(request: Request) {
             stopWaitingStatus();
           },
           reasoning:
-            isReasoningModel && reasoningEffort && reasoningEffort !== "none"
+            isReasoningModel &&
+            reasoningEffort &&
+            reasoningEffort !== "none" &&
+            reasoningEffort !== "default"
               ? reasoningEffort
               : undefined,
           stopWhen: isStepCount(5),
