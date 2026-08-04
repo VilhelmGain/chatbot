@@ -100,8 +100,14 @@ export function ProviderForm({
         );
 
         if (!response.ok) {
-          const data = await response.json();
-          throw new Error(data.message || "Failed to save provider");
+          let message = "Failed to save provider";
+          try {
+            const data = await response.json();
+            message = data.message || message;
+          } catch {
+            // Response body is not valid JSON; use default message
+          }
+          throw new Error(message);
         }
 
         onCreated();

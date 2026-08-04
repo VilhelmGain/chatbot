@@ -46,36 +46,45 @@ export async function POST(request: Request) {
     return new ChatbotError("bad_request:provider").toResponse();
   }
 
-  const provider = await createCustomProvider({
-    apiKey: body.apiKey,
-    baseURL: body.baseURL,
-    name: body.name,
-    providerKey: body.providerKey ?? null,
-    type: body.type,
-    userId: session.user.id,
-  });
+  try {
+    const provider = await createCustomProvider({
+      apiKey: body.apiKey,
+      baseURL: body.baseURL,
+      name: body.name,
+      providerKey: body.providerKey ?? null,
+      type: body.type,
+      userId: session.user.id,
+    });
 
-  if (body.providerKey) {
-    const catalogModels = getCatalogModelsForProvider(body.providerKey);
-    if (catalogModels.length > 0) {
-      await createCustomModels({
-        models: catalogModels,
-        providerId: provider.id,
-      });
+    if (body.providerKey) {
+      const catalogModels = getCatalogModelsForProvider(body.providerKey);
+      if (catalogModels.length > 0) {
+        await createCustomModels({
+          models: catalogModels,
+          providerId: provider.id,
+        });
+      }
     }
-  }
 
-  return Response.json(
-    {
-      baseURL: provider.baseURL,
-      createdAt: provider.createdAt,
-      id: provider.id,
-      name: provider.name,
-      providerKey: provider.providerKey,
-      type: provider.type,
-      updatedAt: provider.updatedAt,
-      userId: provider.userId,
-    },
-    { status: 201 }
-  );
+    return Response.json(
+      {
+        baseURL: provider.baseURL,
+        createdAt: provider.createdAt,
+        id: provider.id,
+        name: provider.name,
+        providerKey: provider.providerKey,
+        type: provider.type,
+        updatedAt: provider.updatedAt,
+        userId: provider.userId,
+      },
+      { status: 201 }
+    );
+  } catch (error) {
+    if (error instanceof ChatbotError) {
+      throw error;
+    }
+    return new ChatbotError("bad_request:provider", {
+      cause: error,
+    }).toResponse();
+  }
 }

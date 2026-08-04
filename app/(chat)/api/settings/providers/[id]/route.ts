@@ -68,25 +68,34 @@ export async function PUT(
     return new ChatbotError("bad_request:provider").toResponse();
   }
 
-  const updated = await updateCustomProvider({
-    apiKey: body.apiKey,
-    baseURL: body.baseURL,
-    id,
-    name: body.name,
-    userId: session.user.id,
-  });
+  try {
+    const updated = await updateCustomProvider({
+      apiKey: body.apiKey,
+      baseURL: body.baseURL,
+      id,
+      name: body.name,
+      userId: session.user.id,
+    });
 
-  invalidateProviderCache(id);
+    invalidateProviderCache(id);
 
-  return Response.json({
-    baseURL: updated.baseURL,
-    createdAt: updated.createdAt,
-    id: updated.id,
-    name: updated.name,
-    type: updated.type,
-    updatedAt: updated.updatedAt,
-    userId: updated.userId,
-  });
+    return Response.json({
+      baseURL: updated.baseURL,
+      createdAt: updated.createdAt,
+      id: updated.id,
+      name: updated.name,
+      type: updated.type,
+      updatedAt: updated.updatedAt,
+      userId: updated.userId,
+    });
+  } catch (error) {
+    if (error instanceof ChatbotError) {
+      throw error;
+    }
+    return new ChatbotError("bad_request:provider", {
+      cause: error,
+    }).toResponse();
+  }
 }
 
 export async function DELETE(
