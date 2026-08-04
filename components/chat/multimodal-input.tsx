@@ -36,11 +36,7 @@ import {
   ModelSelectorName,
   ModelSelectorTrigger,
 } from "@/components/ai-elements/model-selector";
-import {
-  type ChatModel,
-  DEFAULT_CHAT_MODEL,
-  type ModelCapabilities,
-} from "@/lib/ai/models.client";
+import type { ChatModel, ModelCapabilities } from "@/lib/ai/models.client";
 import type { Attachment, ChatMessage } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import {
@@ -813,7 +809,6 @@ function PureModelSelectorCompact({
 
   const selectedModel =
     activeModels.find((m: ChatModel) => m.id === selectedModelId) ??
-    activeModels.find((m: ChatModel) => m.id === DEFAULT_CHAT_MODEL) ??
     activeModels[0];
   const [provider] = selectedModel?.id.split("/") ?? [];
   const isReasoningModel = capabilities?.[selectedModelId]?.reasoning === true;

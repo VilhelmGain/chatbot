@@ -11,10 +11,7 @@ import { createResumableStreamContext } from "resumable-stream";
 import { auth, type UserType } from "@/app/(auth)/auth";
 import { getEntitlements } from "@/lib/ai/entitlements";
 import {
-  chatModels,
-  DEFAULT_CHAT_MODEL,
-  getCapabilities,
-  getModelAvailability,
+  getCustomCapabilitiesForUser,
   isAllowedModelId,
 } from "@/lib/ai/models";
 import { type RequestHints, systemPrompt } from "@/lib/ai/prompts";
@@ -119,33 +116,32 @@ export async function POST(request: Request) {
     }
 
     const isAllowed = await isAllowedModelId(selectedChatModel);
-    const chatModel = isAllowed ? selectedChatModel : DEFAULT_CHAT_MODEL;
+    if (!isAllowed) {
+      return new ChatbotError("bad_request:chat").toResponse();
+    }
 
-    const isCustomProvider = chatModel.startsWith("custom-");
+    const chatModel = selectedChatModel;
+    const providerId = chatModel.split("/")[0].slice(7);
+    const provider = await getCustomProviderById({ id: providerId });
+    if (!provider || provider.userId !== session.user.id) {
+      return new ChatbotError("forbidden:chat").toResponse();
+    }
 
-    if (isCustomProvider) {
-      const providerId = chatModel.split("/")[0].slice(7);
-      const provider = await getCustomProviderById({ id: providerId });
-      if (!provider || provider.userId !== session.user.id) {
-        return new ChatbotError("forbidden:chat").toResponse();
-      }
-    } else {
-      await checkIpRateLimit(getClientIp(request));
+    await checkIpRateLimit(getClientIp(request));
 
-      const userType: UserType = session.user.type;
+    const userType: UserType = session.user.type;
 
-      const messageCount = await getMessageCountByUserId({
-        differenceInHours: 1,
-        id: session.user.id,
-      });
+    const messageCount = await getMessageCountByUserId({
+      differenceInHours: 1,
+      id: session.user.id,
+    });
 
-      const entitlements = getEntitlements(userType);
-      if (
-        entitlements.maxMessagesPerHour > 0 &&
-        messageCount > entitlements.maxMessagesPerHour
-      ) {
-        return new ChatbotError("rate_limit:chat").toResponse();
-      }
+    const entitlements = getEntitlements(userType);
+    if (
+      entitlements.maxMessagesPerHour > 0 &&
+      messageCount > entitlements.maxMessagesPerHour
+    ) {
+      return new ChatbotError("rate_limit:chat").toResponse();
     }
 
     const isToolApprovalFlow = Boolean(messages);
@@ -234,8 +230,9 @@ export async function POST(request: Request) {
       });
     }
 
-    const modelConfig = chatModels.find((m) => m.id === chatModel);
-    const modelCapabilities = await getCapabilities();
+    const modelCapabilities = await getCustomCapabilitiesForUser(
+      session.user.id
+    );
     const capabilities = modelCapabilities[chatModel];
     const isReasoningModel = capabilities?.reasoning === true;
     const supportsTools = capabilities?.tools === true;
@@ -247,7 +244,7 @@ export async function POST(request: Request) {
     const stream = createUIMessageStream({
       execute: async ({ writer: dataStream }) => {
         lastStreamError = null;
-        const modelName = modelConfig?.name ?? chatModel;
+        const modelName = chatModel;
         let hasModelActivity = false;
         let healthCheckTimer: ReturnType<typeof setTimeout> | undefined;
 
@@ -279,15 +276,7 @@ export async function POST(request: Request) {
         writeWaitingStatus("waiting", "Waiting...");
 
         healthCheckTimer = setTimeout(() => {
-          const availability = getModelAvailability(chatModel);
-          if (availability === "impacted") {
-            writeWaitingStatus(
-              "health",
-              `${modelName} may be slow or unavailable right now...`
-            );
-          } else {
-            writeWaitingStatus("still-waiting", "Still waiting...");
-          }
+          writeWaitingStatus("still-waiting", "Still waiting...");
         }, HEALTH_CHECK_DELAY_MS);
 
         const markModelActive = () => {

@@ -7,10 +7,6 @@ services:
       - AUTH_SECRET=${AUTH_SECRET}
       - POSTGRES_URL=postgresql://chatbot:chatbot@postgres:5432/chatbot
       - REDIS_URL=redis://redis:6379
-      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
-      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
-      - GOOGLE_API_KEY=${GOOGLE_API_KEY:-}
-      - XAI_API_KEY=${XAI_API_KEY:-}
       - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
       - UPLOAD_DIR=/app/uploads
     volumes:
