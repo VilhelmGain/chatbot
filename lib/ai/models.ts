@@ -202,7 +202,7 @@ async function discoverOpenAIModels(): Promise<ChatModel[]> {
   }
 
   const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) {
+  if (!isValidApiKey(apiKey)) {
     return [];
   }
 
@@ -244,7 +244,7 @@ async function discoverGoogleModels(): Promise<ChatModel[]> {
   }
 
   const apiKey = process.env.GOOGLE_API_KEY;
-  if (!apiKey) {
+  if (!isValidApiKey(apiKey)) {
     return [];
   }
 
@@ -289,7 +289,7 @@ async function discoverXaiModels(): Promise<ChatModel[]> {
   }
 
   const apiKey = process.env.XAI_API_KEY;
-  if (!apiKey) {
+  if (!isValidApiKey(apiKey)) {
     return [];
   }
 
