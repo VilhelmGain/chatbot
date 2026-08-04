@@ -655,9 +655,9 @@ export async function createCustomProvider({
   type: "openai" | "anthropic";
   userId: string;
 }): Promise<CustomProvider> {
-  const { encrypted, iv } = encrypt(apiKey);
-
   try {
+    const { encrypted, iv } = encrypt(apiKey);
+
     const result = await db
       .insert(customProvider)
       .values({

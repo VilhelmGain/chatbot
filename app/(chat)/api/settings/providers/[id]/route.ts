@@ -92,6 +92,7 @@ export async function PUT(
     if (error instanceof ChatbotError) {
       throw error;
     }
+    console.error("Failed to update provider:", error);
     return new ChatbotError("bad_request:provider", {
       cause: error,
     }).toResponse();

@@ -83,6 +83,7 @@ export async function POST(request: Request) {
     if (error instanceof ChatbotError) {
       throw error;
     }
+    console.error("Failed to create provider:", error);
     return new ChatbotError("bad_request:provider", {
       cause: error,
     }).toResponse();
