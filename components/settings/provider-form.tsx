@@ -120,6 +120,7 @@ export function ProviderForm({
       setName(catalogProvider.name);
       setBaseURL(catalogProvider.baseURL);
       setType(catalogProvider.type);
+      setIsManualMode(true);
     },
     []
   );
