@@ -281,7 +281,11 @@ function CatalogProviderItem({
   }, [onSelect, provider]);
 
   return (
-    <CommandItem onSelect={handleSelect} value={provider.key}>
+    <CommandItem
+      onSelect={handleSelect}
+      onPointerDown={(e) => e.stopPropagation()}
+      value={provider.key}
+    >
       <ModelSelectorLogo provider={provider.key} />
       <div className="flex flex-col">
         <span className="text-sm font-medium">{provider.name}</span>
