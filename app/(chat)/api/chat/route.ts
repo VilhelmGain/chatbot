@@ -9,7 +9,7 @@ import {
 import { after } from "next/server";
 import { createResumableStreamContext } from "resumable-stream";
 import { auth, type UserType } from "@/app/(auth)/auth";
-import { entitlementsByUserType } from "@/lib/ai/entitlements";
+import { getEntitlements } from "@/lib/ai/entitlements";
 import {
   chatModels,
   DEFAULT_CHAT_MODEL,
@@ -49,6 +49,32 @@ import { type PostRequestBody, postRequestBodySchema } from "./schema";
 export const maxDuration = 60;
 
 const HEALTH_CHECK_DELAY_MS = 9000;
+
+function getStreamErrorMessage(error: unknown): string {
+  if (error && typeof error === "object") {
+    const e = error as Record<string, unknown>;
+
+    if (
+      e.statusCode === 401 ||
+      String(e.message).toLowerCase().includes("invalid api key")
+    ) {
+      return "Invalid API key. Please check the provider's API key in settings.";
+    }
+
+    if (
+      String(e.message).toLowerCase().includes("decrypt") ||
+      String(e.cause).toLowerCase().includes("decrypt")
+    ) {
+      return "API key could not be decrypted. If you changed AUTH_SECRET, update the provider's API key in settings.";
+    }
+
+    if (typeof e.message === "string" && e.message.length > 0) {
+      return `Provider error: ${e.message}`;
+    }
+  }
+
+  return "An error occurred while sending the message. Please try again.";
+}
 
 function isModelStreamActivity(chunk: { type: string }) {
   return !["start", "start-step", "finish-step", "finish", "raw"].includes(
@@ -106,7 +132,11 @@ export async function POST(request: Request) {
       id: session.user.id,
     });
 
-    if (messageCount > entitlementsByUserType[userType].maxMessagesPerHour) {
+    const entitlements = getEntitlements(userType);
+    if (
+      entitlements.maxMessagesPerHour > 0 &&
+      messageCount > entitlements.maxMessagesPerHour
+    ) {
       return new ChatbotError("rate_limit:chat").toResponse();
     }
 
@@ -129,8 +159,8 @@ export async function POST(request: Request) {
         visibility: selectedVisibilityType,
       });
       titlePromise = generateTitleFromUserMessage({
+        chatModelId: chatModel,
         message,
-        modelId: chatModel,
       });
     }
 
@@ -204,8 +234,11 @@ export async function POST(request: Request) {
 
     const modelMessages = await convertToModelMessages(uiMessages);
 
+    let lastStreamError: unknown = null;
+
     const stream = createUIMessageStream({
       execute: async ({ writer: dataStream }) => {
+        lastStreamError = null;
         const modelName = modelConfig?.name ?? chatModel;
         let hasModelActivity = false;
         let healthCheckTimer: ReturnType<typeof setTimeout> | undefined;
@@ -264,16 +297,15 @@ export async function POST(request: Request) {
         };
 
         const result = streamText({
-          activeTools:
-            isReasoningModel && !supportsTools
-              ? []
-              : [
-                  "getWeather",
-                  "createDocument",
-                  "editDocument",
-                  "updateDocument",
-                  "requestSuggestions",
-                ],
+          activeTools: supportsTools
+            ? [
+                "getWeather",
+                "createDocument",
+                "editDocument",
+                "updateDocument",
+                "requestSuggestions",
+              ]
+            : [],
           instructions: systemPrompt({ requestHints, supportsTools }),
           messages: modelMessages,
           model: await getLanguageModel(chatModel),
@@ -290,6 +322,7 @@ export async function POST(request: Request) {
           },
           onError({ error }: { error: unknown }) {
             console.error("streamText error:", error);
+            lastStreamError = error;
             stopWaitingStatus();
           },
           providerOptions: {
@@ -385,7 +418,7 @@ export async function POST(request: Request) {
       },
       onError: (error: unknown) => {
         console.error("createUIMessageStream error:", error);
-        return "Oops, an error occurred!";
+        return getStreamErrorMessage(lastStreamError ?? error);
       },
       originalMessages: isToolApprovalFlow ? uiMessages : undefined,
     });

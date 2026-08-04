@@ -20,10 +20,11 @@ export async function POST(
   }
 
   const apiKey = await getDecryptedApiKey({ providerId: id });
+  const normalizedBaseURL = provider.baseURL.replace(/\/$/, "");
 
   try {
     if (provider.type === "openai") {
-      const response = await fetch(`${provider.baseURL}/models`, {
+      const response = await fetch(`${normalizedBaseURL}/models`, {
         headers: {
           Authorization: `Bearer ${apiKey}`,
           "Content-Type": "application/json",
@@ -51,7 +52,7 @@ export async function POST(
     }
 
     if (provider.type === "anthropic") {
-      const response = await fetch(`${provider.baseURL}/messages`, {
+      const response = await fetch(`${normalizedBaseURL}/messages`, {
         body: JSON.stringify({
           max_tokens: 1,
           messages: [{ content: "Hi", role: "user" }],
@@ -84,9 +85,16 @@ export async function POST(
 
     return new ChatbotError("bad_request:provider").toResponse();
   } catch (error) {
+    console.error("Provider connection test failed:", error);
+    let message = "Connection failed.";
+    if (error instanceof ChatbotError) {
+      message = error.cause ? `${error.message} ${error.cause}` : error.message;
+    } else if (error instanceof Error) {
+      message = `Connection failed: ${error.message}`;
+    }
     return Response.json(
       {
-        error: `Connection failed: ${error instanceof Error ? error.message : "Unknown error"}`,
+        error: message,
         success: false,
       },
       { status: 400 }

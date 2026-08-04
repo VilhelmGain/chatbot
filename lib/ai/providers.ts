@@ -4,6 +4,7 @@ import { createOpenAI } from "@ai-sdk/openai";
 import type { LanguageModelV4 } from "@ai-sdk/provider";
 import { createXai } from "@ai-sdk/xai";
 import { customProvider as aiCustomProvider } from "ai";
+import { ChatbotError } from "@/lib/errors";
 import { isTestEnvironment } from "../constants";
 import { getCustomProviderById } from "../db/queries";
 import { decrypt } from "./encryption";
@@ -83,7 +84,12 @@ async function resolveCustomProvider(providerId: string, modelName: string) {
     throw new Error(`Custom provider not found: ${providerId}`);
   }
 
-  const apiKey = decrypt(provider.encryptedApiKey, provider.iv);
+  let apiKey: string;
+  try {
+    apiKey = decrypt(provider.encryptedApiKey, provider.iv);
+  } catch (error) {
+    throw new ChatbotError("bad_request:provider", { cause: error });
+  }
 
   if (provider.type === "openai") {
     // Use the chat completions API for custom OpenAI-compatible providers.

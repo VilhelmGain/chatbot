@@ -8,6 +8,7 @@ import { toast } from "@/components/chat/toast";
 import { ModelManager } from "@/components/settings/model-manager";
 import { ProviderCard } from "@/components/settings/provider-card";
 import { ProviderForm } from "@/components/settings/provider-form";
+import { TitleModelSelector } from "@/components/settings/title-model-selector";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -95,6 +96,11 @@ export default function SettingsPage() {
             Manage your custom AI providers
           </p>
         </div>
+      </div>
+
+      <div className="flex flex-col gap-4">
+        <h2 className="text-lg font-medium">Preferences</h2>
+        <TitleModelSelector />
       </div>
 
       <div className="flex items-center justify-between">

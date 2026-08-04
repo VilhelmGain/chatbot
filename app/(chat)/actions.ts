@@ -19,17 +19,30 @@ export async function saveChatModelAsCookie(model: string) {
   cookieStore.set("chat-model", model);
 }
 
+export async function saveTitleModelAsCookie(model: string) {
+  const cookieStore = await cookies();
+  cookieStore.set("title-model", model);
+}
+
+async function getTitleModelId(): Promise<string | undefined> {
+  const cookieStore = await cookies();
+  return cookieStore.get("title-model")?.value;
+}
+
 export async function generateTitleFromUserMessage({
   message,
-  modelId,
+  chatModelId,
 }: {
   message: UIMessage;
-  modelId?: string;
+  chatModelId?: string;
 }) {
   try {
-    const model = modelId
-      ? await getLanguageModel(modelId)
-      : await getTitleModel();
+    const titleModelId = await getTitleModelId();
+    const model = titleModelId
+      ? await getLanguageModel(titleModelId)
+      : chatModelId
+        ? await getLanguageModel(chatModelId)
+        : await getTitleModel();
 
     const { text } = await generateText({
       instructions: titlePrompt,
@@ -41,7 +54,8 @@ export async function generateTitleFromUserMessage({
       .replace(/^[#*"\s]+/, "")
       .replace(/["]+$/, "")
       .trim();
-  } catch {
+  } catch (error) {
+    console.error("Failed to generate chat title:", error);
     return "New chat";
   }
 }

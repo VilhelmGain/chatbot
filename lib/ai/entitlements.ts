@@ -4,11 +4,26 @@ type Entitlements = {
   maxMessagesPerHour: number;
 };
 
-export const entitlementsByUserType: Record<UserType, Entitlements> = {
-  guest: {
-    maxMessagesPerHour: 10,
-  },
-  regular: {
-    maxMessagesPerHour: 10,
-  },
-};
+function getMaxMessagesPerHour(userType: UserType): number {
+  if (userType === "guest") {
+    return 10;
+  }
+
+  const envValue = process.env.MAX_MESSAGES_PER_HOUR;
+  if (envValue === undefined || envValue === "") {
+    return 0;
+  }
+
+  const parsed = Number.parseInt(envValue, 10);
+  if (Number.isNaN(parsed)) {
+    return 0;
+  }
+
+  return parsed;
+}
+
+export function getEntitlements(userType: UserType): Entitlements {
+  return {
+    maxMessagesPerHour: getMaxMessagesPerHour(userType),
+  };
+}

@@ -883,7 +883,11 @@ export async function getDecryptedApiKey({
   if (!provider) {
     throw new ChatbotError("not_found:provider");
   }
-  return decrypt(provider.encryptedApiKey, provider.iv);
+  try {
+    return decrypt(provider.encryptedApiKey, provider.iv);
+  } catch (error) {
+    throw new ChatbotError("bad_request:provider", { cause: error });
+  }
 }
 
 export async function getCustomModelsForUser({

@@ -34,9 +34,10 @@ export async function POST(
   }
 
   const apiKey = await getDecryptedApiKey({ providerId: id });
+  const normalizedBaseURL = provider.baseURL.replace(/\/$/, "");
 
   try {
-    const response = await fetch(`${provider.baseURL}/models`, {
+    const response = await fetch(`${normalizedBaseURL}/models`, {
       headers: {
         Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
@@ -75,9 +76,16 @@ export async function POST(
       models: created,
     });
   } catch (error) {
+    console.error("Provider auto-detect failed:", error);
+    let message = "Failed to detect models.";
+    if (error instanceof ChatbotError) {
+      message = error.cause ? `${error.message} ${error.cause}` : error.message;
+    } else if (error instanceof Error) {
+      message = `Failed to detect models: ${error.message}`;
+    }
     return Response.json(
       {
-        error: `Failed to detect models: ${error instanceof Error ? error.message : "Unknown error"}`,
+        error: message,
       },
       { status: 400 }
     );
