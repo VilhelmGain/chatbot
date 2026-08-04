@@ -103,8 +103,14 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { id, message, messages, selectedChatModel, selectedVisibilityType } =
-      requestBody;
+    const {
+      id,
+      message,
+      messages,
+      reasoningEffort,
+      selectedChatModel,
+      selectedVisibilityType,
+    } = requestBody;
 
     const session = await auth();
 
@@ -327,11 +333,10 @@ export async function POST(request: Request) {
             lastStreamError = error;
             stopWaitingStatus();
           },
-          providerOptions: {
-            ...(modelConfig?.reasoningEffort && {
-              openai: { reasoningEffort: modelConfig.reasoningEffort },
-            }),
-          },
+          reasoning:
+            isReasoningModel && reasoningEffort && reasoningEffort !== "none"
+              ? reasoningEffort
+              : undefined,
           stopWhen: isStepCount(5),
           telemetry: {
             functionId: "stream-text",

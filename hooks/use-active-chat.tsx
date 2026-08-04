@@ -9,6 +9,7 @@ import {
   type Dispatch,
   type ReactNode,
   type SetStateAction,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -39,6 +40,10 @@ type ActiveChatContextValue = {
   addToolApprovalResponse: UseChatHelpers<ChatMessage>["addToolApprovalResponse"];
   input: string;
   setInput: Dispatch<SetStateAction<string>>;
+  reasoningEffort: "none" | "minimal" | "low" | "medium" | "high";
+  setReasoningEffort: (
+    effort: "none" | "minimal" | "low" | "medium" | "high"
+  ) => void;
   visibilityType: VisibilityType;
   isReadonly: boolean;
   isLoading: boolean;
@@ -76,6 +81,14 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     currentModelIdRef.current = currentModelId;
   }, [currentModelId]);
+
+  const [reasoningEffort, setReasoningEffortState] = useState<
+    "none" | "minimal" | "low" | "medium" | "high"
+  >("medium");
+  const reasoningEffortRef = useRef(reasoningEffort);
+  useEffect(() => {
+    reasoningEffortRef.current = reasoningEffort;
+  }, [reasoningEffort]);
 
   const [input, setInput] = useState("");
 
@@ -161,6 +174,7 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
             ...(isToolApprovalContinuation
               ? { messages: request.messages }
               : { message: lastMessage }),
+            reasoningEffort: reasoningEffortRef.current,
             selectedChatModel: currentModelIdRef.current,
             selectedVisibilityType: visibility,
             ...request.body,
@@ -211,8 +225,34 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
       if (cookieModel) {
         setCurrentModelId(decodeURIComponent(cookieModel));
       }
+      const cookieEffort = document.cookie
+        .split("; ")
+        .find((row) => row.startsWith("reasoning-effort="))
+        ?.split("=")[1];
+      if (
+        cookieEffort &&
+        ["none", "minimal", "low", "medium", "high"].includes(cookieEffort)
+      ) {
+        setReasoningEffortState(
+          decodeURIComponent(cookieEffort) as
+            | "none"
+            | "minimal"
+            | "low"
+            | "medium"
+            | "high"
+        );
+      }
     }
   }, [chatData, isNewChat]);
+
+  const setReasoningEffort = useCallback(
+    (effort: "none" | "minimal" | "low" | "medium" | "high") => {
+      setReasoningEffortState(effort);
+      // biome-ignore lint/suspicious/noDocumentCookie: cookie persistence for user preference
+      document.cookie = `reasoning-effort=${effort}; max-age=${60 * 60 * 24 * 365}; path=/`;
+    },
+    []
+  );
 
   const hasAppendedQueryRef = useRef(false);
   useEffect(() => {
@@ -258,11 +298,13 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
       isLoading: !isNewChat && isLoading,
       isReadonly,
       messages,
+      reasoningEffort,
       regenerate,
       sendMessage,
       setCurrentModelId,
       setInput,
       setMessages,
+      setReasoningEffort,
       status,
       stop,
       visibilityType: visibility,
@@ -278,6 +320,8 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
       regenerate,
       addToolApprovalResponse,
       input,
+      reasoningEffort,
+      setReasoningEffort,
       visibility,
       isReadonly,
       isNewChat,

@@ -87,6 +87,8 @@ function PureMultimodalInput({
   editingMessage,
   onCancelEdit,
   isLoading,
+  reasoningEffort,
+  setReasoningEffort,
 }: {
   chatId: string;
   input: string;
@@ -107,6 +109,10 @@ function PureMultimodalInput({
   editingMessage?: ChatMessage | null;
   onCancelEdit?: () => void;
   isLoading?: boolean;
+  reasoningEffort: "none" | "minimal" | "low" | "medium" | "high";
+  setReasoningEffort: (
+    effort: "none" | "minimal" | "low" | "medium" | "high"
+  ) => void;
 }) {
   const router = useRouter();
   const { setTheme, resolvedTheme } = useTheme();
@@ -551,7 +557,9 @@ function PureMultimodalInput({
             />
             <ModelSelectorCompact
               onModelChange={onModelChange}
+              reasoningEffort={reasoningEffort}
               selectedModelId={selectedModelId}
+              setReasoningEffort={setReasoningEffort}
             />
           </PromptInputTools>
 
@@ -680,6 +688,37 @@ function PureAttachmentsButton({
 
 const AttachmentsButton = memo(PureAttachmentsButton);
 
+function ReasoningEffortButton({
+  effort,
+  currentEffort,
+  onClick,
+}: {
+  effort: "none" | "low" | "medium" | "high";
+  currentEffort: "none" | "minimal" | "low" | "medium" | "high";
+  onClick: (effort: "none" | "low" | "medium" | "high") => void;
+}) {
+  const handleClick = useCallback(() => {
+    onClick(effort);
+  }, [effort, onClick]);
+
+  return (
+    <Button
+      className={cn(
+        "h-7 flex-1 text-[11px] capitalize",
+        currentEffort === effort
+          ? "bg-primary text-primary-foreground"
+          : "bg-muted text-muted-foreground hover:bg-muted/80"
+      )}
+      key={effort}
+      onClick={handleClick}
+      size="sm"
+      variant="ghost"
+    >
+      {effort}
+    </Button>
+  );
+}
+
 function ModelSelectorOption({
   capabilities,
   model,
@@ -755,9 +794,15 @@ function ModelSelectorOption({
 function PureModelSelectorCompact({
   selectedModelId,
   onModelChange,
+  reasoningEffort,
+  setReasoningEffort,
 }: {
   selectedModelId: string;
   onModelChange?: (modelId: string) => void;
+  reasoningEffort: "none" | "minimal" | "low" | "medium" | "high";
+  setReasoningEffort: (
+    effort: "none" | "minimal" | "low" | "medium" | "high"
+  ) => void;
 }) {
   const [open, setOpen] = useState(false);
   const { data: modelsData, isLoading } = useSWR(
@@ -776,6 +821,7 @@ function PureModelSelectorCompact({
     activeModels.find((m: ChatModel) => m.id === DEFAULT_CHAT_MODEL) ??
     activeModels[0];
   const [provider] = selectedModel?.id.split("/") ?? [];
+  const isReasoningModel = capabilities?.[selectedModelId]?.reasoning === true;
 
   if (isLoading) {
     return (
@@ -874,6 +920,23 @@ function PureModelSelectorCompact({
             ));
           })()}
         </ModelSelectorList>
+        {isReasoningModel && (
+          <div className="border-t border-border/60 p-3">
+            <div className="mb-2 text-[11px] font-medium text-muted-foreground">
+              Reasoning Effort
+            </div>
+            <div className="flex gap-1">
+              {(["none", "low", "medium", "high"] as const).map((effort) => (
+                <ReasoningEffortButton
+                  currentEffort={reasoningEffort}
+                  effort={effort}
+                  key={effort}
+                  onClick={setReasoningEffort}
+                />
+              ))}
+            </div>
+          </div>
+        )}
       </ModelSelectorContent>
     </ModelSelector>
   );
