@@ -39,9 +39,9 @@ type ActiveChatContextValue = {
   addToolApprovalResponse: UseChatHelpers<ChatMessage>["addToolApprovalResponse"];
   input: string;
   setInput: Dispatch<SetStateAction<string>>;
-  reasoningEffort: "none" | "minimal" | "low" | "medium" | "high";
+  reasoningEffort: "default" | "none" | "minimal" | "low" | "medium" | "high";
   setReasoningEffort: (
-    effort: "none" | "minimal" | "low" | "medium" | "high"
+    effort: "default" | "none" | "minimal" | "low" | "medium" | "high"
   ) => void;
   visibilityType: VisibilityType;
   isReadonly: boolean;
@@ -82,8 +82,8 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
   }, [currentModelId]);
 
   const [reasoningEffort, setReasoningEffortState] = useState<
-    "none" | "minimal" | "low" | "medium" | "high"
-  >("medium");
+    "default" | "none" | "minimal" | "low" | "medium" | "high"
+  >("default");
   const reasoningEffortRef = useRef(reasoningEffort);
   useEffect(() => {
     reasoningEffortRef.current = reasoningEffort;
@@ -230,10 +230,13 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
         ?.split("=")[1];
       if (
         cookieEffort &&
-        ["none", "minimal", "low", "medium", "high"].includes(cookieEffort)
+        ["default", "none", "minimal", "low", "medium", "high"].includes(
+          cookieEffort
+        )
       ) {
         setReasoningEffortState(
           decodeURIComponent(cookieEffort) as
+            | "default"
             | "none"
             | "minimal"
             | "low"
@@ -245,7 +248,7 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
   }, [chatData, isNewChat]);
 
   const setReasoningEffort = useCallback(
-    (effort: "none" | "minimal" | "low" | "medium" | "high") => {
+    (effort: "default" | "none" | "minimal" | "low" | "medium" | "high") => {
       setReasoningEffortState(effort);
       // biome-ignore lint/suspicious/noDocumentCookie: cookie persistence for user preference
       document.cookie = `reasoning-effort=${effort}; max-age=${60 * 60 * 24 * 365}; path=/`;

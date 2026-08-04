@@ -17,6 +17,7 @@ export type CatalogModel = {
     tools: boolean;
     vision: boolean;
     reasoning: boolean;
+    reasoningEfforts?: string[];
   };
 };
 
@@ -54,14 +55,33 @@ export function mapModelCapabilities(model: Model): {
   tools: boolean;
   vision: boolean;
   reasoning: boolean;
+  reasoningEfforts?: string[];
 } {
-  return {
+  const result: {
+    tools: boolean;
+    vision: boolean;
+    reasoning: boolean;
+    reasoningEfforts?: string[];
+  } = {
     reasoning: model.reasoning === true,
     tools: model.tool_call === true,
     vision:
       model.attachment === true ||
       model.modalities?.input?.includes("image") === true,
   };
+
+  if (model.reasoning && model.reasoning_options) {
+    const effortOption = model.reasoning_options.find(
+      (opt) => opt.type === "effort"
+    );
+    if (effortOption && effortOption.type === "effort") {
+      result.reasoningEfforts = effortOption.values
+        .filter((v) => v !== null)
+        .map((v) => v as string);
+    }
+  }
+
+  return result;
 }
 
 function resolveProviderType(provider: Provider): "openai" | "anthropic" {

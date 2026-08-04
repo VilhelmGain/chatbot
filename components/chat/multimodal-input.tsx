@@ -104,9 +104,9 @@ function PureMultimodalInput({
   editingMessage?: ChatMessage | null;
   onCancelEdit?: () => void;
   isLoading?: boolean;
-  reasoningEffort: "none" | "minimal" | "low" | "medium" | "high";
+  reasoningEffort: "default" | "none" | "minimal" | "low" | "medium" | "high";
   setReasoningEffort: (
-    effort: "none" | "minimal" | "low" | "medium" | "high"
+    effort: "default" | "none" | "minimal" | "low" | "medium" | "high"
   ) => void;
 }) {
   const router = useRouter();
@@ -684,12 +684,16 @@ function ReasoningEffortButton({
   currentEffort,
   onClick,
 }: {
-  effort: "none" | "low" | "medium" | "high";
-  currentEffort: "none" | "minimal" | "low" | "medium" | "high";
-  onClick: (effort: "none" | "low" | "medium" | "high") => void;
+  effort: string;
+  currentEffort: string;
+  onClick: (
+    effort: "default" | "none" | "minimal" | "low" | "medium" | "high"
+  ) => void;
 }) {
   const handleClick = useCallback(() => {
-    onClick(effort);
+    onClick(
+      effort as "default" | "none" | "minimal" | "low" | "medium" | "high"
+    );
   }, [effort, onClick]);
 
   return (
@@ -796,9 +800,9 @@ function PureModelSelectorCompact({
 }: {
   selectedModelId: string;
   onModelChange?: (modelId: string) => void;
-  reasoningEffort: "none" | "minimal" | "low" | "medium" | "high";
+  reasoningEffort: "default" | "none" | "minimal" | "low" | "medium" | "high";
   setReasoningEffort: (
-    effort: "none" | "minimal" | "low" | "medium" | "high"
+    effort: "default" | "none" | "minimal" | "low" | "medium" | "high"
   ) => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -820,6 +824,8 @@ function PureModelSelectorCompact({
   const provider =
     selectedModel?.providerKey ?? selectedModel?.id.split("/")[0];
   const isReasoningModel = capabilities?.[selectedModelId]?.reasoning === true;
+  const modelReasoningEfforts =
+    capabilities?.[selectedModelId]?.reasoningEfforts ?? [];
 
   if (isLoading) {
     return (
@@ -899,7 +905,7 @@ function PureModelSelectorCompact({
               Reasoning Effort
             </div>
             <div className="flex gap-1">
-              {(["none", "low", "medium", "high"] as const).map((effort) => (
+              {["default", ...modelReasoningEfforts].map((effort) => (
                 <ReasoningEffortButton
                   currentEffort={reasoningEffort}
                   effort={effort}

@@ -2,6 +2,7 @@ export type ModelCapabilities = {
   tools: boolean;
   vision: boolean;
   reasoning: boolean;
+  reasoningEfforts?: string[];
 };
 
 export type ChatModel = {
