@@ -1,6 +1,13 @@
 "use client";
 
-import { Download, Loader2, Plus, Sparkles, Trash2 } from "lucide-react";
+import {
+  Download,
+  Loader2,
+  Pencil,
+  Plus,
+  Sparkles,
+  Trash2,
+} from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import useSWR from "swr";
 import { toast } from "@/components/chat/toast";
@@ -48,6 +55,10 @@ export function ModelManager({ providerId, providerKey }: ModelManagerProps) {
   const handleModelDeleted = useCallback(() => {
     mutate();
     toast({ description: "Model removed", type: "success" });
+  }, [mutate]);
+
+  const handleModelUpdated = useCallback(() => {
+    mutate();
   }, [mutate]);
 
   const handleAutoDetect = useCallback(async () => {
@@ -178,6 +189,7 @@ export function ModelManager({ providerId, providerKey }: ModelManagerProps) {
               key={model.id}
               model={model}
               onDeleted={handleModelDeleted}
+              onUpdated={handleModelUpdated}
               providerId={providerId}
             />
           ))}
@@ -195,11 +207,16 @@ function ModelRow({
   model,
   providerId,
   onDeleted,
+  onUpdated,
 }: {
   model: CustomModel;
   providerId: string;
   onDeleted: () => void;
+  onUpdated: () => void;
 }) {
+  const [capabilities, setCapabilities] = useState(model.capabilities);
+  const [isSaving, setIsSaving] = useState(false);
+
   const handleDelete = useCallback(async () => {
     try {
       const response = await fetch(
@@ -222,6 +239,96 @@ function ModelRow({
     }
   }, [model.id, onDeleted, providerId]);
 
+  const handleToggleTools = useCallback(async () => {
+    const newCapabilities = { ...capabilities, tools: !capabilities.tools };
+    setCapabilities(newCapabilities);
+    setIsSaving(true);
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/api/settings/providers/${providerId}/models/${model.id}`,
+        {
+          body: JSON.stringify({ capabilities: newCapabilities }),
+          headers: { "Content-Type": "application/json" },
+          method: "PATCH",
+        }
+      );
+      if (response.ok) {
+        onUpdated();
+        toast({ description: "Capability updated", type: "success" });
+      } else {
+        setCapabilities(capabilities);
+        toast({ description: "Failed to update capability", type: "error" });
+      }
+    } catch {
+      setCapabilities(capabilities);
+      toast({ description: "Failed to update capability", type: "error" });
+    } finally {
+      setIsSaving(false);
+    }
+  }, [capabilities, model.id, onUpdated, providerId]);
+
+  const handleToggleVision = useCallback(async () => {
+    const newCapabilities = {
+      ...capabilities,
+      vision: !capabilities.vision,
+    };
+    setCapabilities(newCapabilities);
+    setIsSaving(true);
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/api/settings/providers/${providerId}/models/${model.id}`,
+        {
+          body: JSON.stringify({ capabilities: newCapabilities }),
+          headers: { "Content-Type": "application/json" },
+          method: "PATCH",
+        }
+      );
+      if (response.ok) {
+        onUpdated();
+        toast({ description: "Capability updated", type: "success" });
+      } else {
+        setCapabilities(capabilities);
+        toast({ description: "Failed to update capability", type: "error" });
+      }
+    } catch {
+      setCapabilities(capabilities);
+      toast({ description: "Failed to update capability", type: "error" });
+    } finally {
+      setIsSaving(false);
+    }
+  }, [capabilities, model.id, onUpdated, providerId]);
+
+  const handleToggleReasoning = useCallback(async () => {
+    const newCapabilities = {
+      ...capabilities,
+      reasoning: !capabilities.reasoning,
+    };
+    setCapabilities(newCapabilities);
+    setIsSaving(true);
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/api/settings/providers/${providerId}/models/${model.id}`,
+        {
+          body: JSON.stringify({ capabilities: newCapabilities }),
+          headers: { "Content-Type": "application/json" },
+          method: "PATCH",
+        }
+      );
+      if (response.ok) {
+        onUpdated();
+        toast({ description: "Capability updated", type: "success" });
+      } else {
+        setCapabilities(capabilities);
+        toast({ description: "Failed to update capability", type: "error" });
+      }
+    } catch {
+      setCapabilities(capabilities);
+      toast({ description: "Failed to update capability", type: "error" });
+    } finally {
+      setIsSaving(false);
+    }
+  }, [capabilities, model.id, onUpdated, providerId]);
+
   return (
     <div className="flex items-center justify-between rounded-md bg-background px-3 py-2">
       <div className="min-w-0 flex-1">
@@ -230,31 +337,62 @@ function ModelRow({
           {model.modelId}
         </p>
         <div className="mt-1 flex gap-1.5">
-          {model.capabilities.tools ? (
-            <span className="rounded bg-blue-100 px-1.5 py-0.5 text-[10px] text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
-              tools
-            </span>
-          ) : null}
-          {model.capabilities.vision ? (
-            <span className="rounded bg-green-100 px-1.5 py-0.5 text-[10px] text-green-700 dark:bg-green-900/30 dark:text-green-300">
-              vision
-            </span>
-          ) : null}
-          {model.capabilities.reasoning ? (
-            <span className="rounded bg-purple-100 px-1.5 py-0.5 text-[10px] text-purple-700 dark:bg-purple-900/30 dark:text-purple-300">
-              reasoning
-            </span>
-          ) : null}
+          <button
+            className={`cursor-pointer rounded px-1.5 py-0.5 text-[10px] transition-opacity ${
+              capabilities.tools
+                ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
+                : "bg-muted text-muted-foreground line-through"
+            } ${isSaving ? "opacity-50" : ""}`}
+            disabled={isSaving}
+            onClick={handleToggleTools}
+            type="button"
+          >
+            tools
+          </button>
+          <button
+            className={`cursor-pointer rounded px-1.5 py-0.5 text-[10px] transition-opacity ${
+              capabilities.vision
+                ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
+                : "bg-muted text-muted-foreground line-through"
+            } ${isSaving ? "opacity-50" : ""}`}
+            disabled={isSaving}
+            onClick={handleToggleVision}
+            type="button"
+          >
+            vision
+          </button>
+          <button
+            className={`cursor-pointer rounded px-1.5 py-0.5 text-[10px] transition-opacity ${
+              capabilities.reasoning
+                ? "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300"
+                : "bg-muted text-muted-foreground line-through"
+            } ${isSaving ? "opacity-50" : ""}`}
+            disabled={isSaving}
+            onClick={handleToggleReasoning}
+            type="button"
+          >
+            reasoning
+          </button>
         </div>
       </div>
-      <Button
-        className="size-7 p-0"
-        onClick={handleDelete}
-        size="icon"
-        variant="ghost"
-      >
-        <Trash2 className="size-3.5 text-muted-foreground hover:text-destructive" />
-      </Button>
+      <div className="flex items-center gap-1">
+        <Button
+          className="size-7 p-0"
+          disabled={isSaving}
+          size="icon"
+          variant="ghost"
+        >
+          <Pencil className="size-3.5 text-muted-foreground hover:text-foreground" />
+        </Button>
+        <Button
+          className="size-7 p-0"
+          onClick={handleDelete}
+          size="icon"
+          variant="ghost"
+        >
+          <Trash2 className="size-3.5 text-muted-foreground hover:text-destructive" />
+        </Button>
+      </div>
     </div>
   );
 }

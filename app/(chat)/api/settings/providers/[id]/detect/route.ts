@@ -1,4 +1,5 @@
 import { auth } from "@/app/(auth)/auth";
+import { getCatalogModelsForProvider } from "@/lib/ai/catalog";
 import {
   createCustomModels,
   getCustomProviderById,
@@ -56,15 +57,23 @@ export async function POST(
     const data = await response.json();
     const models = data.data ?? [];
 
-    const modelEntries = models.map((m: { id: string }) => ({
-      capabilities: {
-        reasoning: false,
-        tools: true,
-        vision: false,
-      },
-      modelId: m.id,
-      name: m.id,
-    }));
+    const catalogModels = provider.providerKey
+      ? getCatalogModelsForProvider(provider.providerKey)
+      : [];
+    const catalogMap = new Map(catalogModels.map((m) => [m.modelId, m]));
+
+    const modelEntries = models.map((m: { id: string }) => {
+      const catalogEntry = catalogMap.get(m.id);
+      return {
+        capabilities: catalogEntry?.capabilities ?? {
+          reasoning: false,
+          tools: true,
+          vision: false,
+        },
+        modelId: m.id,
+        name: catalogEntry?.name ?? m.id,
+      };
+    });
 
     const created = await createCustomModels({
       models: modelEntries,

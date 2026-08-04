@@ -860,6 +860,61 @@ export async function deleteCustomModel({
   }
 }
 
+export async function updateCustomModel({
+  capabilities,
+  id,
+  name,
+  providerId,
+}: {
+  capabilities?: { reasoning: boolean; tools: boolean; vision: boolean };
+  id: string;
+  name?: string;
+  providerId: string;
+}): Promise<CustomModel> {
+  try {
+    const updates: Record<string, unknown> = {};
+    if (capabilities !== undefined) {
+      updates.capabilities = capabilities;
+    }
+    if (name !== undefined) {
+      updates.name = name;
+    }
+
+    if (Object.keys(updates).length === 0) {
+      const existing = await db
+        .select()
+        .from(customModel)
+        .where(
+          and(eq(customModel.id, id), eq(customModel.providerId, providerId))
+        )
+        .limit(1);
+      if (existing.length === 0) {
+        throw new ChatbotError("not_found:provider");
+      }
+      return existing[0];
+    }
+
+    const result = await db
+      .update(customModel)
+      .set(updates)
+      .where(
+        and(eq(customModel.id, id), eq(customModel.providerId, providerId))
+      )
+      .returning();
+
+    if (result.length === 0) {
+      throw new ChatbotError("not_found:provider");
+    }
+
+    return result[0];
+  } catch (error) {
+    if (error instanceof ChatbotError) {
+      throw error;
+    }
+    throw new ChatbotError("bad_request:database", { cause: error });
+  }
+}
+
 export async function getCustomProviderByModelId({
   customProviderId,
 }: {
