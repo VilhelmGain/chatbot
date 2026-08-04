@@ -32,6 +32,7 @@ type CustomProvider = {
   createdAt: string;
   id: string;
   name: string;
+  providerKey: string | null;
   type: "openai" | "anthropic";
   updatedAt: string;
   userId: string;
@@ -170,7 +171,7 @@ export default function SettingsPage() {
       <Dialog onOpenChange={setShowAddProvider} open={showAddProvider}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Add Custom Provider</DialogTitle>
+            <DialogTitle>Add Provider</DialogTitle>
           </DialogHeader>
           <ProviderForm onCreated={handleProviderCreated} />
         </DialogContent>
@@ -211,7 +212,12 @@ function ProviderRow({
         onUpdated={onUpdated}
         provider={provider}
       />
-      {isExpanded ? <ModelManager providerId={provider.id} /> : null}
+      {isExpanded ? (
+        <ModelManager
+          providerId={provider.id}
+          providerKey={provider.providerKey}
+        />
+      ) : null}
     </div>
   );
 }

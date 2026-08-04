@@ -1,0 +1,1 @@
+ALTER TABLE "CustomProvider" ADD COLUMN "providerKey" varchar(128);

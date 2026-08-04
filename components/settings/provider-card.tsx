@@ -10,6 +10,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { useCallback, useState } from "react";
+import { ModelSelectorLogo } from "@/components/ai-elements/model-selector";
 import { toast } from "@/components/chat/toast";
 import { Button } from "@/components/ui/button";
 import {
@@ -32,6 +33,7 @@ type ProviderCardProps = {
     createdAt: string;
     id: string;
     name: string;
+    providerKey: string | null;
     type: "openai" | "anthropic";
     updatedAt: string;
     userId: string;
@@ -119,6 +121,10 @@ export function ProviderCard({
           )}
         </Button>
 
+        {provider.providerKey ? (
+          <ModelSelectorLogo provider={provider.providerKey} />
+        ) : null}
+
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <span className="font-medium truncate">{provider.name}</span>
@@ -181,6 +187,7 @@ export function ProviderCard({
               baseURL: provider.baseURL,
               id: provider.id,
               name: provider.name,
+              providerKey: provider.providerKey,
               type: provider.type,
             }}
             isEdit

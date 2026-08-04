@@ -2,6 +2,7 @@ import { auth } from "@/app/(auth)/auth";
 import {
   getCustomCapabilitiesForUser,
   getCustomModelsForUser,
+  getProviderNamesForUser,
 } from "@/lib/ai/models";
 
 export async function GET() {
@@ -9,7 +10,7 @@ export async function GET() {
 
   if (!session?.user || session.user.type === "guest") {
     return Response.json(
-      { capabilities: {}, models: [] },
+      { capabilities: {}, models: [], providerNames: {} },
       { headers: { "Cache-Control": "public, max-age=300, s-maxage=300" } }
     );
   }
@@ -18,11 +19,13 @@ export async function GET() {
   const customCapabilities = await getCustomCapabilitiesForUser(
     session.user.id
   );
+  const providerNames = await getProviderNamesForUser(session.user.id);
 
   return Response.json(
     {
       capabilities: customCapabilities,
       models: customModels,
+      providerNames,
     },
     { headers: { "Cache-Control": "no-cache" } }
   );
