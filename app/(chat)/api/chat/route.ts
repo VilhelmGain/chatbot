@@ -128,7 +128,10 @@ export async function POST(request: Request) {
         userId: session.user.id,
         visibility: selectedVisibilityType,
       });
-      titlePromise = generateTitleFromUserMessage({ message });
+      titlePromise = generateTitleFromUserMessage({
+        message,
+        modelId: chatModel,
+      });
     }
 
     let uiMessages: ChatMessage[];
@@ -285,7 +288,8 @@ export async function POST(request: Request) {
           onEnd() {
             stopWaitingStatus();
           },
-          onError() {
+          onError({ error }: { error: unknown }) {
+            console.error("streamText error:", error);
             stopWaitingStatus();
           },
           providerOptions: {
@@ -379,7 +383,10 @@ export async function POST(request: Request) {
           });
         }
       },
-      onError: () => "Oops, an error occurred!",
+      onError: (error: unknown) => {
+        console.error("createUIMessageStream error:", error);
+        return "Oops, an error occurred!";
+      },
       originalMessages: isToolApprovalFlow ? uiMessages : undefined,
     });
 

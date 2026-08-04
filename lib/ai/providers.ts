@@ -1,6 +1,7 @@
 import { createAnthropic } from "@ai-sdk/anthropic";
 import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { createOpenAI } from "@ai-sdk/openai";
+import type { LanguageModelV4 } from "@ai-sdk/provider";
 import { createXai } from "@ai-sdk/xai";
 import { customProvider as aiCustomProvider } from "ai";
 import { isTestEnvironment } from "../constants";
@@ -52,12 +53,15 @@ const providerCache = new Map<string, CachedProvider>();
 function createModelFromConfig(
   config: CachedProvider,
   modelName: string
-): ReturnType<ReturnType<typeof createOpenAI>["languageModel"]> {
+): LanguageModelV4 {
   if (config.type === "openai") {
+    // Use the chat completions API for custom OpenAI-compatible providers.
+    // The default "languageModel" uses the Responses API, which most custom
+    // endpoints (OpenRouter, local proxies, etc.) do not support.
     return createOpenAI({
       apiKey: "unused",
       baseURL: config.baseURL,
-    }).languageModel(modelName);
+    }).chat(modelName);
   }
   if (config.type === "anthropic") {
     return createAnthropic({
@@ -82,10 +86,13 @@ async function resolveCustomProvider(providerId: string, modelName: string) {
   const apiKey = decrypt(provider.encryptedApiKey, provider.iv);
 
   if (provider.type === "openai") {
+    // Use the chat completions API for custom OpenAI-compatible providers.
+    // The default "languageModel" uses the Responses API, which most custom
+    // endpoints (OpenRouter, local proxies, etc.) do not support.
     const model = createOpenAI({
       apiKey,
       baseURL: provider.baseURL,
-    }).languageModel(modelName);
+    }).chat(modelName);
     providerCache.set(providerId, {
       baseURL: provider.baseURL,
       expiresAt: Date.now() + CACHE_TTL_MS,

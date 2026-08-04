@@ -5,7 +5,7 @@ import { cookies } from "next/headers";
 import { auth } from "@/app/(auth)/auth";
 import type { VisibilityType } from "@/components/chat/visibility-selector";
 import { titlePrompt } from "@/lib/ai/prompts";
-import { getTitleModel } from "@/lib/ai/providers";
+import { getLanguageModel, getTitleModel } from "@/lib/ai/providers";
 import {
   deleteMessagesByChatIdAfterTimestamp,
   getChatById,
@@ -21,18 +21,29 @@ export async function saveChatModelAsCookie(model: string) {
 
 export async function generateTitleFromUserMessage({
   message,
+  modelId,
 }: {
   message: UIMessage;
+  modelId?: string;
 }) {
-  const { text } = await generateText({
-    instructions: titlePrompt,
-    model: await getTitleModel(),
-    prompt: getTextFromMessage(message),
-  });
-  return text
-    .replace(/^[#*"\s]+/, "")
-    .replace(/["]+$/, "")
-    .trim();
+  try {
+    const model = modelId
+      ? await getLanguageModel(modelId)
+      : await getTitleModel();
+
+    const { text } = await generateText({
+      instructions: titlePrompt,
+      model,
+      prompt: getTextFromMessage(message),
+    });
+
+    return text
+      .replace(/^[#*"\s]+/, "")
+      .replace(/["]+$/, "")
+      .trim();
+  } catch {
+    return "New chat";
+  }
 }
 
 export async function deleteTrailingMessages({ id }: { id: string }) {
