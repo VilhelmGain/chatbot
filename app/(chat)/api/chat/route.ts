@@ -115,29 +115,31 @@ export async function POST(request: Request) {
     const isAllowed = await isAllowedModelId(selectedChatModel);
     const chatModel = isAllowed ? selectedChatModel : DEFAULT_CHAT_MODEL;
 
-    if (chatModel.startsWith("custom-")) {
+    const isCustomProvider = chatModel.startsWith("custom-");
+
+    if (isCustomProvider) {
       const providerId = chatModel.split("/")[0].slice(7);
       const provider = await getCustomProviderById({ id: providerId });
       if (!provider || provider.userId !== session.user.id) {
         return new ChatbotError("forbidden:chat").toResponse();
       }
-    }
+    } else {
+      await checkIpRateLimit(getClientIp(request));
 
-    await checkIpRateLimit(getClientIp(request));
+      const userType: UserType = session.user.type;
 
-    const userType: UserType = session.user.type;
+      const messageCount = await getMessageCountByUserId({
+        differenceInHours: 1,
+        id: session.user.id,
+      });
 
-    const messageCount = await getMessageCountByUserId({
-      differenceInHours: 1,
-      id: session.user.id,
-    });
-
-    const entitlements = getEntitlements(userType);
-    if (
-      entitlements.maxMessagesPerHour > 0 &&
-      messageCount > entitlements.maxMessagesPerHour
-    ) {
-      return new ChatbotError("rate_limit:chat").toResponse();
+      const entitlements = getEntitlements(userType);
+      if (
+        entitlements.maxMessagesPerHour > 0 &&
+        messageCount > entitlements.maxMessagesPerHour
+      ) {
+        return new ChatbotError("rate_limit:chat").toResponse();
+      }
     }
 
     const isToolApprovalFlow = Boolean(messages);
