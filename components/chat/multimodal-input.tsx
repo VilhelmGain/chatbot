@@ -832,7 +832,50 @@ function PureModelSelectorCompact({
           <ModelSelectorName>{selectedModel.name}</ModelSelectorName>
         </Button>
       </ModelSelectorTrigger>
-      <ModelSelectorContent commandDefaultValue={selectedModel.id}>
+      <ModelSelectorContent
+        commandDefaultValue={selectedModel.id}
+        footer={
+          isReasoningModel && modelReasoningEfforts.length > 0 ? (
+            <div className="border-t border-border/60 p-3">
+              <div className="mb-2 text-[11px] font-medium text-muted-foreground">
+                Reasoning Effort
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  className={cn(
+                    "shrink-0 text-[11px] font-medium capitalize transition-colors",
+                    reasoningEffort === "default"
+                      ? "text-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                  onClick={() => setReasoningEffort("default")}
+                >
+                  {reasoningEffort === "default" ? "Default" : reasoningEffort}
+                </button>
+                <Slider
+                  className="flex-1"
+                  disabled={reasoningEffort === "default"}
+                  max={modelReasoningEfforts.length - 1}
+                  min={0}
+                  step={1}
+                  value={[
+                    reasoningEffort === "default"
+                      ? 0
+                      : modelReasoningEfforts.indexOf(reasoningEffort),
+                  ]}
+                  onValueChange={(vals: number[]) => {
+                    const idx = vals[0];
+                    if (idx >= 0 && idx < modelReasoningEfforts.length) {
+                      setReasoningEffort(modelReasoningEfforts[idx] as ReasoningEffort);
+                    }
+                  }}
+                />
+              </div>
+            </div>
+          ) : null
+        }
+      >
         <ModelSelectorInput placeholder="Search models..." />
         <ModelSelectorList>
           {(() => {
@@ -865,45 +908,6 @@ function PureModelSelectorCompact({
             ));
           })()}
         </ModelSelectorList>
-        {isReasoningModel && modelReasoningEfforts.length > 0 && (
-          <div className="border-t border-border/60 p-3">
-            <div className="mb-2 text-[11px] font-medium text-muted-foreground">
-              Reasoning Effort
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                className={cn(
-                  "shrink-0 text-[11px] font-medium capitalize transition-colors",
-                  reasoningEffort === "default"
-                    ? "text-foreground"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-                onClick={() => setReasoningEffort("default")}
-              >
-                {reasoningEffort === "default" ? "Default" : reasoningEffort}
-              </button>
-              <Slider
-                className="flex-1"
-                disabled={reasoningEffort === "default"}
-                max={modelReasoningEfforts.length - 1}
-                min={0}
-                step={1}
-                value={[
-                  reasoningEffort === "default"
-                    ? 0
-                    : modelReasoningEfforts.indexOf(reasoningEffort),
-                ]}
-                onValueChange={(vals: number[]) => {
-                  const idx = vals[0];
-                  if (idx >= 0 && idx < modelReasoningEfforts.length) {
-                    setReasoningEffort(modelReasoningEfforts[idx] as ReasoningEffort);
-                  }
-                }}
-              />
-            </div>
-          </div>
-        )}
       </ModelSelectorContent>
     </ModelSelector>
   );
