@@ -20,6 +20,7 @@ import {
   type SetStateAction,
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -683,18 +684,42 @@ function PureAttachmentsButton({
 
 const AttachmentsButton = memo(PureAttachmentsButton);
 
+const reasoningEffortValues = new Set<ReasoningEffort>([
+  "none",
+  "minimal",
+  "low",
+  "medium",
+  "high",
+  "xhigh",
+  "max",
+]);
+
+function getReasoningEfforts(
+  capabilities: Record<string, ModelCapabilities> | undefined,
+  modelId: string
+): ReasoningEffort[] {
+  return Array.from(
+    new Set(
+      (capabilities?.[modelId]?.reasoningEfforts ?? []).filter(
+        (effort): effort is ReasoningEffort =>
+          reasoningEffortValues.has(effort as ReasoningEffort)
+      )
+    )
+  );
+}
+
 function ModelSelectorOption({
   capabilities,
+  isPending,
   model,
-  onModelChange,
+  onSelectModel,
   selectedModelId,
-  setOpen,
 }: {
   capabilities: Record<string, ModelCapabilities> | undefined;
+  isPending: boolean;
   model: ChatModel;
-  onModelChange?: (modelId: string) => void;
+  onSelectModel: (model: ChatModel) => void;
   selectedModelId: string;
-  setOpen: Dispatch<SetStateAction<boolean>>;
 }) {
   const logoProvider = model.providerKey ?? model.id.split("/")[0];
   const maybeWithTooltip = (icon: ReactNode, label: string) => (
@@ -707,57 +732,166 @@ function ModelSelectorOption({
       </TooltipContent>
     </Tooltip>
   );
-  const handleSelect = useCallback(() => {
-    onModelChange?.(model.id);
-    setCookie("chat-model", model.id);
-    setOpen(false);
-    setTimeout(() => {
-      document
-        .querySelector<HTMLTextAreaElement>("[data-testid='multimodal-input']")
-        ?.focus();
-    }, 50);
-  }, [model.id, onModelChange, setOpen]);
-
-  const handlePointerDown = useCallback(
-    (e: React.PointerEvent) => e.stopPropagation(),
-    []
+  const handleSelect = useCallback(
+    () => onSelectModel(model),
+    [model, onSelectModel]
   );
 
   return (
     <ModelSelectorItem
+      aria-current={model.id === selectedModelId ? "true" : undefined}
       className={cn(
-        "flex w-full transition-colors",
-        model.id === selectedModelId &&
-          "border-b border-dashed border-foreground/50",
-        "data-[selected=true]:bg-muted data-[selected=true]:text-foreground"
+        "flex w-full py-2.5 transition-[background-color,color,box-shadow]",
+        "data-[selected=true]:bg-muted data-[selected=true]:text-foreground",
+        isPending &&
+          "bg-primary/8 text-foreground ring-1 ring-inset ring-primary/20 data-[selected=true]:bg-primary/10"
       )}
-      onPointerDown={handlePointerDown}
       onSelect={handleSelect}
       value={model.id}
     >
       <ModelSelectorLogo provider={logoProvider} />
-      <ModelSelectorName>{model.name}</ModelSelectorName>
-      <div className="ml-auto flex items-center gap-2 text-foreground/70">
-        {capabilities?.[model.id]?.tools
-          ? maybeWithTooltip(
-              <WrenchIcon className="size-3.5" />,
-              "Supports tool use"
-            )
-          : null}
-        {capabilities?.[model.id]?.vision
-          ? maybeWithTooltip(
-              <EyeIcon className="size-3.5" />,
-              "Supports vision"
-            )
-          : null}
-        {capabilities?.[model.id]?.reasoning
-          ? maybeWithTooltip(
-              <BrainIcon className="size-3.5" />,
-              "Supports reasoning"
-            )
-          : null}
-      </div>
+      <ModelSelectorName className={cn(isPending && "font-medium")}>
+        {model.name}
+      </ModelSelectorName>
+      {isPending ? (
+        <span className="ml-auto rounded-full border border-primary/20 bg-primary/10 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.12em] text-primary">
+          Confirm
+        </span>
+      ) : (
+        <div className="ml-auto flex items-center gap-2 text-foreground/70">
+          {capabilities?.[model.id]?.tools
+            ? maybeWithTooltip(
+                <WrenchIcon className="size-3.5" />,
+                "Supports tool use"
+              )
+            : null}
+          {capabilities?.[model.id]?.vision
+            ? maybeWithTooltip(
+                <EyeIcon className="size-3.5" />,
+                "Supports vision"
+              )
+            : null}
+          {capabilities?.[model.id]?.reasoning
+            ? maybeWithTooltip(
+                <BrainIcon className="size-3.5" />,
+                "Supports reasoning"
+              )
+            : null}
+        </div>
+      )}
     </ModelSelectorItem>
+  );
+}
+
+function ReasoningEffortPicker({
+  efforts,
+  modelName,
+  onValueChange,
+  value,
+}: {
+  efforts: ReasoningEffort[];
+  modelName: string;
+  onValueChange: (effort: ReasoningEffort) => void;
+  value: ReasoningEffort;
+}) {
+  const options = useMemo<ReasoningEffort[]>(
+    () => ["default", ...efforts],
+    [efforts]
+  );
+  const selectedIndex = Math.max(0, options.indexOf(value));
+  const handleSliderChange = useCallback(
+    ([index]: number[]) => {
+      const effort = options[index];
+      if (effort) {
+        onValueChange(effort);
+      }
+    },
+    [onValueChange, options]
+  );
+  const handleOptionClick = useCallback(
+    (event: React.MouseEvent<HTMLButtonElement>) => {
+      const effort = event.currentTarget.dataset.effort as
+        | ReasoningEffort
+        | undefined;
+      if (effort) {
+        onValueChange(effort);
+      }
+    },
+    [onValueChange]
+  );
+  const handleSliderKeyDown = useCallback(
+    (event: React.KeyboardEvent) => event.stopPropagation(),
+    []
+  );
+
+  return (
+    <fieldset
+      aria-label={`Reasoning effort for ${modelName}`}
+      className="mx-1 mb-2 mt-1 rounded-xl border border-border/60 bg-muted/35 px-3 pb-3 pt-2.5 shadow-inner"
+      data-testid="reasoning-effort-picker"
+    >
+      <div className="mb-3 flex items-start justify-between gap-3">
+        <div>
+          <div className="flex items-center gap-1.5 text-[11px] font-semibold text-foreground">
+            <BrainIcon className="size-3.5 text-primary" />
+            Reasoning effort
+          </div>
+          <p className="mt-0.5 text-[10px] leading-relaxed text-muted-foreground">
+            Adjust, then click {modelName} again to confirm.
+          </p>
+        </div>
+        <span className="rounded-md bg-background/80 px-1.5 py-0.5 text-[10px] font-medium capitalize text-foreground shadow-sm ring-1 ring-border/50">
+          {value}
+        </span>
+      </div>
+      <Slider
+        aria-label="Reasoning effort"
+        className="py-1"
+        max={options.length - 1}
+        min={0}
+        onKeyDown={handleSliderKeyDown}
+        onValueChange={handleSliderChange}
+        step={1}
+        value={[selectedIndex]}
+      />
+      <div
+        className="mt-2 grid"
+        style={{
+          gridTemplateColumns: `repeat(${options.length}, minmax(0, 1fr))`,
+        }}
+      >
+        {options.map((effort, index) => {
+          const active = value === effort;
+          return (
+            <button
+              aria-label={`Set reasoning effort to ${effort}`}
+              aria-pressed={active}
+              className={cn(
+                "relative flex min-w-0 cursor-pointer flex-col items-center gap-1 text-[9px] capitalize transition-colors",
+                active
+                  ? "font-semibold text-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+              data-effort={effort}
+              key={effort}
+              onClick={handleOptionClick}
+              type="button"
+            >
+              <span
+                className={cn(
+                  "h-1.5 w-1.5 rounded-full border transition-colors",
+                  active
+                    ? "border-primary bg-primary"
+                    : "border-border bg-background",
+                  index === 0 && "rounded-sm"
+                )}
+              />
+              <span className="max-w-full truncate">{effort}</span>
+            </button>
+          );
+        })}
+      </div>
+    </fieldset>
   );
 }
 
@@ -773,6 +907,9 @@ function PureModelSelectorCompact({
   setReasoningEffort: (effort: ReasoningEffort) => void;
 }) {
   const [open, setOpen] = useState(false);
+  const [pendingModelId, setPendingModelId] = useState<string | null>(null);
+  const [draftReasoningEffort, setDraftReasoningEffort] =
+    useState<ReasoningEffort>("default");
   const { data: modelsData, isLoading } = useSWR(
     `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/api/models`,
     (url: string) => fetch(url).then((r) => r.json()),
@@ -790,51 +927,60 @@ function PureModelSelectorCompact({
     activeModels[0];
   const provider =
     selectedModel?.providerKey ?? selectedModel?.id.split("/")[0];
-  const isReasoningModel = capabilities?.[selectedModelId]?.reasoning === true;
-  const modelReasoningEfforts =
-    capabilities?.[selectedModelId]?.reasoningEfforts ?? [];
+  const pendingModel = activeModels.find(
+    (model: ChatModel) => model.id === pendingModelId
+  );
+  const pendingReasoningEfforts = pendingModel
+    ? getReasoningEfforts(capabilities, pendingModel.id)
+    : [];
 
-  const handleModelChange = useCallback(
-    (modelId: string) => {
+  const focusChatInput = useCallback(() => {
+    setTimeout(() => {
+      document
+        .querySelector<HTMLTextAreaElement>("[data-testid='multimodal-input']")
+        ?.focus();
+    }, 50);
+  }, []);
+
+  const commitModel = useCallback(
+    (modelId: string, effort: ReasoningEffort) => {
       onModelChange?.(modelId);
-      setReasoningEffort("default");
+      setReasoningEffort(effort);
+      setCookie("chat-model", modelId);
+      setOpen(false);
+      setPendingModelId(null);
+      setDraftReasoningEffort("default");
+      focusChatInput();
     },
-    [onModelChange, setReasoningEffort]
+    [focusChatInput, onModelChange, setReasoningEffort]
   );
 
-  const handleDefaultClick = useCallback(() => {
-    setReasoningEffort("default");
-  }, [setReasoningEffort]);
-
-  const handleSliderChange = useCallback(
-    (vals: number[]) => {
-      const [idx] = vals;
-      if (idx >= 0 && idx < modelReasoningEfforts.length) {
-        setReasoningEffort(modelReasoningEfforts[idx] as ReasoningEffort);
+  const handleModelSelect = useCallback(
+    (model: ChatModel) => {
+      const efforts = getReasoningEfforts(capabilities, model.id);
+      if (efforts.length <= 1) {
+        commitModel(model.id, "default");
+        return;
       }
-    },
-    [modelReasoningEfforts, setReasoningEffort]
-  );
 
-  const handleTickClick = useCallback(
-    (e: React.MouseEvent<HTMLButtonElement>) => {
-      const { effort } = e.currentTarget.dataset;
-      if (effort) {
-        setReasoningEffort(effort as ReasoningEffort);
+      if (pendingModelId === model.id) {
+        commitModel(model.id, draftReasoningEffort);
+        return;
       }
+
+      setPendingModelId(model.id);
+      setDraftReasoningEffort("default");
     },
-    [setReasoningEffort]
+    [capabilities, commitModel, draftReasoningEffort, pendingModelId]
   );
 
-  const handleSliderPointerDown = useCallback(
-    (e: React.PointerEvent) => e.stopPropagation(),
-    []
-  );
-
-  const handleSliderKeyDown = useCallback(
-    (e: React.KeyboardEvent) => e.stopPropagation(),
-    []
-  );
+  const handleOpenChange = useCallback((nextOpen: boolean) => {
+    setOpen(nextOpen);
+    if (!nextOpen) {
+      setPendingModelId(null);
+      setDraftReasoningEffort("default");
+    }
+  }, []);
 
   if (isLoading) {
     return (
@@ -864,7 +1010,7 @@ function PureModelSelectorCompact({
   }
 
   return (
-    <ModelSelector onOpenChange={setOpen} open={open}>
+    <ModelSelector onOpenChange={handleOpenChange} open={open}>
       <ModelSelectorTrigger asChild>
         <Button
           className="h-7 max-w-[200px] justify-between gap-1.5 rounded-lg px-2 text-[12px] text-muted-foreground transition-colors hover:text-foreground"
@@ -873,9 +1019,17 @@ function PureModelSelectorCompact({
         >
           {provider ? <ModelSelectorLogo provider={provider} /> : null}
           <ModelSelectorName>{selectedModel.name}</ModelSelectorName>
+          {reasoningEffort === "default" ? null : (
+            <span className="rounded bg-primary/10 px-1.5 py-0.5 text-[9px] font-semibold capitalize text-primary">
+              {reasoningEffort}
+            </span>
+          )}
         </Button>
       </ModelSelectorTrigger>
-      <ModelSelectorContent commandDefaultValue={selectedModel.id}>
+      <ModelSelectorContent
+        className="w-[min(360px,calc(100vw-24px))]"
+        commandDefaultValue={selectedModel.id}
+      >
         <ModelSelectorInput placeholder="Search models..." />
         <ModelSelectorList>
           {(() => {
@@ -898,86 +1052,19 @@ function PureModelSelectorCompact({
                   <Fragment key={model.id}>
                     <ModelSelectorOption
                       capabilities={capabilities}
-                      key={model.id}
+                      isPending={model.id === pendingModelId}
                       model={model}
-                      onModelChange={handleModelChange}
+                      onSelectModel={handleModelSelect}
                       selectedModelId={selectedModel.id}
-                      setOpen={setOpen}
                     />
-                    {model.id === selectedModel.id &&
-                    isReasoningModel &&
-                    modelReasoningEfforts.length > 0 ? (
-                      // biome-ignore lint/a11y/noNoninteractiveElementInteractions: stops cmdk from capturing slider events
-                      <fieldset
-                        aria-label="Reasoning effort controls"
-                        className="px-3 pb-2 pt-1"
-                        onKeyDown={handleSliderKeyDown}
-                        onPointerDown={handleSliderPointerDown}
-                      >
-                        <div className="mb-1 text-[10px] font-medium text-muted-foreground">
-                          Reasoning Effort
-                        </div>
-                        <div className="grid w-full grid-cols-[auto_1fr] items-center gap-x-2">
-                          <button
-                            className={cn(
-                              "shrink-0 text-[10px] font-medium capitalize transition-colors",
-                              reasoningEffort === "default"
-                                ? "text-foreground"
-                                : "text-muted-foreground hover:text-foreground"
-                            )}
-                            onClick={handleDefaultClick}
-                            type="button"
-                          >
-                            Default
-                          </button>
-                          <Slider
-                            className="w-full"
-                            max={modelReasoningEfforts.length - 1}
-                            min={0}
-                            onValueChange={handleSliderChange}
-                            step={1}
-                            value={[
-                              reasoningEffort === "default"
-                                ? 0
-                                : modelReasoningEfforts.indexOf(
-                                    reasoningEffort
-                                  ),
-                            ]}
-                          />
-                          <span />
-                          <div className="flex w-full justify-between">
-                            {modelReasoningEfforts.map((effort) => {
-                              const active = reasoningEffort === effort;
-                              return (
-                                <button
-                                  className="flex cursor-pointer flex-col items-center gap-0.5"
-                                  data-effort={effort}
-                                  key={effort}
-                                  onClick={handleTickClick}
-                                  type="button"
-                                >
-                                  <span
-                                    className={cn(
-                                      "h-1 w-px",
-                                      active ? "bg-foreground" : "bg-border/70"
-                                    )}
-                                  />
-                                  <span
-                                    className={cn(
-                                      "text-[9px] capitalize",
-                                      active
-                                        ? "font-medium text-foreground"
-                                        : "text-muted-foreground"
-                                    )}
-                                  >
-                                    {effort}
-                                  </span>
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      </fieldset>
+                    {model.id === pendingModelId &&
+                    pendingReasoningEfforts.length > 1 ? (
+                      <ReasoningEffortPicker
+                        efforts={pendingReasoningEfforts}
+                        modelName={model.name}
+                        onValueChange={setDraftReasoningEffort}
+                        value={draftReasoningEffort}
+                      />
                     ) : null}
                   </Fragment>
                 ))}
