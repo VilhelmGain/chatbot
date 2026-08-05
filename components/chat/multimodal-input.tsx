@@ -14,6 +14,7 @@ import { useRouter } from "next/navigation";
 import {
   type ChangeEvent,
   type Dispatch,
+  Fragment,
   memo,
   type ReactNode,
   type SetStateAction,
@@ -825,6 +826,16 @@ function PureModelSelectorCompact({
     [setReasoningEffort]
   );
 
+  const handleSliderPointerDown = useCallback(
+    (e: React.PointerEvent) => e.stopPropagation(),
+    []
+  );
+
+  const handleSliderKeyDown = useCallback(
+    (e: React.KeyboardEvent) => e.stopPropagation(),
+    []
+  );
+
   if (isLoading) {
     return (
       <Button
@@ -854,83 +865,16 @@ function PureModelSelectorCompact({
 
   return (
     <ModelSelector onOpenChange={setOpen} open={open}>
-      <div className="flex min-w-0 flex-col items-start gap-1">
-        <ModelSelectorTrigger asChild>
-          <Button
-            className="h-7 max-w-[200px] justify-between gap-1.5 rounded-lg px-2 text-[12px] text-muted-foreground transition-colors hover:text-foreground"
-            data-testid="model-selector"
-            variant="ghost"
-          >
-            {provider ? <ModelSelectorLogo provider={provider} /> : null}
-            <ModelSelectorName>{selectedModel.name}</ModelSelectorName>
-          </Button>
-        </ModelSelectorTrigger>
-        {isReasoningModel && modelReasoningEfforts.length > 0 ? (
-          <div className="w-full max-w-[240px]">
-            <div className="mb-1 text-[10px] font-medium text-muted-foreground">
-              Reasoning Effort
-            </div>
-            <div className="grid w-full grid-cols-[auto_1fr] items-center gap-x-2">
-              <button
-                className={cn(
-                  "shrink-0 text-[10px] font-medium capitalize transition-colors",
-                  reasoningEffort === "default"
-                    ? "text-foreground"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-                onClick={handleDefaultClick}
-                type="button"
-              >
-                Default
-              </button>
-              <Slider
-                className="w-full"
-                max={modelReasoningEfforts.length - 1}
-                min={0}
-                onValueChange={handleSliderChange}
-                step={1}
-                value={[
-                  reasoningEffort === "default"
-                    ? 0
-                    : modelReasoningEfforts.indexOf(reasoningEffort),
-                ]}
-              />
-              <span />
-              <div className="flex w-full justify-between">
-                {modelReasoningEfforts.map((effort) => {
-                  const active = reasoningEffort === effort;
-                  return (
-                    <button
-                      className="flex cursor-pointer flex-col items-center gap-0.5"
-                      data-effort={effort}
-                      key={effort}
-                      onClick={handleTickClick}
-                      type="button"
-                    >
-                      <span
-                        className={cn(
-                          "h-1 w-px",
-                          active ? "bg-foreground" : "bg-border/70"
-                        )}
-                      />
-                      <span
-                        className={cn(
-                          "text-[9px] capitalize",
-                          active
-                            ? "font-medium text-foreground"
-                            : "text-muted-foreground"
-                        )}
-                      >
-                        {effort}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        ) : null}
-      </div>
+      <ModelSelectorTrigger asChild>
+        <Button
+          className="h-7 max-w-[200px] justify-between gap-1.5 rounded-lg px-2 text-[12px] text-muted-foreground transition-colors hover:text-foreground"
+          data-testid="model-selector"
+          variant="ghost"
+        >
+          {provider ? <ModelSelectorLogo provider={provider} /> : null}
+          <ModelSelectorName>{selectedModel.name}</ModelSelectorName>
+        </Button>
+      </ModelSelectorTrigger>
       <ModelSelectorContent commandDefaultValue={selectedModel.id}>
         <ModelSelectorInput placeholder="Search models..." />
         <ModelSelectorList>
@@ -951,14 +895,91 @@ function PureModelSelectorCompact({
             return sortedKeys.map((key) => (
               <ModelSelectorGroup heading={providerNames[key] ?? key} key={key}>
                 {grouped[key].map((model) => (
-                  <ModelSelectorOption
-                    capabilities={capabilities}
-                    key={model.id}
-                    model={model}
-                    onModelChange={handleModelChange}
-                    selectedModelId={selectedModel.id}
-                    setOpen={setOpen}
-                  />
+                  <Fragment key={model.id}>
+                    <ModelSelectorOption
+                      capabilities={capabilities}
+                      key={model.id}
+                      model={model}
+                      onModelChange={handleModelChange}
+                      selectedModelId={selectedModel.id}
+                      setOpen={setOpen}
+                    />
+                    {model.id === selectedModel.id &&
+                    isReasoningModel &&
+                    modelReasoningEfforts.length > 0 ? (
+                      // biome-ignore lint/a11y/noNoninteractiveElementInteractions: stops cmdk from capturing slider events
+                      <fieldset
+                        aria-label="Reasoning effort controls"
+                        className="px-3 pb-2 pt-1"
+                        onKeyDown={handleSliderKeyDown}
+                        onPointerDown={handleSliderPointerDown}
+                      >
+                        <div className="mb-1 text-[10px] font-medium text-muted-foreground">
+                          Reasoning Effort
+                        </div>
+                        <div className="grid w-full grid-cols-[auto_1fr] items-center gap-x-2">
+                          <button
+                            className={cn(
+                              "shrink-0 text-[10px] font-medium capitalize transition-colors",
+                              reasoningEffort === "default"
+                                ? "text-foreground"
+                                : "text-muted-foreground hover:text-foreground"
+                            )}
+                            onClick={handleDefaultClick}
+                            type="button"
+                          >
+                            Default
+                          </button>
+                          <Slider
+                            className="w-full"
+                            max={modelReasoningEfforts.length - 1}
+                            min={0}
+                            onValueChange={handleSliderChange}
+                            step={1}
+                            value={[
+                              reasoningEffort === "default"
+                                ? 0
+                                : modelReasoningEfforts.indexOf(
+                                    reasoningEffort
+                                  ),
+                            ]}
+                          />
+                          <span />
+                          <div className="flex w-full justify-between">
+                            {modelReasoningEfforts.map((effort) => {
+                              const active = reasoningEffort === effort;
+                              return (
+                                <button
+                                  className="flex cursor-pointer flex-col items-center gap-0.5"
+                                  data-effort={effort}
+                                  key={effort}
+                                  onClick={handleTickClick}
+                                  type="button"
+                                >
+                                  <span
+                                    className={cn(
+                                      "h-1 w-px",
+                                      active ? "bg-foreground" : "bg-border/70"
+                                    )}
+                                  />
+                                  <span
+                                    className={cn(
+                                      "text-[9px] capitalize",
+                                      active
+                                        ? "font-medium text-foreground"
+                                        : "text-muted-foreground"
+                                    )}
+                                  >
+                                    {effort}
+                                  </span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </fieldset>
+                    ) : null}
+                  </Fragment>
                 ))}
               </ModelSelectorGroup>
             ));
