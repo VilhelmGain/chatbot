@@ -1,16 +1,18 @@
 "use client"
 
 import * as React from "react"
-import {
-  Root as SliderRoot,
-  Track as SliderTrack,
-  Range as SliderRange,
-  Thumb as SliderThumb,
-} from "radix-ui/slider"
+import { Slider } from "radix-ui"
+
+const {
+  Root: SliderRoot,
+  Track: SliderTrack,
+  Range: SliderRange,
+  Thumb: SliderThumb,
+} = Slider
 
 import { cn } from "@/lib/utils"
 
-function Slider({
+function SliderComponent({
   className,
   ...props
 }: React.ComponentProps<typeof SliderRoot>) {
@@ -31,4 +33,4 @@ function Slider({
   )
 }
 
-export { Slider }
+export { SliderComponent as Slider }
