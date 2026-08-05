@@ -8,6 +8,7 @@ import {
 } from "ai";
 import { after } from "next/server";
 import { createResumableStreamContext } from "resumable-stream";
+import { z } from "zod";
 import { auth, type UserType } from "@/app/(auth)/auth";
 import { getEntitlements } from "@/lib/ai/entitlements";
 import {
@@ -46,7 +47,6 @@ import type { ChatMessage, WaitingStatusData } from "@/lib/types";
 import { convertToUIMessages, generateUUID } from "@/lib/utils";
 import { generateTitleFromUserMessage } from "../../actions";
 import { type PostRequestBody, postRequestBodySchema } from "./schema";
-import { z } from "zod";
 
 export const maxDuration = 60;
 
@@ -102,7 +102,10 @@ export async function POST(request: Request) {
     requestBody = postRequestBodySchema.parse(json);
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return new ChatbotError("bad_request:api", error.issues.map(i => i.message).join(", ")).toResponse();
+      return new ChatbotError(
+        "bad_request:api",
+        error.issues.map((i) => i.message).join(", ")
+      ).toResponse();
     }
     return new ChatbotError("bad_request:api").toResponse();
   }

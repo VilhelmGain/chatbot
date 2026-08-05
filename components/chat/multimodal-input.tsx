@@ -793,6 +793,38 @@ function PureModelSelectorCompact({
   const modelReasoningEfforts =
     capabilities?.[selectedModelId]?.reasoningEfforts ?? [];
 
+  const handleModelChange = useCallback(
+    (modelId: string) => {
+      onModelChange?.(modelId);
+      setReasoningEffort("default");
+    },
+    [onModelChange, setReasoningEffort]
+  );
+
+  const handleDefaultClick = useCallback(() => {
+    setReasoningEffort("default");
+  }, [setReasoningEffort]);
+
+  const handleSliderChange = useCallback(
+    (vals: number[]) => {
+      const [idx] = vals;
+      if (idx >= 0 && idx < modelReasoningEfforts.length) {
+        setReasoningEffort(modelReasoningEfforts[idx] as ReasoningEffort);
+      }
+    },
+    [modelReasoningEfforts, setReasoningEffort]
+  );
+
+  const handleTickClick = useCallback(
+    (e: React.MouseEvent<HTMLButtonElement>) => {
+      const { effort } = e.currentTarget.dataset;
+      if (effort) {
+        setReasoningEffort(effort as ReasoningEffort);
+      }
+    },
+    [setReasoningEffort]
+  );
+
   if (isLoading) {
     return (
       <Button
@@ -822,60 +854,84 @@ function PureModelSelectorCompact({
 
   return (
     <ModelSelector onOpenChange={setOpen} open={open}>
-      <ModelSelectorTrigger asChild>
-        <Button
-          className="h-7 max-w-[200px] justify-between gap-1.5 rounded-lg px-2 text-[12px] text-muted-foreground transition-colors hover:text-foreground"
-          data-testid="model-selector"
-          variant="ghost"
-        >
-          {provider ? <ModelSelectorLogo provider={provider} /> : null}
-          <ModelSelectorName>{selectedModel.name}</ModelSelectorName>
-        </Button>
-      </ModelSelectorTrigger>
-      <ModelSelectorContent
-        commandDefaultValue={selectedModel.id}
-        footer={
-          isReasoningModel && modelReasoningEfforts.length > 0 ? (
-            <div className="border-t border-border/60 p-3">
-              <div className="mb-2 text-[11px] font-medium text-muted-foreground">
-                Reasoning Effort
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  className={cn(
-                    "shrink-0 text-[11px] font-medium capitalize transition-colors",
-                    reasoningEffort === "default"
-                      ? "text-foreground"
-                      : "text-muted-foreground hover:text-foreground"
-                  )}
-                  onClick={() => setReasoningEffort("default")}
-                >
-                  {reasoningEffort === "default" ? "Default" : reasoningEffort}
-                </button>
-                <Slider
-                  className="flex-1"
-                  disabled={reasoningEffort === "default"}
-                  max={modelReasoningEfforts.length - 1}
-                  min={0}
-                  step={1}
-                  value={[
-                    reasoningEffort === "default"
-                      ? 0
-                      : modelReasoningEfforts.indexOf(reasoningEffort),
-                  ]}
-                  onValueChange={(vals: number[]) => {
-                    const idx = vals[0];
-                    if (idx >= 0 && idx < modelReasoningEfforts.length) {
-                      setReasoningEffort(modelReasoningEfforts[idx] as ReasoningEffort);
-                    }
-                  }}
-                />
+      <div className="flex min-w-0 flex-col items-start gap-1">
+        <ModelSelectorTrigger asChild>
+          <Button
+            className="h-7 max-w-[200px] justify-between gap-1.5 rounded-lg px-2 text-[12px] text-muted-foreground transition-colors hover:text-foreground"
+            data-testid="model-selector"
+            variant="ghost"
+          >
+            {provider ? <ModelSelectorLogo provider={provider} /> : null}
+            <ModelSelectorName>{selectedModel.name}</ModelSelectorName>
+          </Button>
+        </ModelSelectorTrigger>
+        {isReasoningModel && modelReasoningEfforts.length > 0 ? (
+          <div className="w-full max-w-[240px]">
+            <div className="mb-1 text-[10px] font-medium text-muted-foreground">
+              Reasoning Effort
+            </div>
+            <div className="grid w-full grid-cols-[auto_1fr] items-center gap-x-2">
+              <button
+                className={cn(
+                  "shrink-0 text-[10px] font-medium capitalize transition-colors",
+                  reasoningEffort === "default"
+                    ? "text-foreground"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+                onClick={handleDefaultClick}
+                type="button"
+              >
+                Default
+              </button>
+              <Slider
+                className="w-full"
+                max={modelReasoningEfforts.length - 1}
+                min={0}
+                onValueChange={handleSliderChange}
+                step={1}
+                value={[
+                  reasoningEffort === "default"
+                    ? 0
+                    : modelReasoningEfforts.indexOf(reasoningEffort),
+                ]}
+              />
+              <span />
+              <div className="flex w-full justify-between">
+                {modelReasoningEfforts.map((effort) => {
+                  const active = reasoningEffort === effort;
+                  return (
+                    <button
+                      className="flex cursor-pointer flex-col items-center gap-0.5"
+                      data-effort={effort}
+                      key={effort}
+                      onClick={handleTickClick}
+                      type="button"
+                    >
+                      <span
+                        className={cn(
+                          "h-1 w-px",
+                          active ? "bg-foreground" : "bg-border/70"
+                        )}
+                      />
+                      <span
+                        className={cn(
+                          "text-[9px] capitalize",
+                          active
+                            ? "font-medium text-foreground"
+                            : "text-muted-foreground"
+                        )}
+                      >
+                        {effort}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
-          ) : null
-        }
-      >
+          </div>
+        ) : null}
+      </div>
+      <ModelSelectorContent commandDefaultValue={selectedModel.id}>
         <ModelSelectorInput placeholder="Search models..." />
         <ModelSelectorList>
           {(() => {
@@ -899,7 +955,7 @@ function PureModelSelectorCompact({
                     capabilities={capabilities}
                     key={model.id}
                     model={model}
-                    onModelChange={onModelChange}
+                    onModelChange={handleModelChange}
                     selectedModelId={selectedModel.id}
                     setOpen={setOpen}
                   />
