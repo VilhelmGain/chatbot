@@ -46,6 +46,7 @@ import type { ChatMessage, WaitingStatusData } from "@/lib/types";
 import { convertToUIMessages, generateUUID } from "@/lib/utils";
 import { generateTitleFromUserMessage } from "../../actions";
 import { type PostRequestBody, postRequestBodySchema } from "./schema";
+import { z } from "zod";
 
 export const maxDuration = 60;
 
@@ -99,7 +100,10 @@ export async function POST(request: Request) {
   try {
     const json = await request.json();
     requestBody = postRequestBodySchema.parse(json);
-  } catch {
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return new ChatbotError("bad_request:api", error.issues.map(i => i.message).join(", ")).toResponse();
+    }
     return new ChatbotError("bad_request:api").toResponse();
   }
 
