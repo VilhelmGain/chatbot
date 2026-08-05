@@ -23,6 +23,7 @@ import { getChatHistoryPaginationKey } from "@/components/chat/sidebar-history";
 import { toast } from "@/components/chat/toast";
 import type { VisibilityType } from "@/components/chat/visibility-selector";
 import { useAutoResume } from "@/hooks/use-auto-resume";
+import type { ReasoningEffort } from "@/lib/ai/models.client";
 import type { Vote } from "@/lib/db/schema";
 import { ChatbotError } from "@/lib/errors";
 import type { ChatMessage } from "@/lib/types";
@@ -39,10 +40,8 @@ type ActiveChatContextValue = {
   addToolApprovalResponse: UseChatHelpers<ChatMessage>["addToolApprovalResponse"];
   input: string;
   setInput: Dispatch<SetStateAction<string>>;
-  reasoningEffort: "default" | "none" | "minimal" | "low" | "medium" | "high";
-  setReasoningEffort: (
-    effort: "default" | "none" | "minimal" | "low" | "medium" | "high"
-  ) => void;
+  reasoningEffort: ReasoningEffort;
+  setReasoningEffort: (effort: ReasoningEffort) => void;
   visibilityType: VisibilityType;
   isReadonly: boolean;
   isLoading: boolean;
@@ -81,9 +80,8 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
     currentModelIdRef.current = currentModelId;
   }, [currentModelId]);
 
-  const [reasoningEffort, setReasoningEffortState] = useState<
-    "default" | "none" | "minimal" | "low" | "medium" | "high"
-  >("default");
+  const [reasoningEffort, setReasoningEffortState] =
+    useState<ReasoningEffort>("default");
   const reasoningEffortRef = useRef(reasoningEffort);
   useEffect(() => {
     reasoningEffortRef.current = reasoningEffort;
@@ -228,33 +226,32 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
         .split("; ")
         .find((row) => row.startsWith("reasoning-effort="))
         ?.split("=")[1];
+      const validReasoningEfforts: ReasoningEffort[] = [
+        "default",
+        "none",
+        "minimal",
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max",
+      ];
       if (
         cookieEffort &&
-        ["default", "none", "minimal", "low", "medium", "high"].includes(
-          cookieEffort
-        )
+        validReasoningEfforts.includes(cookieEffort as ReasoningEffort)
       ) {
         setReasoningEffortState(
-          decodeURIComponent(cookieEffort) as
-            | "default"
-            | "none"
-            | "minimal"
-            | "low"
-            | "medium"
-            | "high"
+          decodeURIComponent(cookieEffort) as ReasoningEffort
         );
       }
     }
   }, [chatData, isNewChat]);
 
-  const setReasoningEffort = useCallback(
-    (effort: "default" | "none" | "minimal" | "low" | "medium" | "high") => {
-      setReasoningEffortState(effort);
-      // biome-ignore lint/suspicious/noDocumentCookie: cookie persistence for user preference
-      document.cookie = `reasoning-effort=${effort}; max-age=${60 * 60 * 24 * 365}; path=/`;
-    },
-    []
-  );
+  const setReasoningEffort = useCallback((effort: ReasoningEffort) => {
+    setReasoningEffortState(effort);
+    // biome-ignore lint/suspicious/noDocumentCookie: cookie persistence for user preference
+    document.cookie = `reasoning-effort=${effort}; max-age=${60 * 60 * 24 * 365}; path=/`;
+  }, []);
 
   const hasAppendedQueryRef = useRef(false);
   useEffect(() => {

@@ -16,7 +16,12 @@ import { Spinner } from "@/components/ui/spinner";
 import { AddModelForm } from "./add-model-form";
 
 type CustomModel = {
-  capabilities: { reasoning: boolean; tools: boolean; vision: boolean };
+  capabilities: {
+    reasoning: boolean;
+    tools: boolean;
+    vision: boolean;
+    reasoningEfforts?: string[];
+  };
   createdAt: string;
   id: string;
   modelId: string;

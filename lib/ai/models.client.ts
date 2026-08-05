@@ -1,3 +1,13 @@
+export type ReasoningEffort =
+  | "default"
+  | "none"
+  | "minimal"
+  | "low"
+  | "medium"
+  | "high"
+  | "xhigh"
+  | "max";
+
 export type ModelCapabilities = {
   tools: boolean;
   vision: boolean;
@@ -11,5 +21,5 @@ export type ChatModel = {
   provider: string;
   providerKey?: string | null;
   description: string;
-  reasoningEffort?: "none" | "minimal" | "low" | "medium" | "high";
+  reasoningEffort?: ReasoningEffort;
 };

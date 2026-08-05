@@ -1,10 +1,13 @@
 import { createAnthropic } from "@ai-sdk/anthropic";
 import { createOpenAI } from "@ai-sdk/openai";
+import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 import type { LanguageModelV4 } from "@ai-sdk/provider";
 import { customProvider as aiCustomProvider } from "ai";
+import type { CustomProvider } from "@/lib/db/schema";
 import { ChatbotError } from "@/lib/errors";
 import { isTestEnvironment } from "../constants";
 import { getCustomProviderById } from "../db/queries";
+import { getCatalogProvider } from "./catalog";
 import { decrypt } from "./encryption";
 
 export const myProvider = isTestEnvironment
@@ -29,36 +32,98 @@ type CachedProvider = {
   baseURL: string;
   expiresAt: number;
   type: "openai" | "anthropic";
+  providerKey: string | null;
+  name: string;
 };
 
 const providerCache = new Map<string, CachedProvider>();
 
-function createModelFromConfig(
-  config: CachedProvider,
+export function getCustomProviderOptionsKey(
+  provider: Pick<CustomProvider, "providerKey" | "name">
+): string {
+  return (
+    provider.providerKey ??
+    provider.name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "")
+  );
+}
+
+function getCustomProviderSdk(
+  provider: Pick<CustomProvider, "type" | "providerKey">
+): "openai" | "openai-compatible" {
+  if (provider.type !== "openai") {
+    throw new Error(`Unexpected provider type: ${provider.type}`);
+  }
+
+  if (provider.providerKey) {
+    const catalogProvider = getCatalogProvider(provider.providerKey);
+    if (catalogProvider?.npm === "@ai-sdk/openai") {
+      return "openai";
+    }
+  }
+
+  return "openai-compatible";
+}
+
+export function isOpenAICompatibleProvider(
+  provider: Pick<CustomProvider, "type" | "providerKey">
+): boolean {
+  return (
+    provider.type === "openai" &&
+    getCustomProviderSdk(provider) === "openai-compatible"
+  );
+}
+
+function createModelFromProvider(
+  provider: Pick<CustomProvider, "type" | "baseURL" | "providerKey" | "name">,
+  apiKey: string,
   modelName: string
 ): LanguageModelV4 {
-  if (config.type === "openai") {
-    // Use the chat completions API for custom OpenAI-compatible providers.
-    // The default "languageModel" uses the Responses API, which most custom
-    // endpoints (OpenRouter, local proxies, etc.) do not support.
-    return createOpenAI({
-      apiKey: config.apiKey,
-      baseURL: config.baseURL,
-    }).chat(modelName);
+  if (provider.type === "openai") {
+    const sdk = getCustomProviderSdk(provider);
+
+    if (sdk === "openai") {
+      // Use the chat completions API for custom OpenAI-compatible providers.
+      // The default "languageModel" uses the Responses API, which most custom
+      // endpoints (OpenRouter, local proxies, etc.) do not support.
+      return createOpenAI({
+        apiKey,
+        baseURL: provider.baseURL,
+      }).chat(modelName);
+    }
+
+    return createOpenAICompatible({
+      apiKey,
+      baseURL: provider.baseURL,
+      name: getCustomProviderOptionsKey(provider),
+    })(modelName);
   }
-  if (config.type === "anthropic") {
+
+  if (provider.type === "anthropic") {
     return createAnthropic({
-      apiKey: config.apiKey,
-      baseURL: config.baseURL,
+      apiKey,
+      baseURL: provider.baseURL,
     }).languageModel(modelName);
   }
-  throw new Error(`Unknown custom provider type: ${config.type}`);
+
+  throw new Error(`Unknown custom provider type: ${provider.type}`);
 }
 
 async function resolveCustomProvider(providerId: string, modelName: string) {
   const cached = providerCache.get(providerId);
   if (cached && cached.expiresAt > Date.now()) {
-    return createModelFromConfig(cached, modelName);
+    return createModelFromProvider(
+      {
+        baseURL: cached.baseURL,
+        name: cached.name,
+        providerKey: cached.providerKey,
+        type: cached.type,
+      },
+      cached.apiKey,
+      modelName
+    );
   }
 
   const provider = await getCustomProviderById({ id: providerId });
@@ -73,38 +138,16 @@ async function resolveCustomProvider(providerId: string, modelName: string) {
     throw new ChatbotError("bad_request:provider", { cause: error });
   }
 
-  if (provider.type === "openai") {
-    // Use the chat completions API for custom OpenAI-compatible providers.
-    // The default "languageModel" uses the Responses API, which most custom
-    // endpoints (OpenRouter, local proxies, etc.) do not support.
-    const model = createOpenAI({
-      apiKey,
-      baseURL: provider.baseURL,
-    }).chat(modelName);
-    providerCache.set(providerId, {
-      apiKey,
-      baseURL: provider.baseURL,
-      expiresAt: Date.now() + CACHE_TTL_MS,
-      type: provider.type,
-    });
-    return model;
-  }
-
-  if (provider.type === "anthropic") {
-    const model = createAnthropic({
-      apiKey,
-      baseURL: provider.baseURL,
-    }).languageModel(modelName);
-    providerCache.set(providerId, {
-      apiKey,
-      baseURL: provider.baseURL,
-      expiresAt: Date.now() + CACHE_TTL_MS,
-      type: provider.type,
-    });
-    return model;
-  }
-
-  throw new Error(`Unknown custom provider type: ${provider.type}`);
+  const model = createModelFromProvider(provider, apiKey, modelName);
+  providerCache.set(providerId, {
+    apiKey,
+    baseURL: provider.baseURL,
+    expiresAt: Date.now() + CACHE_TTL_MS,
+    name: provider.name,
+    providerKey: provider.providerKey,
+    type: provider.type,
+  });
+  return model;
 }
 
 function resolveModel(modelId: string) {

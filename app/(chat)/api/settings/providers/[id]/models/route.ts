@@ -11,6 +11,7 @@ import { ChatbotError } from "@/lib/errors";
 const createModelSchema = z.object({
   capabilities: z.object({
     reasoning: z.boolean(),
+    reasoningEfforts: z.array(z.string()).optional(),
     tools: z.boolean(),
     vision: z.boolean(),
   }),
@@ -23,6 +24,7 @@ const bulkCreateModelsSchema = z.object({
     z.object({
       capabilities: z.object({
         reasoning: z.boolean(),
+        reasoningEfforts: z.array(z.string()).optional(),
         tools: z.boolean(),
         vision: z.boolean(),
       }),

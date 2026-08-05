@@ -1,3 +1,13 @@
+export type ReasoningEffort =
+  | "default"
+  | "none"
+  | "minimal"
+  | "low"
+  | "medium"
+  | "high"
+  | "xhigh"
+  | "max";
+
 export type ModelCapabilities = {
   tools: boolean;
   vision: boolean;
@@ -11,7 +21,7 @@ export type ChatModel = {
   provider: string;
   providerKey?: string | null;
   description: string;
-  reasoningEffort?: "none" | "minimal" | "low" | "medium" | "high";
+  reasoningEffort?: ReasoningEffort;
 };
 
 export async function isAllowedModelId(modelId: string): Promise<boolean> {
@@ -63,18 +73,41 @@ export async function getCustomModelsForUser(
 export async function getCustomCapabilitiesForUser(
   userId: string
 ): Promise<Record<string, ModelCapabilities>> {
+  const { getCatalogModelsForProvider } = await import("./catalog");
   const { getCustomModelsByProviderId, getCustomProvidersByUserId } =
     await import("../db/queries");
   const providers = await getCustomProvidersByUserId({ userId });
   const allEntries = await Promise.all(
     providers.map(async (provider) => {
+      const catalogCapabilities = provider.providerKey
+        ? new Map(
+            getCatalogModelsForProvider(provider.providerKey).map((m) => [
+              m.modelId,
+              m.capabilities,
+            ])
+          )
+        : null;
+
       const models = await getCustomModelsByProviderId({
         providerId: provider.id,
       });
-      return models.map((model) => ({
-        key: `custom-${provider.id}/${model.modelId}`,
-        value: model.capabilities as ModelCapabilities,
-      }));
+      return models.map((model) => {
+        const capabilities = model.capabilities as ModelCapabilities;
+        const catalogEntry = catalogCapabilities?.get(model.modelId);
+        if (catalogEntry?.reasoningEfforts && !capabilities.reasoningEfforts) {
+          return {
+            key: `custom-${provider.id}/${model.modelId}`,
+            value: {
+              ...capabilities,
+              reasoningEfforts: catalogEntry.reasoningEfforts,
+            },
+          };
+        }
+        return {
+          key: `custom-${provider.id}/${model.modelId}`,
+          value: capabilities,
+        };
+      });
     })
   );
 

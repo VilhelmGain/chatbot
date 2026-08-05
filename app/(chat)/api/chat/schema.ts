@@ -31,7 +31,16 @@ export const postRequestBodySchema = z.object({
   message: userMessageSchema.optional(),
   messages: z.array(toolApprovalMessageSchema).optional(),
   reasoningEffort: z
-    .enum(["default", "none", "minimal", "low", "medium", "high"])
+    .enum([
+      "default",
+      "none",
+      "minimal",
+      "low",
+      "medium",
+      "high",
+      "xhigh",
+      "max",
+    ])
     .optional(),
   selectedChatModel: z.string(),
   selectedVisibilityType: z.enum(["public", "private"]),
