@@ -51,6 +51,7 @@ import {
   PromptInputTools,
 } from "../ai-elements/prompt-input";
 import { Button } from "../ui/button";
+import { Slider } from "../ui/slider";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 import { PaperclipIcon, StopIcon } from "./icons";
 import { PreviewAttachment } from "./preview-attachment";
@@ -681,37 +682,6 @@ function PureAttachmentsButton({
 
 const AttachmentsButton = memo(PureAttachmentsButton);
 
-function ReasoningEffortButton({
-  effort,
-  currentEffort,
-  onClick,
-}: {
-  effort: string;
-  currentEffort: string;
-  onClick: (effort: ReasoningEffort) => void;
-}) {
-  const handleClick = useCallback(() => {
-    onClick(effort as ReasoningEffort);
-  }, [effort, onClick]);
-
-  return (
-    <Button
-      className={cn(
-        "h-7 flex-1 text-[11px] capitalize",
-        currentEffort === effort
-          ? "bg-primary text-primary-foreground"
-          : "bg-muted text-muted-foreground hover:bg-muted/80"
-      )}
-      key={effort}
-      onClick={handleClick}
-      size="sm"
-      variant="ghost"
-    >
-      {effort}
-    </Button>
-  );
-}
-
 function ModelSelectorOption({
   capabilities,
   model,
@@ -895,20 +865,42 @@ function PureModelSelectorCompact({
             ));
           })()}
         </ModelSelectorList>
-        {isReasoningModel && (
+        {isReasoningModel && modelReasoningEfforts.length > 0 && (
           <div className="border-t border-border/60 p-3">
             <div className="mb-2 text-[11px] font-medium text-muted-foreground">
               Reasoning Effort
             </div>
-            <div className="flex gap-1">
-              {["default", ...modelReasoningEfforts].map((effort) => (
-                <ReasoningEffortButton
-                  currentEffort={reasoningEffort}
-                  effort={effort}
-                  key={effort}
-                  onClick={setReasoningEffort}
-                />
-              ))}
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                className={cn(
+                  "shrink-0 text-[11px] font-medium capitalize transition-colors",
+                  reasoningEffort === "default"
+                    ? "text-foreground"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+                onClick={() => setReasoningEffort("default")}
+              >
+                {reasoningEffort === "default" ? "Default" : reasoningEffort}
+              </button>
+              <Slider
+                className="flex-1"
+                disabled={reasoningEffort === "default"}
+                max={modelReasoningEfforts.length - 1}
+                min={0}
+                step={1}
+                value={[
+                  reasoningEffort === "default"
+                    ? 0
+                    : modelReasoningEfforts.indexOf(reasoningEffort),
+                ]}
+                onValueChange={(vals: number[]) => {
+                  const idx = vals[0];
+                  if (idx >= 0 && idx < modelReasoningEfforts.length) {
+                    setReasoningEffort(modelReasoningEfforts[idx] as ReasoningEffort);
+                  }
+                }}
+              />
             </div>
           </div>
         )}
