@@ -16,6 +16,7 @@ import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import type { ArtifactKind } from "@/components/chat/artifact";
 import type { VisibilityType } from "@/components/chat/visibility-selector";
+import type { ModelCapabilities } from "@/lib/ai/models.client";
 import { decrypt, encrypt } from "../ai/encryption";
 import { ChatbotError } from "../errors";
 import { generateUUID } from "../utils";
@@ -774,7 +775,7 @@ export async function createCustomModel({
   name,
   providerId,
 }: {
-  capabilities: { reasoning: boolean; tools: boolean; vision: boolean };
+  capabilities: ModelCapabilities;
   modelId: string;
   name: string;
   providerId: string;
@@ -803,7 +804,7 @@ export async function createCustomModels({
   providerId,
 }: {
   models: Array<{
-    capabilities: { reasoning: boolean; tools: boolean; vision: boolean };
+    capabilities: ModelCapabilities;
     modelId: string;
     name: string;
   }>;
@@ -866,7 +867,7 @@ export async function updateCustomModel({
   name,
   providerId,
 }: {
-  capabilities?: { reasoning: boolean; tools: boolean; vision: boolean };
+  capabilities?: ModelCapabilities;
   id: string;
   name?: string;
   providerId: string;

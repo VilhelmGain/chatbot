@@ -11,6 +11,7 @@ const updateModelSchema = z.object({
   capabilities: z
     .object({
       reasoning: z.boolean(),
+      reasoningEfforts: z.array(z.string()).optional(),
       tools: z.boolean(),
       vision: z.boolean(),
     })

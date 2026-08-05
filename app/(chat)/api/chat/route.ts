@@ -15,7 +15,11 @@ import {
   isAllowedModelId,
 } from "@/lib/ai/models";
 import { type RequestHints, systemPrompt } from "@/lib/ai/prompts";
-import { getLanguageModel } from "@/lib/ai/providers";
+import {
+  getCustomProviderOptionsKey,
+  getLanguageModel,
+  isOpenAICompatibleProvider,
+} from "@/lib/ai/providers";
 import { createDocument } from "@/lib/ai/tools/create-document";
 import { editDocument } from "@/lib/ai/tools/edit-document";
 import { getWeather } from "@/lib/ai/tools/get-weather";
@@ -294,6 +298,32 @@ export async function POST(request: Request) {
           clearHealthCheckTimer();
         };
 
+        const providerOptionsKey = getCustomProviderOptionsKey(provider);
+        const isOpenAICompatible = isOpenAICompatibleProvider(provider);
+
+        // The unified `reasoning` option supports a fixed set of values.
+        // Provider-specific values like "max" must be sent through
+        // `providerOptions` instead.
+        const reasoningValue =
+          isReasoningModel &&
+          reasoningEffort &&
+          reasoningEffort !== "default" &&
+          reasoningEffort !== "max"
+            ? reasoningEffort
+            : undefined;
+
+        const providerOptions =
+          isReasoningModel &&
+          reasoningEffort &&
+          reasoningEffort !== "default" &&
+          isOpenAICompatible
+            ? {
+                [providerOptionsKey]: {
+                  reasoningEffort,
+                },
+              }
+            : undefined;
+
         const result = streamText({
           activeTools: supportsTools
             ? [
@@ -323,13 +353,8 @@ export async function POST(request: Request) {
             lastStreamError = error;
             stopWaitingStatus();
           },
-          reasoning:
-            isReasoningModel &&
-            reasoningEffort &&
-            reasoningEffort !== "none" &&
-            reasoningEffort !== "default"
-              ? reasoningEffort
-              : undefined,
+          providerOptions,
+          reasoning: reasoningValue,
           stopWhen: isStepCount(5),
           telemetry: {
             functionId: "stream-text",

@@ -75,9 +75,9 @@ export function mapModelCapabilities(model: Model): {
       (opt) => opt.type === "effort"
     );
     if (effortOption && effortOption.type === "effort") {
-      result.reasoningEfforts = effortOption.values
-        .filter((v) => v !== null)
-        .map((v) => v as string);
+      result.reasoningEfforts = effortOption.values.map((v) =>
+        v === null ? "none" : v
+      );
     }
   }
 

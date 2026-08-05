@@ -36,7 +36,11 @@ import {
   ModelSelectorName,
   ModelSelectorTrigger,
 } from "@/components/ai-elements/model-selector";
-import type { ChatModel, ModelCapabilities } from "@/lib/ai/models.client";
+import type {
+  ChatModel,
+  ModelCapabilities,
+  ReasoningEffort,
+} from "@/lib/ai/models.client";
 import type { Attachment, ChatMessage } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import {
@@ -104,10 +108,8 @@ function PureMultimodalInput({
   editingMessage?: ChatMessage | null;
   onCancelEdit?: () => void;
   isLoading?: boolean;
-  reasoningEffort: "default" | "none" | "minimal" | "low" | "medium" | "high";
-  setReasoningEffort: (
-    effort: "default" | "none" | "minimal" | "low" | "medium" | "high"
-  ) => void;
+  reasoningEffort: ReasoningEffort;
+  setReasoningEffort: (effort: ReasoningEffort) => void;
 }) {
   const router = useRouter();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -686,14 +688,10 @@ function ReasoningEffortButton({
 }: {
   effort: string;
   currentEffort: string;
-  onClick: (
-    effort: "default" | "none" | "minimal" | "low" | "medium" | "high"
-  ) => void;
+  onClick: (effort: ReasoningEffort) => void;
 }) {
   const handleClick = useCallback(() => {
-    onClick(
-      effort as "default" | "none" | "minimal" | "low" | "medium" | "high"
-    );
+    onClick(effort as ReasoningEffort);
   }, [effort, onClick]);
 
   return (
@@ -800,10 +798,8 @@ function PureModelSelectorCompact({
 }: {
   selectedModelId: string;
   onModelChange?: (modelId: string) => void;
-  reasoningEffort: "default" | "none" | "minimal" | "low" | "medium" | "high";
-  setReasoningEffort: (
-    effort: "default" | "none" | "minimal" | "low" | "medium" | "high"
-  ) => void;
+  reasoningEffort: ReasoningEffort;
+  setReasoningEffort: (effort: ReasoningEffort) => void;
 }) {
   const [open, setOpen] = useState(false);
   const { data: modelsData, isLoading } = useSWR(
