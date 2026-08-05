@@ -149,8 +149,7 @@ test.describe("Model Selector", () => {
     await kimiOption.click();
 
     await expect(page.getByPlaceholder("Search models...")).not.toBeVisible();
-    await expect(modelButton).toContainText("Kimi K2.5");
-    await expect(modelButton).toContainText("high");
+    await expect(modelButton).toHaveText("Kimi K2.5 (high)");
   });
 
   test("supports keyboard interaction on the reasoning slider", async ({

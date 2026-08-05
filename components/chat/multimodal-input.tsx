@@ -927,6 +927,10 @@ function PureModelSelectorCompact({
     activeModels[0];
   const provider =
     selectedModel?.providerKey ?? selectedModel?.id.split("/")[0];
+  const selectedModelName =
+    reasoningEffort === "default"
+      ? selectedModel.name
+      : `${selectedModel.name} (${reasoningEffort})`;
   const pendingModel = activeModels.find(
     (model: ChatModel) => model.id === pendingModelId
   );
@@ -1018,12 +1022,7 @@ function PureModelSelectorCompact({
           variant="ghost"
         >
           {provider ? <ModelSelectorLogo provider={provider} /> : null}
-          <ModelSelectorName>{selectedModel.name}</ModelSelectorName>
-          {reasoningEffort === "default" ? null : (
-            <span className="rounded bg-primary/10 px-1.5 py-0.5 text-[9px] font-semibold capitalize text-primary">
-              {reasoningEffort}
-            </span>
-          )}
+          <ModelSelectorName>{selectedModelName}</ModelSelectorName>
         </Button>
       </ModelSelectorTrigger>
       <ModelSelectorContent
