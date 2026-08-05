@@ -927,10 +927,6 @@ function PureModelSelectorCompact({
     activeModels[0];
   const provider =
     selectedModel?.providerKey ?? selectedModel?.id.split("/")[0];
-  const selectedModelName =
-    reasoningEffort === "default"
-      ? selectedModel.name
-      : `${selectedModel.name} (${reasoningEffort})`;
   const pendingModel = activeModels.find(
     (model: ChatModel) => model.id === pendingModelId
   );
@@ -1012,6 +1008,11 @@ function PureModelSelectorCompact({
       </Button>
     );
   }
+
+  const selectedModelName =
+    reasoningEffort === "default"
+      ? selectedModel.name
+      : `${selectedModel.name} (${reasoningEffort})`;
 
   return (
     <ModelSelector onOpenChange={handleOpenChange} open={open}>
