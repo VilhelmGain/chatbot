@@ -22,6 +22,7 @@ CREATE TABLE "CustomProvider" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"iv" varchar(32) NOT NULL,
 	"name" varchar(128) NOT NULL,
+	"providerKey" varchar(128),
 	"type" varchar NOT NULL,
 	"updatedAt" timestamp DEFAULT now() NOT NULL,
 	"userId" uuid NOT NULL

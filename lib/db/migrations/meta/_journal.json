@@ -5,22 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1710000000000,
-      "tag": "0000_initial",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1785776925844,
-      "tag": "0001_majestic_owl",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1785842696149,
-      "tag": "0002_blue_chat",
+      "when": 1785946009241,
+      "tag": "0000_freezing_boomer",
       "breakpoints": true
     }
   ]
