@@ -1,71 +1,121 @@
-<a href="https://chatbot.ai-sdk.dev/demo">
-  <img alt="Chatbot" src="app/(chat)/opengraph-image.png">
-  <h1 align="center">Chatbot</h1>
-</a>
+# Chatbot
 
-<p align="center">
-    Chatbot (formerly AI Chatbot) is a free, open-source template built with Next.js and the AI SDK that helps you quickly build powerful chatbot applications.
-</p>
+A multi-provider AI chatbot built with Next.js, the AI SDK, and Drizzle ORM. Supports OpenAI, Anthropic, Google, xAI, and user-configured custom providers.
 
-<p align="center">
-  <a href="https://chatbot.ai-sdk.dev/docs"><strong>Read Docs</strong></a> ·
-  <a href="#features"><strong>Features</strong></a> ·
-  <a href="#model-providers"><strong>Model Providers</strong></a> ·
-  <a href="#deploy-your-own"><strong>Deploy Your Own</strong></a> ·
-  <a href="#running-locally"><strong>Running locally</strong></a>
-</p>
-<br/>
+## Tech Stack
 
-## Features
+- **Framework:** Next.js 16 (App Router), React 19, TypeScript
+- **Styling:** Tailwind CSS v4, shadcn/ui (Radix UI primitives)
+- **AI:** [AI SDK](https://ai-sdk.dev) v7 with streaming, tool use, and reasoning effort control
+- **Database:** Postgres via [Drizzle ORM](https://orm.drizzle.team)
+- **Cache:** Redis (optional — rate limiting and stream resumption)
+- **Auth:** [NextAuth.js](https://authjs.dev) v5 (credentials + guest sessions)
+- **Artifacts:** In-app code, spreadsheet, image, and text artifacts
 
-- [Next.js](https://nextjs.org) App Router
-  - Advanced routing for seamless navigation and performance
-  - React Server Components (RSCs) and Server Actions for server-side rendering and increased performance
-- [AI SDK](https://ai-sdk.dev/docs/introduction)
-  - Unified API for generating text, structured objects, and tool calls with LLMs
-  - Hooks for building dynamic chat and generative user interfaces
-  - Supports OpenAI, Anthropic, Google, xAI, and other model providers via AI Gateway
-- [shadcn/ui](https://ui.shadcn.com)
-  - Styling with [Tailwind CSS](https://tailwindcss.com)
-  - Component primitives from [Radix UI](https://radix-ui.com) for accessibility and flexibility
-- Data Persistence
-  - [Neon Serverless Postgres](https://vercel.com/marketplace/neon) for saving chat history and user data
-  - [Vercel Blob](https://vercel.com/storage/blob) for efficient file storage
-- [Auth.js](https://authjs.dev)
-  - Simple and secure authentication
+## Prerequisites
 
-## Model Providers
+- Node.js 20+
+- `pnpm` 10.32.1 (`corepack enable`)
+- Postgres (or Docker Compose)
+- At least one AI provider API key (OpenAI, Anthropic, Google, or xAI)
 
-This template uses the [Vercel AI Gateway](https://vercel.com/docs/ai-gateway) to access multiple AI models through a unified interface. Models are configured in `lib/ai/models.ts` with per-model provider routing. Included models: Mistral, Moonshot, DeepSeek, OpenAI, and xAI.
+## Getting Started
 
-### AI Gateway Authentication
-
-**For Vercel deployments**: Authentication is handled automatically via OIDC tokens.
-
-**For non-Vercel deployments**: You need to provide an AI Gateway API key by setting the `AI_GATEWAY_API_KEY` environment variable in your `.env.local` file.
-
-With the [AI SDK](https://ai-sdk.dev/docs/introduction), you can also switch to direct LLM providers like [OpenAI](https://openai.com), [Anthropic](https://anthropic.com), [Cohere](https://cohere.com/), and [many more](https://ai-sdk.dev/providers/ai-sdk-providers) with just a few lines of code.
-
-## Deploy Your Own
-
-You can deploy your own version of Chatbot to Vercel with one click:
-
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/templates/next.js/chatbot)
-
-## Running locally
-
-You will need to use the environment variables [defined in `.env.example`](.env.example) to run Chatbot. It's recommended you use [Vercel Environment Variables](https://vercel.com/docs/projects/environment-variables) for this, but a `.env` file is all that is necessary.
-
-> Note: You should not commit your `.env` file or it will expose secrets that will allow others to control access to your various AI and authentication provider accounts.
-
-1. Install Vercel CLI: `npm i -g vercel`
-2. Link local instance with Vercel and GitHub accounts (creates `.vercel` directory): `vercel link`
-3. Download your environment variables: `vercel env pull`
+### 1. Install dependencies
 
 ```bash
 pnpm install
-pnpm db:migrate # Setup database or apply latest database changes
+```
+
+### 2. Configure environment
+
+```bash
+cp .env.example .env.local
+```
+
+Required variables:
+
+| Variable | Description |
+|---|---|
+| `AUTH_SECRET` | Random secret for NextAuth (`openssl rand -base64 32`) |
+| `POSTGRES_URL` | Postgres connection string |
+| `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` / `GOOGLE_API_KEY` / `XAI_API_KEY` | At least one provider key |
+
+Optional:
+
+| Variable | Description |
+|---|---|
+| `REDIS_URL` | Enables rate limiting and stream resumption |
+| `MAX_MESSAGES_PER_HOUR` | Rate limit for logged-in users (guests: 10/hour) |
+
+### 3. Run database migrations
+
+```bash
+pnpm db:migrate
+```
+
+### 4. Start the dev server
+
+```bash
 pnpm dev
 ```
 
-Your app template should now be running on [localhost:3000](http://localhost:3000).
+App runs at [localhost:3000](http://localhost:3000).
+
+## Docker Compose
+
+Runs the full stack (app + Postgres + Redis):
+
+```bash
+docker compose up
+```
+
+- App: `localhost:3001`
+- Postgres: `localhost:5433`
+- Redis: `localhost:6380`
+
+Migrations run automatically on container start.
+
+## Model Providers
+
+Built-in providers are resolved via API keys in `.env.local`. Users can also add custom OpenAI-compatible providers at runtime through the settings UI — these are stored in Postgres and resolved dynamically.
+
+Model capabilities (tools, vision, reasoning) are defined in the catalog at `lib/ai/catalog.ts`.
+
+## Scripts
+
+| Command | Description |
+|---|---|
+| `pnpm dev` | Dev server with Turbopack |
+| `pnpm build` | Production build (includes type checking) |
+| `pnpm check` | Lint (Ultracite/Biome) |
+| `pnpm fix` | Auto-fix lint issues |
+| `pnpm test` | Playwright e2e tests (sets `PLAYWRIGHT=True` for mock AI) |
+| `pnpm db:migrate` | Run Drizzle migrations |
+| `pnpm db:studio` | Open Drizzle Studio |
+| `pnpm db:generate` | Generate migration files |
+
+## Testing
+
+E2E tests use Playwright. The mock AI provider is activated via `PLAYWRIGHT=True`, so no real API keys are needed.
+
+```bash
+pnpm test
+```
+
+## Project Structure
+
+```
+app/(chat)/         # Chat UI and API routes
+app/(auth)/         # Authentication (NextAuth.js)
+lib/ai/             # Model catalog, providers, prompts, tools
+lib/db/             # Drizzle schema, migrations, queries
+lib/artifacts/      # Artifact rendering (code, sheet, image, text)
+components/         # React components
+artifacts/          # Server actions for artifact generation
+tests/e2e/          # Playwright tests
+```
+
+## License
+
+Apache 2.0 — © 2024 Vercel, Inc. · © 2026 Vilhelm Gain
