@@ -26,6 +26,7 @@ import { editDocument } from "@/lib/ai/tools/edit-document";
 import { getWeather } from "@/lib/ai/tools/get-weather";
 import { requestSuggestions } from "@/lib/ai/tools/request-suggestions";
 import { updateDocument } from "@/lib/ai/tools/update-document";
+import { resolveAttachmentParts } from "@/lib/attachments";
 import { isProductionEnvironment } from "@/lib/constants";
 import {
   createStreamId,
@@ -249,7 +250,9 @@ export async function POST(request: Request) {
     const isReasoningModel = capabilities?.reasoning === true;
     const supportsTools = capabilities?.tools === true;
 
-    const modelMessages = await convertToModelMessages(uiMessages);
+    const modelMessages = await convertToModelMessages(
+      await resolveAttachmentParts(uiMessages)
+    );
 
     let lastStreamError: unknown = null;
 
