@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ALLOWED_MEDIA_TYPES } from "@/lib/attachments";
+import { ALLOWED_MEDIA_TYPES, isValidAttachmentUrl } from "@/lib/attachments";
 
 const textPartSchema = z.object({
   text: z.string().min(1),
@@ -12,7 +12,9 @@ const filePartSchema = z.object({
   }),
   name: z.string().min(1).max(100),
   type: z.enum(["file"]),
-  url: z.url(),
+  url: z.string().refine(isValidAttachmentUrl, {
+    message: "Invalid attachment URL",
+  }),
 });
 
 const partSchema = z.union([textPartSchema, filePartSchema]);
