@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ALLOWED_MEDIA_TYPES } from "@/lib/attachments";
 
 const textPartSchema = z.object({
   text: z.string().min(1),
@@ -6,7 +7,9 @@ const textPartSchema = z.object({
 });
 
 const filePartSchema = z.object({
-  mediaType: z.enum(["image/jpeg", "image/png"]),
+  mediaType: z.string().refine((m) => ALLOWED_MEDIA_TYPES.includes(m), {
+    message: "Unsupported attachment media type",
+  }),
   name: z.string().min(1).max(100),
   type: z.enum(["file"]),
   url: z.url(),

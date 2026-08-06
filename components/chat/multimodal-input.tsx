@@ -665,20 +665,24 @@ function PureAttachmentsButton({
   );
 
   return (
-    <Button
-      className={cn(
-        "h-7 w-7 rounded-lg border border-border/40 p-1 transition-colors",
-        hasVision
-          ? "text-foreground hover:border-border hover:text-foreground"
-          : "text-muted-foreground/30 cursor-not-allowed"
-      )}
-      data-testid="attachments-button"
-      disabled={status !== "ready" || !hasVision}
-      onClick={handleClick}
-      variant="ghost"
-    >
-      <PaperclipIcon size={14} style={{ height: 14, width: 14 }} />
-    </Button>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          className="h-7 w-7 rounded-lg border border-border/40 p-1 text-foreground transition-colors hover:border-border hover:text-foreground"
+          data-testid="attachments-button"
+          disabled={status !== "ready"}
+          onClick={handleClick}
+          variant="ghost"
+        >
+          <PaperclipIcon size={14} style={{ height: 14, width: 14 }} />
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent side="top" sideOffset={8}>
+        {hasVision
+          ? "Attach image or file"
+          : "Attach file (images need a vision model)"}
+      </TooltipContent>
+    </Tooltip>
   );
 }
 

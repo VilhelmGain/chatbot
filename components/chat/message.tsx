@@ -128,16 +128,22 @@ const PurePreviewMessage = ({
       className="flex flex-row justify-end gap-2"
       data-testid={"message-attachments"}
     >
-      {attachmentsFromMessage.map((attachment) => (
-        <PreviewAttachment
-          attachment={{
-            contentType: attachment.mediaType,
-            name: attachment.filename ?? "file",
-            url: attachment.url,
-          }}
-          key={attachment.url}
-        />
-      ))}
+      {attachmentsFromMessage.map((attachment) => {
+        // File parts are persisted with a `name` field (see the chat request
+        // schema and `multimodal-input.tsx`), but the AI SDK's `FileUIPart`
+        // type only declares `filename`. Read both at runtime.
+        const filePart = attachment as { name?: string; filename?: string };
+        return (
+          <PreviewAttachment
+            attachment={{
+              contentType: attachment.mediaType,
+              name: filePart.name ?? filePart.filename ?? "file",
+              url: attachment.url,
+            }}
+            key={attachment.url}
+          />
+        );
+      })}
     </div>
   );
 

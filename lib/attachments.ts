@@ -1,0 +1,221 @@
+import { readFile } from "node:fs/promises";
+import { basename } from "node:path";
+
+import type { ChatMessage } from "@/lib/types";
+
+// ---------------------------------------------------------------------------
+// Allowlist — single source of truth for accepted attachment media types.
+// Shared by the upload route, the chat request schema, and the server-side
+// resolver so they can never drift apart.
+// ---------------------------------------------------------------------------
+
+export const IMAGE_MEDIA_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+] as const;
+
+export const PDF_MEDIA_TYPE = "application/pdf" as const;
+
+export const TEXT_MEDIA_TYPES = [
+  "text/plain",
+  "text/markdown",
+  "text/csv",
+  "text/html",
+  "application/json",
+  "application/xml",
+  "text/javascript",
+  "text/x-typescript",
+  "text/typescript",
+  "text/x-shellscript",
+  "text/yaml",
+  "text/x-yaml",
+  "application/yaml",
+  "application/x-yaml",
+] as const;
+
+export const ALLOWED_MEDIA_TYPES: readonly string[] = [
+  ...IMAGE_MEDIA_TYPES,
+  PDF_MEDIA_TYPE,
+  ...TEXT_MEDIA_TYPES,
+];
+
+export const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+
+export function isImageMediaType(mediaType: string | undefined): boolean {
+  return (
+    mediaType !== undefined &&
+    IMAGE_MEDIA_TYPES.includes(mediaType as (typeof IMAGE_MEDIA_TYPES)[number])
+  );
+}
+
+export function isPdfMediaType(mediaType: string | undefined): boolean {
+  return mediaType === PDF_MEDIA_TYPE;
+}
+
+export function isTextMediaType(mediaType: string | undefined): boolean {
+  return (
+    mediaType !== undefined &&
+    TEXT_MEDIA_TYPES.includes(mediaType as (typeof TEXT_MEDIA_TYPES)[number])
+  );
+}
+
+export function isAllowedMediaType(mediaType: string | undefined): boolean {
+  return (
+    isImageMediaType(mediaType) ||
+    isPdfMediaType(mediaType) ||
+    isTextMediaType(mediaType)
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Server-side resolver
+// ---------------------------------------------------------------------------
+
+const UPLOAD_DIR = process.env.UPLOAD_DIR ?? "./uploads";
+
+/**
+ * Returns true when `url` points at this app's own file-serving route
+ * (`/api/files/<filename>`), regardless of host or port. We resolve only
+ * self-hosted uploads (never arbitrary external URLs) to data URLs.
+ */
+function isLocalFileUrl(url: string | undefined): boolean {
+  if (url === undefined) {
+    return false;
+  }
+  try {
+    const parsed = new URL(url, "http://local.invalid");
+    return parsed.pathname.startsWith("/api/files/");
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Turn a `/api/files/<filename>` URL into a `data:<mediaType>;base64,...` URL
+ * by reading the file from `UPLOAD_DIR`. Returns `null` when the URL is not a
+ * local file URL or the file can't be read.
+ *
+ * `mediaType` is required because the AI SDK derives the part's media type from
+ * the data URL itself (`splitDataUrl`), not from the file part's `mediaType`
+ * field — so a placeholder like `application/octet-stream` would reach the
+ * provider and cause it to reject or mishandle the attachment.
+ */
+export async function localFileUrlToDataUrl(
+  url: string | undefined,
+  mediaType: string
+): Promise<string | null> {
+  if (!isLocalFileUrl(url)) {
+    return null;
+  }
+
+  const filename = sanitizeFilename(basename(new URL(url as string).pathname));
+  if (!filename) {
+    return null;
+  }
+
+  try {
+    const { join } = await import("node:path");
+    const { cwd } = await import("node:process");
+    const filePath = join(cwd(), UPLOAD_DIR, filename);
+    const buffer = await readFile(filePath);
+    return `data:${mediaType};base64,${buffer.toString("base64")}`;
+  } catch (error) {
+    console.error("Failed to read attachment file:", { error, filename });
+    return null;
+  }
+}
+
+/**
+ * Sanitize a filename to match the upload route's `safeName` rules, so we read
+ * exactly what was written (defensive against path traversal).
+ */
+function sanitizeFilename(name: string): string {
+  return name.replace(/[^a-zA-Z0-9._-]/g, "_");
+}
+
+type FilePart = {
+  type: "file";
+  mediaType: string;
+  name?: string;
+  filename?: string;
+  url?: string;
+};
+
+/**
+ * Resolve file parts whose `url` points at the local `/api/files/` route:
+ *
+ * - **Image / PDF parts:** rewrite `url` to a `data:` URL so the bytes are
+ *   inlined and shipped directly to the provider. The provider's API servers
+ *   can't reach `http://localhost:3000`, and the AI SDK skips downloading any
+ *   `http(s)://` URL for `@ai-sdk/openai` / `@ai-sdk/anthropic` (they declare
+ *   it "supported"), so the image would otherwise be silently dropped.
+ * - **Text-like files:** replace the `file` part with an inline `text` part
+ *   containing the file content, so any model — vision or not — can read it.
+ *
+ * Non-local URLs and read failures are left untouched so the request still
+ * works (the model just may not see that attachment). The DB is unaffected —
+ * this transform runs only on the in-memory messages sent to the model.
+ */
+export async function resolveAttachmentParts(
+  messages: ChatMessage[]
+): Promise<ChatMessage[]> {
+  return await Promise.all(
+    messages.map(async (message) => {
+      if (message.role !== "user") {
+        return message;
+      }
+
+      const resolvedParts = await Promise.all(
+        message.parts.map(async (part) => {
+          if (part.type !== "file") {
+            return part;
+          }
+
+          const filePart = part as FilePart;
+          if (!isLocalFileUrl(filePart.url)) {
+            return part;
+          }
+
+          const dataUrl = await localFileUrlToDataUrl(
+            filePart.url,
+            filePart.mediaType
+          );
+          if (dataUrl === null) {
+            return part;
+          }
+
+          // Text-like files → inline text part (works on every model).
+          if (isTextMediaType(filePart.mediaType)) {
+            const decoded = dataUrlToText(dataUrl);
+            if (decoded !== null) {
+              return {
+                text: `<attachment name="${filePart.name ?? "file"}">\n${decoded}\n</attachment>`,
+                type: "text" as const,
+              };
+            }
+          }
+
+          // Images / PDFs → keep as a file part with an inlined data URL.
+          return { ...filePart, url: dataUrl };
+        })
+      );
+
+      return { ...message, parts: resolvedParts };
+    })
+  );
+}
+
+function dataUrlToText(dataUrl: string): string | null {
+  const comma = dataUrl.indexOf(",");
+  if (comma === -1) {
+    return null;
+  }
+  const base64 = dataUrl.slice(comma + 1);
+  try {
+    return Buffer.from(base64, "base64").toString("utf8");
+  } catch {
+    return null;
+  }
+}
