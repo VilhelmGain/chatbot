@@ -164,7 +164,13 @@ function resolveModel(modelId: string) {
 
 export function getLanguageModel(modelId: string) {
   if (isTestEnvironment && myProvider) {
-    return myProvider.languageModel(modelId);
+    // The mock provider registers models by bare id (e.g. "chat-model"),
+    // but the client sends custom-provider ids ("custom-<uuid>/<modelId>").
+    // Strip the provider prefix so the mock model can be resolved.
+    const mockModelId = modelId.startsWith("custom-")
+      ? modelId.split("/").slice(1).join("/")
+      : modelId;
+    return myProvider.languageModel(mockModelId);
   }
 
   return resolveModel(modelId);
