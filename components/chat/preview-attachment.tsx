@@ -14,6 +14,22 @@ export const PreviewAttachment = ({
 }) => {
   const { name, url, contentType } = attachment;
 
+  // Legacy messages persist absolute `http(s)://<host>/api/files/...` URLs that
+  // may not match the current origin. Rewrite them to a same-origin path so the
+  // preview loads regardless of host/port and never trips `next/image`
+  // remotePatterns validation. Relative and `data:` URLs pass through.
+  const src = (() => {
+    try {
+      const parsed = new URL(url);
+      if (parsed.pathname.startsWith("/api/files/")) {
+        return parsed.pathname;
+      }
+    } catch {
+      /* not an absolute URL */
+    }
+    return url;
+  })();
+
   return (
     <div
       className="group relative h-24 w-24 shrink-0 overflow-hidden rounded-xl border border-border/40 bg-muted"
@@ -24,7 +40,8 @@ export const PreviewAttachment = ({
           alt={name ?? "attachment"}
           className="size-full object-cover"
           height={96}
-          src={url}
+          src={src}
+          unoptimized
           width={96}
         />
       ) : (

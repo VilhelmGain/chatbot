@@ -75,21 +75,46 @@ export function isAllowedMediaType(mediaType: string | undefined): boolean {
 
 const UPLOAD_DIR = process.env.UPLOAD_DIR ?? "./uploads";
 
+const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+
 /**
  * Returns true when `url` points at this app's own file-serving route
- * (`/api/files/<filename>`), regardless of host or port. We resolve only
- * self-hosted uploads (never arbitrary external URLs) to data URLs.
+ * (`/api/files/<filename>`), regardless of host or port and regardless of the
+ * optional `basePath` prefix. We resolve only self-hosted uploads (never
+ * arbitrary external URLs) to data URLs.
  */
-function isLocalFileUrl(url: string | undefined): boolean {
+export function isLocalFileUrl(url: string | undefined): boolean {
   if (url === undefined) {
     return false;
   }
   try {
-    const parsed = new URL(url, "http://local.invalid");
-    return parsed.pathname.startsWith("/api/files/");
+    const { pathname } = new URL(url, "http://local.invalid");
+    return (
+      pathname.startsWith("/api/files/") ||
+      pathname.startsWith(`${BASE_PATH}/api/files/`)
+    );
   } catch {
     return false;
   }
+}
+
+/**
+ * Validates an attachment URL on the wire: either a local `/api/files/...`
+ * path (with or without `basePath`) or an absolute `http(s)` URL. Relative
+ * paths are rejected so they can never reach the AI SDK's `new URL()` call
+ * during model-message conversion.
+ */
+export function isValidAttachmentUrl(url: string): boolean {
+  if (isLocalFileUrl(url)) {
+    return true;
+  }
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    return false;
+  }
+  return parsed.protocol === "http:" || parsed.protocol === "https:";
 }
 
 /**
@@ -183,7 +208,13 @@ export async function resolveAttachmentParts(
             filePart.mediaType
           );
           if (dataUrl === null) {
-            return part;
+            // Local file couldn't be read (e.g. deleted since upload). Don't
+            // forward a bare relative URL to the model — the AI SDK would
+            // throw on `new URL(relative)`. Send an inline note instead.
+            return {
+              text: `<attachment name="${filePart.name ?? filePart.filename ?? "file"}">[unreadable]</attachment>`,
+              type: "text" as const,
+            };
           }
 
           // Text-like files → inline text part (works on every model).

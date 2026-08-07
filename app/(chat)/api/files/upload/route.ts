@@ -58,13 +58,13 @@ export async function POST(request: Request) {
       const filePath = join(uploadDir, safeName);
       await writeFile(filePath, fileBuffer);
 
-      const baseUrl =
-        process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+      const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
       return NextResponse.json({
         contentType: file.type,
+        name: filename.slice(0, 100),
         pathname: safeName,
         size: fileBuffer.length,
-        url: `${baseUrl}/api/files/${safeName}`,
+        url: `${basePath}/api/files/${safeName}`,
       });
     } catch {
       return NextResponse.json({ error: "Upload failed" }, { status: 500 });

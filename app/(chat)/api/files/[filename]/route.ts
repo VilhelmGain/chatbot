@@ -4,6 +4,25 @@ import { NextResponse } from "next/server";
 
 const UPLOAD_DIR = process.env.UPLOAD_DIR ?? "./uploads";
 
+const CONTENT_TYPES: Record<string, string> = {
+  csv: "text/csv",
+  gif: "image/gif",
+  html: "text/html",
+  jpeg: "image/jpeg",
+  jpg: "image/jpeg",
+  js: "text/javascript",
+  json: "application/json",
+  md: "text/markdown",
+  pdf: "application/pdf",
+  png: "image/png",
+  ts: "text/x-typescript",
+  txt: "text/plain",
+  webp: "image/webp",
+  xml: "application/xml",
+  yaml: "application/yaml",
+  yml: "application/yaml",
+};
+
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ filename: string }> }
@@ -14,8 +33,8 @@ export async function GET(
 
   try {
     const data = await readFile(filePath);
-    const ext = safeName.split(".").pop()?.toLowerCase();
-    const contentType = ext === "png" ? "image/png" : "image/jpeg";
+    const ext = safeName.split(".").pop()?.toLowerCase() ?? "";
+    const contentType = CONTENT_TYPES[ext] ?? "application/octet-stream";
     return new Response(data, {
       headers: {
         "Cache-Control": "public, max-age=86400",
