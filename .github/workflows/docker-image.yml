@@ -28,6 +28,10 @@ jobs:
           context: .
           # Pushes to Docker Hub on 'push' events, but only builds/tests on 'pull_request'
           push: ${{ github.event_name != 'pull_request' }}
+          # NEXT_PUBLIC_* vars are inlined at build time; inject the public URL so
+          # metadataBase resolves correctly in the deployed image.
+          build-args: |
+            NEXT_PUBLIC_APP_URL=${{ vars.NEXT_PUBLIC_APP_URL }}
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/chat:latest
             ${{ secrets.DOCKERHUB_USERNAME }}/chat:${{ github.sha }}

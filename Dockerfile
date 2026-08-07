@@ -13,6 +13,11 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
+# NEXT_PUBLIC_* vars are inlined at build time; pass the public URL so
+# metadataBase resolves correctly in the deployed image.
+ARG NEXT_PUBLIC_APP_URL
+ENV NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL}
+
 # Mount Next.js build cache for faster rebuilds
 RUN --mount=type=cache,target=/app/.next/cache \
     pnpm build
