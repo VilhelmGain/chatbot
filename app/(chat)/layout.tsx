@@ -16,6 +16,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         src="https://cdn.jsdelivr.net/pyodide/v0.23.4/full/pyodide.js"
         strategy="lazyOnload"
       />
+      <Toaster
+        position="top-center"
+        theme="system"
+        toastOptions={{
+          className:
+            "!bg-card !text-foreground !border-border/50 !shadow-[var(--shadow-float)]",
+        }}
+      />
       <DataStreamProvider>
         <Suspense fallback={<div className="flex h-dvh bg-sidebar" />}>
           <SidebarShell>{children}</SidebarShell>
@@ -33,14 +41,6 @@ async function SidebarShell({ children }: { children: React.ReactNode }) {
     <SidebarProvider defaultOpen={!isCollapsed}>
       <AppSidebar user={session?.user} />
       <SidebarInset>
-        <Toaster
-          position="top-center"
-          theme="system"
-          toastOptions={{
-            className:
-              "!bg-card !text-foreground !border-border/50 !shadow-[var(--shadow-float)]",
-          }}
-        />
         <Suspense fallback={<div className="flex h-dvh" />}>
           <ActiveChatProvider>
             <ChatShellWrapper />
