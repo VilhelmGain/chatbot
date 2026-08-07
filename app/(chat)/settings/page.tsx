@@ -6,6 +6,7 @@ import { useTheme } from "next-themes";
 import { useCallback, useEffect, useState } from "react";
 import useSWR from "swr";
 import { toast } from "@/components/chat/toast";
+import { ExportChats } from "@/components/settings/export-chats";
 import { ModelManager } from "@/components/settings/model-manager";
 import { ProviderCard } from "@/components/settings/provider-card";
 import { ProviderForm } from "@/components/settings/provider-form";
@@ -129,6 +130,8 @@ export default function SettingsPage() {
           </p>
         </div>
       </div>
+
+      <ExportChats />
 
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-medium">Custom Providers</h2>
