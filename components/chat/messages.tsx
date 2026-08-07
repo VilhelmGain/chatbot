@@ -22,6 +22,7 @@ type MessagesProps = {
   isLoading?: boolean;
   selectedModelId: string;
   onEditMessage?: (message: ChatMessage) => void;
+  onForkMessage?: (message: ChatMessage) => void;
 };
 
 function PureMessages({
@@ -37,6 +38,7 @@ function PureMessages({
   isLoading,
   selectedModelId: _selectedModelId,
   onEditMessage,
+  onForkMessage,
 }: MessagesProps) {
   const {
     containerRef: messagesContainerRef,
@@ -90,6 +92,7 @@ function PureMessages({
               key={message.id}
               message={message}
               onEdit={onEditMessage}
+              onFork={onForkMessage}
               regenerate={regenerate}
               requiresScrollPadding={
                 hasSentMessage && index === messages.length - 1

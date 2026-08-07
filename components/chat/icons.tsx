@@ -1111,6 +1111,29 @@ export const LineChartIcon = ({ size = 16 }: { size?: number }) => (
   </svg>
 );
 
+export const GitForkIcon = ({ size = 16 }: { size?: number }) => (
+  <svg
+    fill="none"
+    height={size}
+    stroke="currentColor"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    strokeWidth="1.5"
+    style={{ color: "currentcolor" }}
+    viewBox="0 0 16 16"
+    width={size}
+  >
+    <circle cx="8" cy="3" r="1.75" />
+    <circle cx="3.5" cy="8" r="1.75" />
+    <circle cx="12.5" cy="8" r="1.75" />
+    <circle cx="8" cy="13" r="1.75" />
+    <path d="M8 4.75V8" />
+    <path d="M5.25 8H8" />
+    <path d="M8 8H10.75" />
+    <path d="M8 9.75V11.25" />
+  </svg>
+);
+
 export const WarningIcon = ({ size = 16 }: { size?: number }) => (
   <svg
     height={size}

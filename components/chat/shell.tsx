@@ -1,6 +1,9 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
+import { forkChat } from "@/app/(chat)/actions";
 import { useActiveChat } from "@/hooks/use-active-chat";
 import {
   initialArtifactData,
@@ -92,6 +95,26 @@ export function ChatShell() {
     setInput("");
   }, [editingMessage, input, regenerate, setInput, setMessages]);
 
+  const router = useRouter();
+
+  const handleForkMessage = useCallback(
+    async (msg: ChatMessage) => {
+      try {
+        const { chatId: forkedChatId } = await forkChat({
+          branchMessageId: msg.id,
+          chatId,
+        });
+        router.push(
+          `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/chat/${forkedChatId}`
+        );
+      } catch (error) {
+        console.error("Failed to fork conversation:", error);
+        toast.error("Failed to fork conversation.");
+      }
+    },
+    [chatId, router]
+  );
+
   return (
     <>
       <div className="flex h-dvh w-full flex-row overflow-hidden">
@@ -116,6 +139,7 @@ export function ChatShell() {
               isReadonly={isReadonly}
               messages={messages}
               onEditMessage={handleEditMessage}
+              onForkMessage={handleForkMessage}
               regenerate={regenerate}
               selectedModelId={currentModelId}
               setMessages={setMessages}

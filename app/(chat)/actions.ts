@@ -10,9 +10,12 @@ import {
   deleteMessagesByChatIdAfterTimestamp,
   getChatById,
   getMessageById,
+  getMessagesByChatId,
+  saveChat,
+  saveMessages,
   updateChatVisibilityById,
 } from "@/lib/db/queries";
-import { getTextFromMessage } from "@/lib/utils";
+import { generateUUID, getTextFromMessage } from "@/lib/utils";
 
 export async function saveChatModelAsCookie(model: string) {
   const cookieStore = await cookies();
@@ -111,4 +114,53 @@ export async function updateChatVisibility({
   }
 
   await updateChatVisibilityById({ chatId, visibility });
+}
+
+export async function forkChat({
+  chatId,
+  branchMessageId,
+}: {
+  chatId: string;
+  branchMessageId: string;
+}) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    throw new Error("Unauthorized");
+  }
+
+  const [sourceChat, messages] = await Promise.all([
+    getChatById({ id: chatId }),
+    getMessagesByChatId({ id: chatId }),
+  ]);
+
+  if (!sourceChat || sourceChat.userId !== session.user.id) {
+    throw new Error("Unauthorized");
+  }
+
+  const branchIndex = messages.findIndex(
+    (currentMessage) => currentMessage.id === branchMessageId
+  );
+  if (branchIndex === -1) {
+    throw new Error("Message not found");
+  }
+
+  const forkedChatId = generateUUID();
+
+  await saveChat({
+    id: forkedChatId,
+    title: sourceChat.title,
+    userId: session.user.id,
+    visibility: sourceChat.visibility,
+  });
+
+  const messagesToCopy = messages.slice(0, branchIndex + 1);
+  await saveMessages({
+    messages: messagesToCopy.map((currentMessage) => ({
+      ...currentMessage,
+      chatId: forkedChatId,
+      id: generateUUID(),
+    })),
+  });
+
+  return { chatId: forkedChatId };
 }
