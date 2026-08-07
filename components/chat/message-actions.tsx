@@ -9,7 +9,13 @@ import {
   MessageAction as Action,
   MessageActions as Actions,
 } from "../ai-elements/message";
-import { CopyIcon, PencilEditIcon, ThumbDownIcon, ThumbUpIcon } from "./icons";
+import {
+  CopyIcon,
+  GitForkIcon,
+  PencilEditIcon,
+  ThumbDownIcon,
+  ThumbUpIcon,
+} from "./icons";
 
 export function PureMessageActions({
   chatId,
@@ -17,12 +23,14 @@ export function PureMessageActions({
   vote,
   isLoading,
   onEdit,
+  onFork,
 }: {
   chatId: string;
   message: ChatMessage;
   vote: Vote | undefined;
   isLoading: boolean;
   onEdit?: () => void;
+  onFork?: () => void;
 }) {
   const { mutate } = useSWRConfig();
   const [_, copyToClipboard] = useCopyToClipboard();
@@ -172,6 +180,17 @@ export function PureMessageActions({
       >
         <CopyIcon />
       </Action>
+
+      {onFork ? (
+        <Action
+          className="text-muted-foreground/50 hover:text-foreground"
+          data-testid="message-fork"
+          onClick={onFork}
+          tooltip="Fork conversation"
+        >
+          <GitForkIcon />
+        </Action>
+      ) : null}
 
       <Action
         className="text-muted-foreground/50 hover:text-foreground"
