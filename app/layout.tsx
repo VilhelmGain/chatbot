@@ -7,11 +7,11 @@ import "./globals.css";
 import { SessionProvider } from "next-auth/react";
 
 export const metadata: Metadata = {
-  description: "Self-hosted AI chatbot.",
+  description: "Bring your own key AI Chat",
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"
   ),
-  title: "AI Chatbot",
+  title: "Visbyr Chat",
 };
 
 export const viewport = {
