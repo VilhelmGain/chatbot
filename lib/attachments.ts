@@ -135,7 +135,9 @@ export async function localFileUrlToDataUrl(
     return null;
   }
 
-  const filename = sanitizeFilename(basename(new URL(url as string).pathname));
+  const filename = sanitizeFilename(
+    basename(new URL(url as string, "http://local.invalid").pathname)
+  );
   if (!filename) {
     return null;
   }
