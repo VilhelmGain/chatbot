@@ -239,6 +239,26 @@ export async function getAllChatsByUserId({ userId }: { userId: string }) {
   }
 }
 
+export async function getAllMessagesByUserId({ userId }: { userId: string }) {
+  try {
+    return await db
+      .select({
+        chatId: message.chatId,
+        chatTitle: chat.title,
+        createdAt: message.createdAt,
+        id: message.id,
+        parts: message.parts,
+        role: message.role,
+      })
+      .from(message)
+      .innerJoin(chat, eq(message.chatId, chat.id))
+      .where(eq(chat.userId, userId))
+      .orderBy(asc(message.createdAt));
+  } catch (error) {
+    throw new ChatbotError("bad_request:database", { cause: error });
+  }
+}
+
 export async function getChatById({ id }: { id: string }) {
   try {
     const [selectedChat] = await db.select().from(chat).where(eq(chat.id, id));

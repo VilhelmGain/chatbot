@@ -158,7 +158,7 @@ export async function localFileUrlToDataUrl(
  * Sanitize a filename to match the upload route's `safeName` rules, so we read
  * exactly what was written (defensive against path traversal).
  */
-function sanitizeFilename(name: string): string {
+export function sanitizeFilename(name: string): string {
   return name.replace(/[^a-zA-Z0-9._-]/g, "_");
 }
 
