@@ -803,7 +803,7 @@ export async function getCustomModelsByProviderId({
       .select()
       .from(customModel)
       .where(eq(customModel.providerId, providerId))
-      .orderBy(asc(customModel.createdAt));
+      .orderBy(asc(customModel.name), asc(customModel.modelId));
   } catch (error) {
     throw new ChatbotError("bad_request:database", { cause: error });
   }

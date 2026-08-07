@@ -38,9 +38,13 @@ export function TitleModelSelector() {
     fetcher
   );
 
-  const [selected, setSelected] = useState<string>(
-    () => getClientCookie("title-model") ?? ""
-  );
+  const [selected, setSelected] = useState<string>("");
+
+  useEffect(() => {
+    // document is unavailable during SSR; read the cookie once the client
+    // has hydrated.
+    setSelected(getClientCookie("title-model") ?? "");
+  }, []);
 
   const handleChange = useCallback((value: string) => {
     setSelected(value);
