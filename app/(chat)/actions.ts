@@ -4,11 +4,20 @@ import { generateText, type UIMessage } from "ai";
 import { cookies } from "next/headers";
 import { auth } from "@/app/(auth)/auth";
 import type { VisibilityType } from "@/components/chat/visibility-selector";
+import {
+  getCustomCapabilitiesForUser,
+  type ReasoningEffort,
+} from "@/lib/ai/models";
 import { titlePrompt } from "@/lib/ai/prompts";
-import { getLanguageModel } from "@/lib/ai/providers";
+import {
+  getCustomProviderOptionsKey,
+  getLanguageModel,
+  isOpenAICompatibleProvider,
+} from "@/lib/ai/providers";
 import {
   deleteMessagesByChatIdAfterTimestamp,
   getChatById,
+  getCustomProviderById,
   getMessageById,
   getMessagesByChatId,
   saveChat,
@@ -39,29 +48,82 @@ async function getTitleModelId(): Promise<string | undefined> {
   return cookieStore.get("title-model")?.value;
 }
 
+async function getTitleReasoningEffort(): Promise<ReasoningEffort | undefined> {
+  const cookieStore = await cookies();
+  const value = cookieStore.get("title-reasoning-effort")?.value;
+  return value && value !== "default" ? (value as ReasoningEffort) : undefined;
+}
+
 export async function generateTitleFromUserMessage({
   message,
   chatModelId,
+  reasoningEffort,
+  userId,
 }: {
   message: UIMessage;
   chatModelId?: string;
+  reasoningEffort?: ReasoningEffort;
+  userId?: string;
 }) {
   try {
     const titleModelId = await getTitleModelId();
-    const model = titleModelId
-      ? await getLanguageModel(titleModelId)
-      : chatModelId
-        ? await getLanguageModel(chatModelId)
-        : null;
+    const titleReasoningEffort = await getTitleReasoningEffort();
 
+    const usesTitleModel = Boolean(titleModelId);
+    const modelId = titleModelId || chatModelId;
+    if (!modelId) {
+      return "New chat";
+    }
+
+    const model = await getLanguageModel(modelId);
     if (!model) {
       return "New chat";
+    }
+
+    // When no explicit title model is set, fall back to the active chat model
+    // and honor the reasoning effort sent with the chat request.
+    const effort = usesTitleModel ? titleReasoningEffort : reasoningEffort;
+
+    let reasoningValue:
+      | "none"
+      | "minimal"
+      | "low"
+      | "medium"
+      | "high"
+      | "xhigh"
+      | undefined;
+    let providerOptions:
+      | Record<string, { reasoningEffort: string }>
+      | undefined;
+
+    if (effort && effort !== "default") {
+      const capabilities = userId
+        ? await getCustomCapabilitiesForUser(userId)
+        : undefined;
+      const isReasoningModel = capabilities?.[modelId]?.reasoning === true;
+
+      if (isReasoningModel) {
+        if (effort !== "max") {
+          reasoningValue = effort;
+        }
+        const providerId = modelId.split("/")[0].slice(7);
+        const provider = await getCustomProviderById({ id: providerId });
+        if (provider && isOpenAICompatibleProvider(provider)) {
+          providerOptions = {
+            [getCustomProviderOptionsKey(provider)]: {
+              reasoningEffort: effort,
+            },
+          };
+        }
+      }
     }
 
     const { text } = await generateText({
       instructions: titlePrompt,
       model,
       prompt: getTextFromMessage(message),
+      ...(reasoningValue ? { reasoning: reasoningValue } : {}),
+      ...(providerOptions ? { providerOptions } : {}),
     });
 
     return text
