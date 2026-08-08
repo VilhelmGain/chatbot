@@ -1,15 +1,12 @@
 import Link from "next/link";
 import { memo, useCallback } from "react";
+import { toast } from "sonner";
 import { useChatVisibility } from "@/hooks/use-chat-visibility";
 import type { Chat } from "@/lib/db/schema";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuPortal,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 import {
@@ -17,14 +14,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "../ui/sidebar";
-import {
-  CheckCircleFillIcon,
-  GlobeIcon,
-  LockIcon,
-  MoreHorizontalIcon,
-  ShareIcon,
-  TrashIcon,
-} from "./icons";
+import { LockIcon, MoreHorizontalIcon, ShareIcon, TrashIcon } from "./icons";
 
 const PureChatItem = ({
   chat,
@@ -45,12 +35,20 @@ const PureChatItem = ({
     setOpenMobile(false);
   }, [setOpenMobile]);
 
+  const handleShare = useCallback(async () => {
+    setVisibilityType("public");
+    const shareUrl = `${window.location.origin}${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/chat/${chat.id}`;
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      toast.success("Link copied to clipboard");
+    } catch {
+      toast.error("Failed to copy link");
+    }
+  }, [chat.id, setVisibilityType]);
+
   const handleSetPrivate = useCallback(() => {
     setVisibilityType("private");
-  }, [setVisibilityType]);
-
-  const handleSetPublic = useCallback(() => {
-    setVisibilityType("public");
+    toast.success("Chat is now private");
   }, [setVisibilityType]);
 
   const handleDelete = useCallback(() => {
@@ -81,39 +79,19 @@ const PureChatItem = ({
         </DropdownMenuTrigger>
 
         <DropdownMenuContent align="end" side="bottom">
-          <DropdownMenuSub>
-            <DropdownMenuSubTrigger className="cursor-pointer">
-              <ShareIcon />
-              <span>Share</span>
-            </DropdownMenuSubTrigger>
-            <DropdownMenuPortal>
-              <DropdownMenuSubContent>
-                <DropdownMenuItem
-                  className="cursor-pointer flex-row justify-between"
-                  onClick={handleSetPrivate}
-                >
-                  <div className="flex flex-row items-center gap-2">
-                    <LockIcon size={12} />
-                    <span>Private</span>
-                  </div>
-                  {visibilityType === "private" ? (
-                    <CheckCircleFillIcon />
-                  ) : null}
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  className="cursor-pointer flex-row justify-between"
-                  onClick={handleSetPublic}
-                >
-                  <div className="flex flex-row items-center gap-2">
-                    <GlobeIcon />
-                    <span>Public</span>
-                  </div>
-                  {visibilityType === "public" ? <CheckCircleFillIcon /> : null}
-                </DropdownMenuItem>
-              </DropdownMenuSubContent>
-            </DropdownMenuPortal>
-          </DropdownMenuSub>
-
+          <DropdownMenuItem className="cursor-pointer" onClick={handleShare}>
+            <ShareIcon />
+            <span>Share</span>
+          </DropdownMenuItem>
+          {visibilityType === "public" && (
+            <DropdownMenuItem
+              className="cursor-pointer"
+              onClick={handleSetPrivate}
+            >
+              <LockIcon />
+              <span>Make private</span>
+            </DropdownMenuItem>
+          )}
           <DropdownMenuItem onSelect={handleDelete} variant="destructive">
             <TrashIcon />
             <span>Delete</span>
