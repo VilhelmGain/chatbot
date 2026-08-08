@@ -195,6 +195,8 @@ export async function POST(request: Request) {
       titlePromise = generateTitleFromUserMessage({
         chatModelId: chatModel,
         message,
+        reasoningEffort,
+        userId: session.user.id,
       });
     }
 

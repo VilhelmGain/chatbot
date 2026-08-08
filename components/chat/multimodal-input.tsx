@@ -904,11 +904,15 @@ function PureModelSelectorCompact({
   onModelChange,
   reasoningEffort,
   setReasoningEffort,
+  defaultLabel,
+  modelCookieName = "chat-model",
 }: {
   selectedModelId: string;
   onModelChange?: (modelId: string) => void;
   reasoningEffort: ReasoningEffort;
   setReasoningEffort: (effort: ReasoningEffort) => void;
+  defaultLabel?: string;
+  modelCookieName?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [pendingModelId, setPendingModelId] = useState<string | null>(null);
@@ -926,11 +930,18 @@ function PureModelSelectorCompact({
   const providerNames: Record<string, string> = modelsData?.providerNames ?? {};
   const activeModels = dynamicModels ?? [];
 
-  const selectedModel =
-    activeModels.find((m: ChatModel) => m.id === selectedModelId) ??
-    activeModels[0];
-  const provider =
-    selectedModel?.providerKey ?? selectedModel?.id.split("/")[0];
+  const isDefaultSelected =
+    defaultLabel !== undefined &&
+    (selectedModelId === "" ||
+      !activeModels.some((m: ChatModel) => m.id === selectedModelId));
+
+  const selectedModel = isDefaultSelected
+    ? null
+    : (activeModels.find((m: ChatModel) => m.id === selectedModelId) ??
+      activeModels[0]);
+  const provider = selectedModel
+    ? (selectedModel.providerKey ?? selectedModel.id.split("/")[0])
+    : undefined;
   const pendingModel = activeModels.find(
     (model: ChatModel) => model.id === pendingModelId
   );
@@ -950,13 +961,13 @@ function PureModelSelectorCompact({
     (modelId: string, effort: ReasoningEffort) => {
       onModelChange?.(modelId);
       setReasoningEffort(effort);
-      setCookie("chat-model", modelId);
+      setCookie(modelCookieName, modelId);
       setOpen(false);
       setPendingModelId(null);
       setDraftReasoningEffort("default");
       focusChatInput();
     },
-    [focusChatInput, onModelChange, setReasoningEffort]
+    [focusChatInput, modelCookieName, onModelChange, setReasoningEffort]
   );
 
   const handleModelSelect = useCallback(
@@ -986,6 +997,10 @@ function PureModelSelectorCompact({
     }
   }, []);
 
+  const handleDefaultSelect = useCallback(() => {
+    commitModel("", "default");
+  }, [commitModel]);
+
   if (isLoading) {
     return (
       <Button
@@ -1013,10 +1028,11 @@ function PureModelSelectorCompact({
     );
   }
 
-  const selectedModelName =
-    reasoningEffort === "default"
+  const selectedModelName = selectedModel
+    ? reasoningEffort === "default"
       ? selectedModel.name
-      : `${selectedModel.name} (${reasoningEffort})`;
+      : `${selectedModel.name} (${reasoningEffort})`
+    : null;
 
   return (
     <ModelSelector onOpenChange={handleOpenChange} open={open}>
@@ -1026,16 +1042,39 @@ function PureModelSelectorCompact({
           data-testid="model-selector"
           variant="ghost"
         >
-          {provider ? <ModelSelectorLogo provider={provider} /> : null}
-          <ModelSelectorName>{selectedModelName}</ModelSelectorName>
+          {isDefaultSelected ? (
+            <ModelSelectorName>{defaultLabel}</ModelSelectorName>
+          ) : (
+            <>
+              {provider ? <ModelSelectorLogo provider={provider} /> : null}
+              <ModelSelectorName>{selectedModelName}</ModelSelectorName>
+            </>
+          )}
         </Button>
       </ModelSelectorTrigger>
       <ModelSelectorContent
         className="w-[min(360px,calc(100vw-24px))]"
-        commandDefaultValue={selectedModel.id}
+        commandDefaultValue={
+          isDefaultSelected ? "default" : (selectedModel?.id ?? "default")
+        }
       >
         <ModelSelectorInput placeholder="Search models..." />
         <ModelSelectorList>
+          {defaultLabel ? (
+            <ModelSelectorItem
+              aria-current={isDefaultSelected ? "true" : undefined}
+              className={cn(
+                "flex w-full py-2.5 transition-[background-color,color,box-shadow]",
+                "data-[selected=true]:bg-muted data-[selected=true]:text-foreground"
+              )}
+              onSelect={handleDefaultSelect}
+              value="default"
+            >
+              <ModelSelectorName className="flex-1 truncate text-left">
+                {defaultLabel}
+              </ModelSelectorName>
+            </ModelSelectorItem>
+          ) : null}
           {(() => {
             const grouped: Record<string, ChatModel[]> = {};
             for (const model of activeModels) {
@@ -1059,7 +1098,7 @@ function PureModelSelectorCompact({
                       isPending={model.id === pendingModelId}
                       model={model}
                       onSelectModel={handleModelSelect}
-                      selectedModelId={selectedModel.id}
+                      selectedModelId={selectedModel?.id ?? ""}
                     />
                     {model.id === pendingModelId &&
                     pendingReasoningEfforts.length > 1 ? (
@@ -1081,7 +1120,7 @@ function PureModelSelectorCompact({
   );
 }
 
-const ModelSelectorCompact = memo(PureModelSelectorCompact);
+export const ModelSelectorCompact = memo(PureModelSelectorCompact);
 
 function PureStopButton({
   stop,

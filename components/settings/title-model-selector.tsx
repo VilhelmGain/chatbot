@@ -1,86 +1,73 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import useSWR from "swr";
+import { ModelSelectorCompact } from "@/components/chat/multimodal-input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Spinner } from "@/components/ui/spinner";
-
-type ChatModel = {
-  id: string;
-  name: string;
-  provider: string;
-};
-
-const fetcher = (url: string) => fetch(url).then((r) => r.json());
+import type { ReasoningEffort } from "@/lib/ai/models.client";
 
 const COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 365;
 
-function setClientCookie(name: string, value: string) {
+const VALID_REASONING_EFFORTS: ReasoningEffort[] = [
+  "default",
+  "none",
+  "minimal",
+  "low",
+  "medium",
+  "high",
+  "xhigh",
+  "max",
+];
+
+function writeCookie(name: string, value: string) {
   // biome-ignore lint/suspicious/noDocumentCookie: needed for client-side cookie setting
   document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=${COOKIE_MAX_AGE_SECONDS}`;
 }
 
-function getClientCookie(name: string): string | undefined {
+function readCookie(name: string): string | undefined {
   const match = document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]*)`));
   return match ? decodeURIComponent(match[1]) : undefined;
 }
 
 export function TitleModelSelector() {
-  const { data, isLoading } = useSWR<{ models: ChatModel[] }>(
-    `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/api/models`,
-    fetcher
-  );
-
-  const [selected, setSelected] = useState<string>("");
+  const [titleModelId, setTitleModelId] = useState("");
+  const [titleEffort, setTitleEffort] = useState<ReasoningEffort>("default");
 
   useEffect(() => {
-    // document is unavailable during SSR; read the cookie once the client
+    // document is unavailable during SSR; read the cookies once the client
     // has hydrated.
-    setSelected(getClientCookie("title-model") ?? "");
-  }, []);
-
-  const handleChange = useCallback((value: string) => {
-    setSelected(value);
-    setClientCookie("title-model", value);
-  }, []);
-
-  useEffect(() => {
-    const current = getClientCookie("title-model") ?? "";
-    if (current !== selected) {
-      setSelected(current);
+    const cookieModel = readCookie("title-model");
+    if (cookieModel) {
+      setTitleModelId(cookieModel);
     }
-  }, [selected]);
+    const cookieEffort = readCookie("title-reasoning-effort");
+    if (
+      cookieEffort &&
+      (VALID_REASONING_EFFORTS as string[]).includes(cookieEffort)
+    ) {
+      setTitleEffort(cookieEffort as ReasoningEffort);
+    }
+  }, []);
 
-  if (isLoading) {
-    return <Spinner />;
-  }
+  const handleModelChange = useCallback((modelId: string) => {
+    setTitleModelId(modelId);
+  }, []);
 
-  const models = data?.models ?? [];
+  const handleEffortChange = useCallback((effort: ReasoningEffort) => {
+    setTitleEffort(effort);
+    writeCookie("title-reasoning-effort", effort);
+  }, []);
 
   return (
     <div className="flex flex-col gap-2">
-      <Label htmlFor="title-model">Title model</Label>
-      <Select onValueChange={handleChange} value={selected}>
-        <SelectTrigger id="title-model">
-          <SelectValue placeholder="Use active chat model" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="">Use active chat model</SelectItem>
-          {models.map((model) => (
-            <SelectItem key={model.id} value={model.id}>
-              {model.name}{" "}
-              <span className="text-muted-foreground">({model.provider})</span>
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      <Label>Title model</Label>
+      <ModelSelectorCompact
+        defaultLabel="Use active chat model"
+        modelCookieName="title-model"
+        onModelChange={handleModelChange}
+        reasoningEffort={titleEffort}
+        selectedModelId={titleModelId}
+        setReasoningEffort={handleEffortChange}
+      />
       <p className="text-xs text-muted-foreground">
         Model used to generate chat titles. If not set, the active chat model is
         used.
