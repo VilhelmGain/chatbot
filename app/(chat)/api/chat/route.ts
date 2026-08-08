@@ -5,6 +5,7 @@ import {
   isStepCount,
   streamText,
   toUIMessageStream,
+  type UIMessage,
 } from "ai";
 import { after } from "next/server";
 import { createResumableStreamContext } from "resumable-stream";
@@ -45,7 +46,11 @@ import { ChatbotError } from "@/lib/errors";
 import { checkIpRateLimit } from "@/lib/ratelimit";
 import { getClientIp, getRequestHints } from "@/lib/server/request-utils";
 import type { ChatMessage, WaitingStatusData } from "@/lib/types";
-import { convertToUIMessages, generateUUID } from "@/lib/utils";
+import {
+  convertToUIMessages,
+  generateUUID,
+  getTextFromMessage,
+} from "@/lib/utils";
 import { generateTitleFromUserMessage } from "../../actions";
 import { type PostRequestBody, postRequestBodySchema } from "./schema";
 
@@ -82,6 +87,18 @@ function getStreamErrorMessage(error: unknown): string {
 function isModelStreamActivity(chunk: { type: string }) {
   return !["start", "start-step", "finish-step", "finish", "raw"].includes(
     chunk.type
+  );
+}
+
+function hasMessageContent(message: ChatMessage | UIMessage): boolean {
+  return (
+    getTextFromMessage(message).length > 0 ||
+    message.parts.some(
+      (part) =>
+        part.type === "reasoning" ||
+        part.type === "tool-invocation" ||
+        part.type === "file"
+    )
   );
 }
 
@@ -335,6 +352,7 @@ export async function POST(request: Request) {
             : undefined;
 
         const result = streamText({
+          abortSignal: request.signal,
           activeTools: supportsTools
             ? [
                 "getWeather",
@@ -409,7 +427,17 @@ export async function POST(request: Request) {
         }
       },
       generateId: generateUUID,
-      onEnd: async ({ messages: finishedMessages }) => {
+      onEnd: async ({
+        isAborted,
+        messages: finishedMessages,
+        responseMessage,
+      }) => {
+        if (isAborted) {
+          const abortedMessage = responseMessage ?? finishedMessages.at(-1);
+          if (!abortedMessage || !hasMessageContent(abortedMessage)) {
+            return;
+          }
+        }
         if (isToolApprovalFlow) {
           await Promise.all(
             finishedMessages.map(async (finishedMsg) => {
