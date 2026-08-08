@@ -124,11 +124,7 @@ export function ChatShell() {
             isArtifactVisible ? "w-[40%]" : "w-full"
           )}
         >
-          <ChatHeader
-            chatId={chatId}
-            isReadonly={isReadonly}
-            selectedVisibilityType={visibilityType}
-          />
+          <ChatHeader />
 
           <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden bg-background md:rounded-tl-[12px] md:border-t md:border-l md:border-border/40">
             <Messages

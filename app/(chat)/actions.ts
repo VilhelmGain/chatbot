@@ -3,7 +3,6 @@
 import { generateText, type UIMessage } from "ai";
 import { cookies } from "next/headers";
 import { auth } from "@/app/(auth)/auth";
-import type { VisibilityType } from "@/components/chat/visibility-selector";
 import {
   getCustomCapabilitiesForUser,
   type ReasoningEffort,
@@ -24,6 +23,7 @@ import {
   saveMessages,
   updateChatVisibilityById,
 } from "@/lib/db/queries";
+import type { VisibilityType } from "@/lib/types";
 import { generateUUID, getTextFromMessage } from "@/lib/utils";
 
 export async function saveChatModelAsCookie(model: string) {

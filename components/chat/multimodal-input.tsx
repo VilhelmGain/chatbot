@@ -43,7 +43,7 @@ import type {
   ModelCapabilities,
   ReasoningEffort,
 } from "@/lib/ai/models.client";
-import type { Attachment, ChatMessage } from "@/lib/types";
+import type { Attachment, ChatMessage, VisibilityType } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import {
   PromptInput,
@@ -63,7 +63,6 @@ import {
   slashCommands,
 } from "./slash-commands";
 import { SuggestedActions } from "./suggested-actions";
-import type { VisibilityType } from "./visibility-selector";
 
 function setCookie(name: string, value: string) {
   const maxAge = 60 * 60 * 24 * 365;

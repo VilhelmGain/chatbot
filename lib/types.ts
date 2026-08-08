@@ -7,6 +7,8 @@ import type { requestSuggestions } from "./ai/tools/request-suggestions";
 import type { updateDocument } from "./ai/tools/update-document";
 import type { Suggestion } from "./db/schema";
 
+export type VisibilityType = "private" | "public";
+
 export const messageMetadataSchema = z.object({
   createdAt: z.string(),
 });
