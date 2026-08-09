@@ -9,7 +9,7 @@ A multi-provider AI chatbot built with Next.js, the AI SDK, and Drizzle ORM. Sup
 - **AI:** [AI SDK](https://ai-sdk.dev) v7 with streaming, tool use, and reasoning effort control
 - **Database:** Postgres via [Drizzle ORM](https://orm.drizzle.team)
 - **Cache:** Redis (optional — rate limiting and stream resumption)
-- **Auth:** [NextAuth.js](https://authjs.dev) v5 (credentials + guest sessions)
+- **Auth:** [Clerk](https://clerk.com) (hosted sign-in; chat requires a signed-in account)
 - **Artifacts:** In-app code, spreadsheet, image, and text artifacts
 
 ## Prerequisites
@@ -37,7 +37,10 @@ Required variables:
 
 | Variable | Description |
 |---|---|
-| `AUTH_SECRET` | Random secret for NextAuth (`openssl rand -base64 32`) |
+| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk publishable key (dashboard.clerk.com) |
+| `CLERK_SECRET_KEY` | Clerk secret key |
+| `NEXT_PUBLIC_CLERK_SIGN_IN_URL` / `NEXT_PUBLIC_CLERK_SIGN_UP_URL` | Clerk hosted sign-in/up page URLs |
+| `ENCRYPTION_KEY` | Random secret for encrypting provider API keys (`openssl rand -base64 32`) |
 | `POSTGRES_URL` | Postgres connection string |
 | `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` / `GOOGLE_API_KEY` / `XAI_API_KEY` | At least one provider key |
 
@@ -46,7 +49,7 @@ Optional:
 | Variable | Description |
 |---|---|
 | `REDIS_URL` | Enables rate limiting and stream resumption |
-| `MAX_MESSAGES_PER_HOUR` | Rate limit for logged-in users (guests: 10/hour) |
+| `MAX_MESSAGES_PER_HOUR` | Rate limit for logged-in users (0 or unset = unlimited) |
 
 ### 3. Run database migrations
 
@@ -107,7 +110,7 @@ pnpm test
 
 ```
 app/(chat)/         # Chat UI and API routes
-app/(auth)/         # Authentication (NextAuth.js)
+app/(auth)/auth.ts  # Session helper (Clerk-backed, mocked under Playwright)
 lib/ai/             # Model catalog, providers, prompts, tools
 lib/db/             # Drizzle schema, migrations, queries
 lib/artifacts/      # Artifact rendering (code, sheet, image, text)

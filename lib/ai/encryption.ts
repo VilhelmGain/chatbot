@@ -5,9 +5,9 @@ import crypto from "node:crypto";
 const ALGORITHM = "aes-256-gcm";
 
 function getKey(): Buffer {
-  const secret = process.env.AUTH_SECRET;
+  const secret = process.env.ENCRYPTION_KEY;
   if (!secret) {
-    throw new Error("AUTH_SECRET is required for API key encryption");
+    throw new Error("ENCRYPTION_KEY is required for API key encryption");
   }
   return crypto.createHash("sha256").update(secret).digest();
 }

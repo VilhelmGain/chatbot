@@ -1,99 +1,59 @@
-import { compare } from "bcrypt-ts";
-import NextAuth, { type DefaultSession } from "next-auth";
-import type { DefaultJWT } from "next-auth/jwt";
-import Credentials from "next-auth/providers/credentials";
-import { DUMMY_PASSWORD } from "@/lib/constants";
-import { createGuestUser, getUser } from "@/lib/db/queries";
-import { authConfig } from "./auth.config";
+import { auth as clerkAuth, currentUser } from "@clerk/nextjs/server";
+import { cookies } from "next/headers";
+import { isTestEnvironment } from "@/lib/constants";
+import {
+  createUserFromClerk,
+  getOrCreateUserByEmail,
+  getUserByClerkId,
+} from "@/lib/db/queries";
 
-export type UserType = "guest" | "regular";
+export type User = {
+  id: string;
+  email: string;
+  emailVerified: boolean;
+  image: string | null;
+  name: string | null;
+};
 
-declare module "next-auth" {
-  interface Session extends DefaultSession {
-    user: {
-      id: string;
-      type: UserType;
-    } & DefaultSession["user"];
+export type Session = {
+  user: User;
+};
+
+export async function auth(): Promise<Session | null> {
+  if (isTestEnvironment) {
+    const cookieStore = await cookies();
+    const email = cookieStore.get("test-user")?.value;
+    if (!email) {
+      return null;
+    }
+
+    const dbUser = await getOrCreateUserByEmail(email);
+    return { user: dbUser };
   }
 
-  interface User {
-    email?: string | null;
-    id?: string;
-    type: UserType;
+  const { userId } = await clerkAuth();
+  if (!userId) {
+    return null;
   }
+
+  let dbUser = await getUserByClerkId(userId);
+  if (!dbUser) {
+    const clerkUser = await currentUser();
+    const primaryEmail = clerkUser?.emailAddresses.find(
+      (address) => address.id === clerkUser.primaryEmailAddressId
+    )?.emailAddress;
+    const email = primaryEmail ?? clerkUser?.emailAddresses[0]?.emailAddress;
+
+    dbUser = await createUserFromClerk({
+      clerkId: userId,
+      email: email ?? "",
+      emailVerified: clerkUser?.emailAddresses.some(
+        (address) => address.verification?.status === "verified"
+      ),
+      image: clerkUser?.imageUrl ?? null,
+      name: clerkUser?.fullName ?? null,
+    });
+  }
+
+  return { user: dbUser };
 }
-
-declare module "next-auth/jwt" {
-  interface JWT extends DefaultJWT {
-    id: string;
-    type: UserType;
-  }
-}
-
-export const {
-  handlers: { GET, POST },
-  auth,
-  signIn,
-  signOut,
-} = NextAuth({
-  ...authConfig,
-  callbacks: {
-    jwt({ token, user }) {
-      if (user) {
-        token.id = user.id as string;
-        token.type = user.type;
-      }
-
-      return token;
-    },
-    session({ session, token }) {
-      if (session.user) {
-        session.user.id = token.id;
-        session.user.type = token.type;
-      }
-
-      return session;
-    },
-  },
-  providers: [
-    Credentials({
-      async authorize(credentials) {
-        const email = String(credentials.email ?? "");
-        const password = String(credentials.password ?? "");
-        const users = await getUser(email);
-
-        if (users.length === 0) {
-          await compare(password, DUMMY_PASSWORD);
-          return null;
-        }
-
-        const [user] = users;
-
-        if (!user.password) {
-          await compare(password, DUMMY_PASSWORD);
-          return null;
-        }
-
-        const passwordsMatch = await compare(password, user.password);
-
-        if (!passwordsMatch) {
-          return null;
-        }
-
-        return { ...user, type: "regular" };
-      },
-      credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" },
-      },
-    }),
-    Credentials({
-      async authorize() {
-        const [guestUser] = await createGuestUser();
-        return { ...guestUser, type: "guest" };
-      },
-      credentials: {},
-      id: "guest",
-    }),
-  ],
-});

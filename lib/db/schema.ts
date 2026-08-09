@@ -12,14 +12,13 @@ import {
 } from "drizzle-orm/pg-core";
 
 export const user = pgTable("User", {
+  clerkId: text("clerkId").notNull().unique(),
   createdAt: timestamp("createdAt").notNull().defaultNow(),
   email: varchar("email", { length: 64 }).notNull(),
   emailVerified: boolean("emailVerified").notNull().default(false),
   id: uuid("id").primaryKey().notNull().defaultRandom(),
   image: text("image"),
-  isAnonymous: boolean("isAnonymous").notNull().default(false),
   name: text("name"),
-  password: varchar("password", { length: 64 }),
   updatedAt: timestamp("updatedAt").notNull().defaultNow(),
 });
 

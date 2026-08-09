@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { signIn } from "../helpers";
 
 /**
  * Regression tests for provider settings regressions:
@@ -12,14 +13,9 @@ import { expect, test } from "@playwright/test";
  */
 test.describe("Provider Settings", () => {
   test("test-connection toast is visible in the viewport", async ({ page }) => {
-    const email = `provider-toast-${Date.now()}@example.com`;
-
-    // Register a real user — provider APIs reject guest sessions.
-    await page.goto("/register");
-    await page.fill('input[type="email"]', email);
-    await page.fill('input[type="password"]', "password123");
-    await page.click('button[type="submit"]');
-    await expect(page).toHaveURL(/\/$/);
+    // Sign in as a mock test-mode user (no Clerk needed).
+    await signIn(page);
+    await page.goto("/");
 
     // Create a provider via API. baseURL is unreachable on purpose: we only
     // need the failure toast to be visible.
@@ -47,25 +43,20 @@ test.describe("Provider Settings", () => {
     await page.locator("button[title='Test connection']").click();
     const toast = page.locator("[data-testid=toast]").first();
     await expect(toast).toBeVisible();
-    const box = (await toast.bounding_box()) ?? {
+    const box = (await toast.boundingBox()) ?? {
       height: 0,
       width: 0,
       x: 0,
       y: 0,
     };
-    const viewport = page.viewport_size() ?? { height: 720, width: 1280 };
+    const viewport = page.viewportSize() ?? { height: 720, width: 1280 };
     expect(box.y).toBeGreaterThanOrEqual(0);
     expect(box.y + box.height).toBeLessThanOrEqual(viewport.height);
   });
 
   test("custom models are listed in alphabetical order", async ({ page }) => {
-    const email = `provider-order-${Date.now()}@example.com`;
-
-    await page.goto("/register");
-    await page.fill('input[type="email"]', email);
-    await page.fill('input[type="password"]', "password123");
-    await page.click('button[type="submit"]');
-    await expect(page).toHaveURL(/\/$/);
+    await signIn(page);
+    await page.goto("/");
 
     const provider = await page.evaluate(async () => {
       const response = await fetch("/api/settings/providers", {

@@ -1,14 +1,8 @@
-import type { UserType } from "@/app/(auth)/auth";
-
 type Entitlements = {
   maxMessagesPerHour: number;
 };
 
-function getMaxMessagesPerHour(userType: UserType): number {
-  if (userType === "guest") {
-    return 10;
-  }
-
+function getMaxMessagesPerHour(): number {
   const envValue = process.env.MAX_MESSAGES_PER_HOUR;
   if (envValue === undefined || envValue === "") {
     return 0;
@@ -22,8 +16,8 @@ function getMaxMessagesPerHour(userType: UserType): number {
   return parsed;
 }
 
-export function getEntitlements(userType: UserType): Entitlements {
+export function getEntitlements(): Entitlements {
   return {
-    maxMessagesPerHour: getMaxMessagesPerHour(userType),
+    maxMessagesPerHour: getMaxMessagesPerHour(),
   };
 }

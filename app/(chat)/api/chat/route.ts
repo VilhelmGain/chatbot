@@ -10,7 +10,7 @@ import {
 import { after } from "next/server";
 import { createResumableStreamContext } from "resumable-stream";
 import { z } from "zod";
-import { auth, type UserType } from "@/app/(auth)/auth";
+import { auth } from "@/app/(auth)/auth";
 import { getEntitlements } from "@/lib/ai/entitlements";
 import {
   getCustomCapabilitiesForUser,
@@ -73,7 +73,7 @@ function getStreamErrorMessage(error: unknown): string {
       String(e.message).toLowerCase().includes("decrypt") ||
       String(e.cause).toLowerCase().includes("decrypt")
     ) {
-      return "API key could not be decrypted. If you changed AUTH_SECRET, update the provider's API key in settings.";
+      return "API key could not be decrypted. If you changed ENCRYPTION_KEY, update the provider's API key in settings.";
     }
 
     if (typeof e.message === "string" && e.message.length > 0) {
@@ -159,14 +159,12 @@ export async function POST(request: Request) {
 
     await checkIpRateLimit(getClientIp(request));
 
-    const userType: UserType = session.user.type;
-
     const messageCount = await getMessageCountByUserId({
       differenceInHours: 1,
       id: session.user.id,
     });
 
-    const entitlements = getEntitlements(userType);
+    const entitlements = getEntitlements();
     if (
       entitlements.maxMessagesPerHour > 0 &&
       messageCount > entitlements.maxMessagesPerHour

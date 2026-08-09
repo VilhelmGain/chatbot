@@ -1,8 +1,8 @@
 #!/bin/sh
 set -e
 
-if [ -z "$AUTH_SECRET" ]; then
-  echo "ERROR: AUTH_SECRET is not set. NextAuth requires a secret in production."
+if [ -z "$ENCRYPTION_KEY" ]; then
+  echo "ERROR: ENCRYPTION_KEY is not set. It is required to encrypt provider API keys."
   echo "Generate one with: openssl rand -base64 32"
   exit 1
 fi

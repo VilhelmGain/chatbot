@@ -1,4 +1,9 @@
 import { expect, test } from "@playwright/test";
+import { signIn } from "../helpers";
+
+test.beforeEach(async ({ page }) => {
+  await signIn(page);
+});
 
 test.describe("Chat Page", () => {
   test("home page loads with input field", async ({ page }) => {

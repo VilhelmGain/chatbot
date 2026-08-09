@@ -8,7 +8,7 @@ import {
 export async function GET() {
   const session = await auth();
 
-  if (!session?.user || session.user.type === "guest") {
+  if (!session?.user) {
     return Response.json(
       { capabilities: {}, models: [], providerNames: {} },
       { headers: { "Cache-Control": "public, max-age=300, s-maxage=300" } }

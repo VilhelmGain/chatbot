@@ -40,7 +40,7 @@ export async function GET(
 ) {
   const session = await auth();
 
-  if (!session?.user || session.user.type === "guest") {
+  if (!session?.user) {
     return new ChatbotError("unauthorized:provider").toResponse();
   }
 
@@ -62,7 +62,7 @@ export async function POST(
 ) {
   const session = await auth();
 
-  if (!session?.user || session.user.type === "guest") {
+  if (!session?.user) {
     return new ChatbotError("unauthorized:provider").toResponse();
   }
 
