@@ -11,6 +11,23 @@ export type VisibilityType = "private" | "public";
 
 export const messageMetadataSchema = z.object({
   createdAt: z.string(),
+  modelId: z.string().optional(),
+  modelName: z.string().optional(),
+  outputTokens: z.number().optional(),
+  reasoningEffort: z
+    .enum([
+      "default",
+      "none",
+      "minimal",
+      "low",
+      "medium",
+      "high",
+      "xhigh",
+      "max",
+    ])
+    .optional(),
+  timeToFirstToken: z.number().optional(),
+  tokensPerSecond: z.number().optional(),
 });
 
 export type MessageMetadata = z.infer<typeof messageMetadataSchema>;

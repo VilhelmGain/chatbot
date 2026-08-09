@@ -33,6 +33,7 @@ import {
   createStreamId,
   deleteChatById,
   getChatById,
+  getCustomModelsByProviderId,
   getCustomProviderById,
   getMessageCountByUserId,
   getMessagesByChatId,
@@ -156,6 +157,10 @@ export async function POST(request: Request) {
     if (!provider || provider.userId !== session.user.id) {
       return new ChatbotError("forbidden:chat").toResponse();
     }
+    const selectedModelName =
+      (await getCustomModelsByProviderId({ providerId })).find(
+        (model) => model.modelId === chatModel.split("/").slice(1).join("/")
+      )?.name ?? chatModel;
 
     await checkIpRateLimit(getClientIp(request));
 
@@ -253,6 +258,7 @@ export async function POST(request: Request) {
             chatId: id,
             createdAt: new Date(),
             id: message.id,
+            metadata: {},
             parts: message.parts,
             role: "user",
           },
@@ -266,6 +272,13 @@ export async function POST(request: Request) {
     const capabilities = modelCapabilities[chatModel];
     const isReasoningModel = capabilities?.reasoning === true;
     const supportsTools = capabilities?.tools === true;
+    const responseStartedAt = new Date();
+    const baseMessageMetadata = {
+      createdAt: responseStartedAt.toISOString(),
+      modelId: chatModel,
+      modelName: selectedModelName,
+      reasoningEffort: isReasoningModel ? reasoningEffort : undefined,
+    };
 
     const modelMessages = await convertToModelMessages(
       await resolveAttachmentParts(uiMessages)
@@ -276,9 +289,11 @@ export async function POST(request: Request) {
     const stream = createUIMessageStream({
       execute: async ({ writer: dataStream }) => {
         lastStreamError = null;
-        const modelName = chatModel;
         let hasModelActivity = false;
         let healthCheckTimer: ReturnType<typeof setTimeout> | undefined;
+        let outputTokens = 0;
+        let tokensPerSecond: number | undefined;
+        let timeToFirstToken: number | undefined;
 
         const clearHealthCheckTimer = () => {
           if (healthCheckTimer) {
@@ -297,7 +312,7 @@ export async function POST(request: Request) {
             data: {
               message: messageText,
               modelId: chatModel,
-              modelName,
+              modelName: selectedModelName,
               phase,
             },
             transient: true,
@@ -411,6 +426,33 @@ export async function POST(request: Request) {
 
         dataStream.merge(
           toUIMessageStream({
+            messageMetadata: ({ part }) => {
+              if (part.type === "start") {
+                return baseMessageMetadata;
+              }
+              if (part.type === "finish-step") {
+                outputTokens += part.usage.outputTokens ?? 0;
+                tokensPerSecond =
+                  part.performance.outputTokensPerSecond ??
+                  part.performance.effectiveOutputTokensPerSecond;
+                timeToFirstToken ??= part.performance.timeToFirstOutputMs;
+
+                return {
+                  ...baseMessageMetadata,
+                  outputTokens,
+                  timeToFirstToken,
+                  tokensPerSecond,
+                };
+              }
+              if (part.type === "finish") {
+                return {
+                  ...baseMessageMetadata,
+                  outputTokens: part.totalUsage.outputTokens ?? outputTokens,
+                  timeToFirstToken,
+                  tokensPerSecond,
+                };
+              }
+            },
             sendReasoning: isReasoningModel,
             stream: result.stream,
           })
@@ -447,6 +489,7 @@ export async function POST(request: Request) {
               if (existingMsg) {
                 await updateMessage({
                   id: finishedMsg.id,
+                  metadata: finishedMsg.metadata,
                   parts: finishedMsg.parts,
                 });
                 return;
@@ -459,6 +502,7 @@ export async function POST(request: Request) {
                     chatId: id,
                     createdAt: new Date(),
                     id: finishedMsg.id,
+                    metadata: finishedMsg.metadata ?? {},
                     parts: finishedMsg.parts,
                     role: finishedMsg.role,
                   },
@@ -473,6 +517,7 @@ export async function POST(request: Request) {
               chatId: id,
               createdAt: new Date(),
               id: currentMessage.id,
+              metadata: currentMessage.metadata ?? {},
               parts: currentMessage.parts,
               role: currentMessage.role,
             })),
