@@ -23,7 +23,6 @@ import { getChatHistoryPaginationKey } from "@/components/chat/sidebar-history";
 import { toast } from "@/components/chat/toast";
 import { useAutoResume } from "@/hooks/use-auto-resume";
 import type { ReasoningEffort } from "@/lib/ai/models.client";
-import type { Vote } from "@/lib/db/schema";
 import { ChatbotError } from "@/lib/errors";
 import type { ChatMessage, VisibilityType } from "@/lib/types";
 import { fetcher, fetchWithErrorHandlers, generateUUID } from "@/lib/utils";
@@ -44,7 +43,6 @@ type ActiveChatContextValue = {
   visibilityType: VisibilityType;
   isReadonly: boolean;
   isLoading: boolean;
-  votes: Vote[] | undefined;
   currentModelId: string;
   setCurrentModelId: (id: string) => void;
 };
@@ -279,14 +277,6 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
 
   const isReadonly = isNewChat ? false : (chatData?.isReadonly ?? false);
 
-  const { data: votes } = useSWR<Vote[]>(
-    !isReadonly && messages.length >= 2
-      ? `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/api/vote?chatId=${chatId}`
-      : null,
-    fetcher,
-    { revalidateOnFocus: false }
-  );
-
   const value = useMemo<ActiveChatContextValue>(
     () => ({
       addToolApprovalResponse,
@@ -306,7 +296,6 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
       status,
       stop,
       visibilityType: visibility,
-      votes,
     }),
     [
       chatId,
@@ -324,7 +313,6 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
       isReadonly,
       isNewChat,
       isLoading,
-      votes,
       currentModelId,
     ]
   );

@@ -1,6 +1,5 @@
 import type { UseChatHelpers } from "@ai-sdk/react";
 import { formatDistance } from "date-fns";
-import equal from "fast-deep-equal";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   type Dispatch,
@@ -18,7 +17,7 @@ import { imageArtifact } from "@/artifacts/image/client";
 import { sheetArtifact } from "@/artifacts/sheet/client";
 import { textArtifact } from "@/artifacts/text/client";
 import { useArtifact } from "@/hooks/use-artifact";
-import type { Document, Vote } from "@/lib/db/schema";
+import type { Document } from "@/lib/db/schema";
 import type { Attachment, ChatMessage, VisibilityType } from "@/lib/types";
 import { fetcher } from "@/lib/utils";
 import { useSidebar } from "../ui/sidebar";
@@ -53,7 +52,6 @@ export type UIArtifact = {
 
 function PureArtifact({
   addToolApprovalResponse: _addToolApprovalResponse,
-  chatId: _chatId,
   input: _input,
   setInput: _setInput,
   status,
@@ -64,13 +62,11 @@ function PureArtifact({
   messages: _messages,
   setMessages,
   regenerate: _regenerate,
-  votes: _votes,
   isReadonly: _isReadonly,
   selectedVisibilityType: _selectedVisibilityType,
   selectedModelId: _selectedModelId,
 }: {
   addToolApprovalResponse: UseChatHelpers<ChatMessage>["addToolApprovalResponse"];
-  chatId: string;
   input: string;
   setInput: Dispatch<SetStateAction<string>>;
   status: UseChatHelpers<ChatMessage>["status"];
@@ -79,7 +75,6 @@ function PureArtifact({
   setAttachments: Dispatch<SetStateAction<Attachment[]>>;
   messages: ChatMessage[];
   setMessages: UseChatHelpers<ChatMessage>["setMessages"];
-  votes: Vote[] | undefined;
   sendMessage: UseChatHelpers<ChatMessage>["sendMessage"];
   regenerate: UseChatHelpers<ChatMessage>["regenerate"];
   isReadonly: boolean;
@@ -474,9 +469,6 @@ function PureArtifact({
 
 export const Artifact = memo(PureArtifact, (prevProps, nextProps) => {
   if (prevProps.status !== nextProps.status) {
-    return false;
-  }
-  if (!equal(prevProps.votes, nextProps.votes)) {
     return false;
   }
   if (prevProps.input !== nextProps.input) {

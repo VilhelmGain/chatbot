@@ -7,7 +7,12 @@ import { formatISO } from 'date-fns';
 import { twMerge } from 'tailwind-merge';
 import type { DBMessage, Document } from '@/lib/db/schema';
 import { ChatbotError, type ErrorCode } from './errors';
-import type { ChatMessage, ChatTools, CustomUIDataTypes } from './types';
+import type {
+  ChatMessage,
+  ChatTools,
+  CustomUIDataTypes,
+  MessageMetadata,
+} from './types';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -74,6 +79,7 @@ export function convertToUIMessages(messages: DBMessage[]): ChatMessage[] {
     role: message.role as 'user' | 'assistant' | 'system',
     parts: message.parts as UIMessagePart<CustomUIDataTypes, ChatTools>[],
     metadata: {
+      ...((message.metadata ?? {}) as Partial<MessageMetadata>),
       createdAt: formatISO(message.createdAt),
     },
   }));

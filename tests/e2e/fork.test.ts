@@ -102,6 +102,8 @@ test.describe("Chat Forking", () => {
       await page.waitForSelector("[data-testid='message-fork']", {
         timeout: 60_000,
       });
+      await expect(page.getByTestId("message-upvote")).toHaveCount(0);
+      await expect(page.getByTestId("message-downvote")).toHaveCount(0);
       await page.waitForTimeout(1000);
     };
 

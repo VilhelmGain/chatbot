@@ -15,6 +15,13 @@
       "when": 1786251049750,
       "tag": "0002_mature_true_believers",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1786277529378,
+      "tag": "0003_amazing_black_bolt",
+      "breakpoints": true
     }
   ]
 }
