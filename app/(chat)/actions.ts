@@ -21,10 +21,15 @@ import {
   getMessagesByChatId,
   saveChat,
   saveMessages,
+  updateChatTitleById,
   updateChatVisibilityById,
 } from "@/lib/db/queries";
 import type { VisibilityType } from "@/lib/types";
-import { generateUUID, getTextFromMessage } from "@/lib/utils";
+import {
+  convertToUIMessages,
+  generateUUID,
+  getTextFromMessage,
+} from "@/lib/utils";
 
 export async function saveChatModelAsCookie(model: string) {
   const cookieStore = await cookies();
@@ -176,6 +181,81 @@ export async function updateChatVisibility({
   }
 
   await updateChatVisibilityById({ chatId, visibility });
+}
+
+export async function renameChat({
+  chatId,
+  title,
+}: {
+  chatId: string;
+  title: string;
+}) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    throw new Error("Unauthorized");
+  }
+
+  const chat = await getChatById({ id: chatId });
+  if (!chat || chat.userId !== session.user.id) {
+    throw new Error("Unauthorized");
+  }
+
+  if (!title.trim()) {
+    return;
+  }
+
+  await updateChatTitleById({ chatId, title });
+}
+
+export async function regenerateChatTitle({
+  chatId,
+}: {
+  chatId: string;
+}): Promise<{ title: string }> {
+  const session = await auth();
+  if (!session?.user?.id) {
+    throw new Error("Unauthorized");
+  }
+
+  const chat = await getChatById({ id: chatId });
+  if (!chat || chat.userId !== session.user.id) {
+    throw new Error("Unauthorized");
+  }
+
+  const messages = await getMessagesByChatId({ id: chatId });
+  const firstUserMessage = messages.find(
+    (currentMessage) => currentMessage.role === "user"
+  );
+  if (!firstUserMessage) {
+    return { title: chat.title };
+  }
+
+  const [uiMessage] = convertToUIMessages([firstUserMessage]);
+
+  const cookieStore = await cookies();
+  const rawChatModelId = cookieStore.get("chat-model")?.value;
+  const chatModelId = rawChatModelId
+    ? decodeURIComponent(rawChatModelId)
+    : undefined;
+  const rawReasoningEffort = cookieStore.get("reasoning-effort")?.value;
+  const reasoningEffort =
+    rawReasoningEffort && rawReasoningEffort !== "default"
+      ? (decodeURIComponent(rawReasoningEffort) as ReasoningEffort)
+      : undefined;
+
+  const title = await generateTitleFromUserMessage({
+    chatModelId,
+    message: uiMessage,
+    reasoningEffort,
+    userId: session.user.id,
+  });
+
+  if (!title || title === "New chat") {
+    return { title: chat.title };
+  }
+
+  await updateChatTitleById({ chatId, title });
+  return { title };
 }
 
 export async function forkChat({
