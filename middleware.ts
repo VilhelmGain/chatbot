@@ -1,51 +1,40 @@
+import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { type NextRequest, NextResponse } from "next/server";
-import { getToken } from "next-auth/jwt";
-import { guestRegex, isDevelopmentEnvironment } from "./lib/constants";
+import { isTestEnvironment } from "./lib/constants";
 
-export async function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+const isProtectedRoute = createRouteMatcher([
+  "/",
+  "/chat/:id",
+  "/settings",
+  "/api/:path*",
+  "/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)",
+]);
 
-  if (pathname.startsWith("/ping")) {
+function handlePing(request: NextRequest) {
+  if (request.nextUrl.pathname.startsWith("/ping")) {
     return new Response("pong", { status: 200 });
   }
-
-  if (pathname.startsWith("/api/auth")) {
-    return NextResponse.next();
-  }
-
-  const token = await getToken({
-    req: request,
-    secret: process.env.AUTH_SECRET,
-    secureCookie: !isDevelopmentEnvironment,
-  });
-
-  const base = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
-
-  if (!token) {
-    const redirectUrl = encodeURIComponent(new URL(request.url).pathname);
-
-    return NextResponse.redirect(
-      new URL(`${base}/api/auth/guest?redirectUrl=${redirectUrl}`, request.url)
-    );
-  }
-
-  const isGuest = guestRegex.test(token?.email ?? "");
-
-  if (token && !isGuest && ["/login", "/register"].includes(pathname)) {
-    return NextResponse.redirect(new URL(`${base}/`, request.url));
-  }
-
-  return NextResponse.next();
+  return null;
 }
+
+const testHandler = (request: NextRequest) =>
+  handlePing(request) ?? NextResponse.next();
+
+export default isTestEnvironment
+  ? testHandler
+  : clerkMiddleware(async (auth, request: NextRequest) => {
+      const pingResponse = handlePing(request);
+      if (pingResponse) {
+        return pingResponse;
+      }
+
+      if (isProtectedRoute(request)) {
+        await auth.protect();
+      }
+    });
 
 export const config = {
   matcher: [
-    "/",
-    "/chat/:id",
-    "/settings",
-    "/api/:path*",
-    "/login",
-    "/register",
     "/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)",
   ],
 };

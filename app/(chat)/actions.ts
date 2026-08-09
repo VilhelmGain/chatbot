@@ -1,7 +1,9 @@
 "use server";
 
+import { auth as clerkAuth, clerkClient } from "@clerk/nextjs/server";
 import { generateText, type UIMessage } from "ai";
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import { auth } from "@/app/(auth)/auth";
 import {
   getCustomCapabilitiesForUser,
@@ -13,6 +15,7 @@ import {
   getLanguageModel,
   isOpenAICompatibleProvider,
 } from "@/lib/ai/providers";
+import { isTestEnvironment } from "@/lib/constants";
 import {
   deleteMessagesByChatIdAfterTimestamp,
   getChatById,
@@ -30,7 +33,6 @@ export async function saveChatModelAsCookie(model: string) {
   const cookieStore = await cookies();
   cookieStore.set("chat-model", model);
 }
-
 export async function saveReasoningEffortAsCookie(effort: string) {
   const cookieStore = await cookies();
   cookieStore.set("reasoning-effort", effort, {
@@ -41,6 +43,21 @@ export async function saveReasoningEffortAsCookie(effort: string) {
 export async function saveTitleModelAsCookie(model: string) {
   const cookieStore = await cookies();
   cookieStore.set("title-model", model);
+}
+
+export async function signOut() {
+  if (isTestEnvironment) {
+    const cookieStore = await cookies();
+    cookieStore.delete("test-user");
+    redirect("/");
+  }
+
+  const { sessionId } = await clerkAuth();
+  if (sessionId) {
+    await (await clerkClient()).sessions.revokeSession(sessionId);
+  }
+
+  redirect("/");
 }
 
 async function getTitleModelId(): Promise<string | undefined> {

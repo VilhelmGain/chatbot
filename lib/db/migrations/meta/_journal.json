@@ -8,6 +8,13 @@
       "when": 1785946009241,
       "tag": "0000_freezing_boomer",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1786251049750,
+      "tag": "0002_mature_true_believers",
+      "breakpoints": true
     }
   ]
 }

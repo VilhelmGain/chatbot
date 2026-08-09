@@ -1,16 +1,10 @@
 import { expect, test } from "@playwright/test";
+import { signIn } from "../helpers";
 
 test.describe("Title Model Selector", () => {
   test.beforeEach(async ({ page }) => {
-    // Register a real (non-guest) user — settings rejects guest sessions.
-    await page.goto("/register");
-    await page.fill(
-      'input[type="email"]',
-      `title-selector-${Date.now()}@example.com`
-    );
-    await page.fill('input[type="password"]', "password123");
-    await page.click('button[type="submit"]');
-    await expect(page).toHaveURL(/\/$/);
+    // Sign in as a mock test-mode user (no Clerk needed).
+    await signIn(page);
 
     // Mock the model catalog.
     await page.route("**/api/models", async (route) => {

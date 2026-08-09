@@ -19,7 +19,7 @@ const createProviderSchema = z.object({
 export async function GET() {
   const session = await auth();
 
-  if (!session?.user || session.user.type === "guest") {
+  if (!session?.user) {
     return new ChatbotError("unauthorized:provider").toResponse();
   }
 
@@ -33,7 +33,7 @@ export async function GET() {
 export async function POST(request: Request) {
   const session = await auth();
 
-  if (!session?.user || session.user.type === "guest") {
+  if (!session?.user) {
     return new ChatbotError("unauthorized:provider").toResponse();
   }
 

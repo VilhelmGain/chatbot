@@ -16,6 +16,7 @@
       "!components/elements",
       "!components/ui",
       "!lib/utils.ts",
+      "!lib/db/migrations",
       "!hooks/use-mobile.ts"
     ]
   },

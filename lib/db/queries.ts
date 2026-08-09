@@ -37,40 +37,76 @@ import {
   user,
   vote,
 } from "./schema";
-import { generateHashedPassword } from "./utils";
 
 const client = postgres(process.env.POSTGRES_URL ?? "");
 const db = drizzle(client);
 
-export async function getUser(email: string): Promise<User[]> {
+export async function getUserByClerkId(clerkId: string): Promise<User | null> {
   try {
-    return await db.select().from(user).where(eq(user.email, email));
+    const [selectedUser] = await db
+      .select()
+      .from(user)
+      .where(eq(user.clerkId, clerkId))
+      .limit(1);
+
+    return selectedUser ?? null;
   } catch (error) {
     throw new ChatbotError("bad_request:database", { cause: error });
   }
 }
 
-export async function createUser(email: string, password: string) {
-  const hashedPassword = generateHashedPassword(password);
-
+export async function createUserFromClerk({
+  clerkId,
+  email,
+  emailVerified,
+  image,
+  name,
+}: {
+  clerkId: string;
+  email: string;
+  emailVerified?: boolean;
+  image?: string | null;
+  name?: string | null;
+}): Promise<User> {
   try {
-    return await db.insert(user).values({ email, password: hashedPassword });
+    const [createdUser] = await db
+      .insert(user)
+      .values({
+        clerkId,
+        email,
+        emailVerified: emailVerified ?? false,
+        image,
+        name,
+      })
+      .returning();
+
+    return createdUser;
   } catch (error) {
-    throw new ChatbotError("bad_request:database", {
-      cause: error,
-    });
+    throw new ChatbotError("bad_request:database", { cause: error });
   }
 }
 
-export async function createGuestUser() {
-  const email = `guest-${Date.now()}`;
-  const password = generateHashedPassword(generateUUID());
-
+export async function getOrCreateUserByEmail(email: string): Promise<User> {
   try {
-    return await db.insert(user).values({ email, password }).returning({
-      email: user.email,
-      id: user.id,
-    });
+    const [existingUser] = await db
+      .select()
+      .from(user)
+      .where(eq(user.email, email))
+      .limit(1);
+
+    if (existingUser) {
+      return existingUser;
+    }
+
+    const [createdUser] = await db
+      .insert(user)
+      .values({
+        clerkId: `test-${email}`,
+        email,
+      })
+      .returning();
+
+    return createdUser;
   } catch (error) {
     throw new ChatbotError("bad_request:database", { cause: error });
   }

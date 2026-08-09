@@ -1,7 +1,10 @@
 import { expect, test } from "@playwright/test";
+import { signIn } from "../helpers";
 
 test.describe("Model Selector", () => {
   test.beforeEach(async ({ page }) => {
+    await signIn(page);
+
     await page.route("**/api/models", async (route) => {
       await route.fulfill({
         contentType: "application/json",

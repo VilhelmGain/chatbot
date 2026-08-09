@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { signIn } from "../helpers";
 
 const CHAT_URL_REGEX = /\/chat\/[\w-]+/;
 
@@ -6,18 +7,10 @@ test.describe("Chat Forking", () => {
   test("forks a chat from an earlier response and continues independently", async ({
     page,
   }) => {
-    const email = `fork-e2e-${Date.now()}@example.com`;
+    // Sign in as a mock test-mode user (no Clerk needed).
+    await signIn(page);
 
-    // 1. Register a user via the UI (server actions can't be called by fetch).
-    //    Guests cannot manage models, and the model selector is driven by
-    //    custom providers, so a real user is required.
-    await page.goto("/register");
-    await page.fill("#email", email);
-    await page.fill("#password", "fork-test-password");
-    await page.getByRole("button", { name: "Sign up" }).click();
-    await page.waitForURL(/\/$/, { timeout: 30_000 });
-
-    // 2. Seed a provider + model via the settings API so the mock AI provider
+    // 1. Seed a provider + model via the settings API so the mock AI provider
     //    (PLAYWRIGHT=True) resolves "custom-<id>/chat-model" to the mock model.
     const providerRes = await page.request.post("/api/settings/providers", {
       data: {
@@ -42,7 +35,7 @@ test.describe("Chat Forking", () => {
     );
     expect(modelRes.status()).toBe(201);
 
-    // 3. Open a new chat and select the model.
+    // 2. Open a new chat and select the model.
     await page.goto("/");
     await page.waitForSelector("[data-testid='multimodal-input']", {
       timeout: 30_000,
@@ -112,7 +105,7 @@ test.describe("Chat Forking", () => {
       await page.waitForTimeout(1000);
     };
 
-    // 4. Have a two-turn conversation.
+    // 3. Have a two-turn conversation.
     await sendAndWaitForResponses("Hello", 1);
     const originalChatUrl = page.url();
     expect(originalChatUrl).toMatch(CHAT_URL_REGEX);
@@ -122,14 +115,14 @@ test.describe("Chat Forking", () => {
       2
     );
 
-    // 5. Fork from the FIRST assistant response.
+    // 4. Fork from the FIRST assistant response.
     const firstAssistant = page
       .locator("[data-testid='message-assistant']")
       .first();
     await firstAssistant.hover();
     await firstAssistant.locator("[data-testid='message-fork']").click();
 
-    // 6. The fork navigates to a new chat containing exactly the first turn.
+    // 5. The fork navigates to a new chat containing exactly the first turn.
     await page.waitForFunction(
       (originalUrl) => window.location.href !== originalUrl,
       originalChatUrl,
@@ -151,13 +144,13 @@ test.describe("Chat Forking", () => {
       1
     );
 
-    // 7. Continue the fork with an alternate prompt.
+    // 6. Continue the fork with an alternate prompt.
     await sendAndWaitForResponses("Actually let's talk about cats", 2);
     await expect(page.locator("[data-testid='message-assistant']")).toHaveCount(
       2
     );
 
-    // 8. The original chat is untouched by the fork continuation.
+    // 7. The original chat is untouched by the fork continuation.
     await page.goto(originalChatUrl);
     await page.waitForFunction(
       () =>
@@ -176,7 +169,7 @@ test.describe("Chat Forking", () => {
       page.locator("[data-testid='message-user']").filter({ hasText: "cats" })
     ).toHaveCount(0);
 
-    // 9. Both chats are listed in the history sidebar.
+    // 8. Both chats are listed in the history sidebar.
     await expect(page.locator("a[href*='/chat/']").first()).toHaveCount(1);
   });
 });
