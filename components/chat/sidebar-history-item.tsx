@@ -1,8 +1,10 @@
 import Link from "next/link";
-import { memo, useCallback } from "react";
+import { memo, useCallback, useRef, useState } from "react";
 import { toast } from "sonner";
+import { useChatTitle } from "@/hooks/use-chat-title";
 import { useChatVisibility } from "@/hooks/use-chat-visibility";
 import type { Chat } from "@/lib/db/schema";
+import { cn } from "@/lib/utils";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,11 +12,19 @@ import {
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 import {
+  SidebarInput,
   SidebarMenuAction,
   SidebarMenuButton,
   SidebarMenuItem,
 } from "../ui/sidebar";
-import { LockIcon, MoreHorizontalIcon, ShareIcon, TrashIcon } from "./icons";
+import {
+  LockIcon,
+  MoreHorizontalIcon,
+  PencilEditIcon,
+  ShareIcon,
+  SparklesIcon,
+  TrashIcon,
+} from "./icons";
 
 const PureChatItem = ({
   chat,
@@ -31,6 +41,14 @@ const PureChatItem = ({
     chatId: chat.id,
     initialVisibilityType: chat.visibility,
   });
+  const { title, setTitle, regenerateTitle } = useChatTitle({
+    chatId: chat.id,
+    initialTitle: chat.title,
+  });
+  const [isEditing, setIsEditing] = useState(false);
+  const [draftTitle, setDraftTitle] = useState("");
+  const [isRegenerating, setIsRegenerating] = useState(false);
+  const saveGuardRef = useRef(false);
   const closeMobile = useCallback(() => {
     setOpenMobile(false);
   }, [setOpenMobile]);
@@ -55,49 +73,168 @@ const PureChatItem = ({
     onDelete(chat.id);
   }, [chat.id, onDelete]);
 
+  const stopEditing = useCallback(() => {
+    setIsEditing(false);
+  }, []);
+
+  const startEditing = useCallback(() => {
+    saveGuardRef.current = false;
+    setDraftTitle(title);
+    setIsEditing(true);
+  }, [title]);
+
+  const handleTitleDoubleClick = useCallback(
+    (event: React.MouseEvent<HTMLAnchorElement>) => {
+      event.preventDefault();
+      startEditing();
+    },
+    [startEditing]
+  );
+
+  const handleRenameSelect = useCallback(() => {
+    requestAnimationFrame(startEditing);
+  }, [startEditing]);
+
+  const handleSave = useCallback(() => {
+    if (saveGuardRef.current) {
+      return;
+    }
+    saveGuardRef.current = true;
+    const trimmedTitle = draftTitle.trim();
+    if (trimmedTitle) {
+      setTitle(trimmedTitle).catch(() => {
+        toast.error("Failed to rename chat");
+      });
+    }
+    stopEditing();
+  }, [draftTitle, setTitle, stopEditing]);
+
+  const handleCancel = useCallback(() => {
+    saveGuardRef.current = true;
+    stopEditing();
+  }, [stopEditing]);
+
+  const handleTitleChange = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      setDraftTitle(event.target.value);
+    },
+    []
+  );
+
+  const handleTitleFocus = useCallback(
+    (event: React.FocusEvent<HTMLInputElement>) => {
+      event.currentTarget.select();
+    },
+    []
+  );
+
+  const handleKeyDown = useCallback(
+    (event: React.KeyboardEvent<HTMLInputElement>) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        handleSave();
+      } else if (event.key === "Escape") {
+        event.preventDefault();
+        handleCancel();
+      }
+    },
+    [handleCancel, handleSave]
+  );
+
+  const handleRegenerate = useCallback(async () => {
+    setIsRegenerating(true);
+    try {
+      await regenerateTitle();
+      toast.success("Title regenerated");
+    } catch {
+      toast.error("Failed to regenerate title");
+    } finally {
+      setIsRegenerating(false);
+    }
+  }, [regenerateTitle]);
+
   return (
     <SidebarMenuItem>
-      <SidebarMenuButton
-        asChild
-        className="h-8 rounded-none text-[13px] text-sidebar-foreground/50 transition-all duration-150 hover:bg-transparent hover:text-sidebar-foreground data-active:bg-transparent data-active:font-normal data-active:text-sidebar-foreground/50 data-[active=true]:text-sidebar-foreground data-[active=true]:font-medium data-[active=true]:border-b data-[active=true]:border-dashed data-[active=true]:border-sidebar-foreground/50"
-        isActive={isActive}
-      >
-        <Link href={`/chat/${chat.id}`} onClick={closeMobile}>
-          <span className="truncate">{chat.title}</span>
-        </Link>
-      </SidebarMenuButton>
-
-      <DropdownMenu modal={true}>
-        <DropdownMenuTrigger asChild>
-          <SidebarMenuAction
-            className="mr-0.5 rounded-md text-sidebar-foreground/50 ring-0 transition-colors duration-150 focus-visible:ring-0 hover:text-sidebar-foreground data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
-            showOnHover={!isActive}
+      {isEditing ? (
+        <SidebarInput
+          autoFocus
+          className={cn(
+            "h-8 rounded-none border-none bg-transparent px-2.5 text-[13px] shadow-none focus-visible:ring-0",
+            isActive && "border-b border-dashed border-sidebar-foreground/50"
+          )}
+          data-testid="chat-title-input"
+          onBlur={handleSave}
+          onChange={handleTitleChange}
+          onFocus={handleTitleFocus}
+          onKeyDown={handleKeyDown}
+          value={draftTitle}
+        />
+      ) : (
+        <SidebarMenuButton
+          asChild
+          className="h-8 rounded-none text-[13px] text-sidebar-foreground/50 transition-all duration-150 hover:bg-transparent hover:text-sidebar-foreground data-active:bg-transparent data-active:font-normal data-active:text-sidebar-foreground/50 data-[active=true]:text-sidebar-foreground data-[active=true]:font-medium data-[active=true]:border-b data-[active=true]:border-dashed data-[active=true]:border-sidebar-foreground/50"
+          isActive={isActive}
+        >
+          <Link
+            href={`/chat/${chat.id}`}
+            onClick={closeMobile}
+            onDoubleClick={handleTitleDoubleClick}
           >
-            <MoreHorizontalIcon />
-            <span className="sr-only">More</span>
-          </SidebarMenuAction>
-        </DropdownMenuTrigger>
+            <span className="truncate">{title}</span>
+          </Link>
+        </SidebarMenuButton>
+      )}
 
-        <DropdownMenuContent align="end" side="bottom">
-          <DropdownMenuItem className="cursor-pointer" onClick={handleShare}>
-            <ShareIcon />
-            <span>Share</span>
-          </DropdownMenuItem>
-          {visibilityType === "public" && (
+      {!isEditing && (
+        <DropdownMenu modal={true}>
+          <DropdownMenuTrigger asChild>
+            <SidebarMenuAction
+              className="mr-0.5 rounded-md text-sidebar-foreground/50 ring-0 transition-colors duration-150 focus-visible:ring-0 hover:text-sidebar-foreground data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+              showOnHover={!isActive}
+            >
+              <MoreHorizontalIcon />
+              <span className="sr-only">More</span>
+            </SidebarMenuAction>
+          </DropdownMenuTrigger>
+
+          <DropdownMenuContent align="end" side="bottom">
             <DropdownMenuItem
               className="cursor-pointer"
-              onClick={handleSetPrivate}
+              onSelect={handleRenameSelect}
             >
-              <LockIcon />
-              <span>Make private</span>
+              <PencilEditIcon />
+              <span>Rename</span>
             </DropdownMenuItem>
-          )}
-          <DropdownMenuItem onSelect={handleDelete} variant="destructive">
-            <TrashIcon />
-            <span>Delete</span>
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+            <DropdownMenuItem
+              className="cursor-pointer"
+              disabled={isRegenerating}
+              onSelect={handleRegenerate}
+            >
+              <SparklesIcon />
+              <span>
+                {isRegenerating ? "Regenerating title…" : "Regenerate title"}
+              </span>
+            </DropdownMenuItem>
+            <DropdownMenuItem className="cursor-pointer" onClick={handleShare}>
+              <ShareIcon />
+              <span>Share</span>
+            </DropdownMenuItem>
+            {visibilityType === "public" && (
+              <DropdownMenuItem
+                className="cursor-pointer"
+                onClick={handleSetPrivate}
+              >
+                <LockIcon />
+                <span>Make private</span>
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuItem onSelect={handleDelete} variant="destructive">
+              <TrashIcon />
+              <span>Delete</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
     </SidebarMenuItem>
   );
 };
