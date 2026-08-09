@@ -30,12 +30,18 @@ const nextConfig: NextConfig = {
     turbopackFileSystemCacheForDev: true,
   },
   images: {
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+    dangerouslyAllowSVG: true,
     remotePatterns: [
       {
         hostname: "localhost",
       },
       {
         hostname: "127.0.0.1",
+      },
+      {
+        hostname: "img.clerk.com",
+        protocol: "https",
       },
     ],
   },
