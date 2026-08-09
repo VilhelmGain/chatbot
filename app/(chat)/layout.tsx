@@ -7,6 +7,7 @@ import { ChatShellWrapper } from "@/components/chat/chat-shell-wrapper";
 import { DataStreamProvider } from "@/components/chat/data-stream-provider";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { ActiveChatProvider } from "@/hooks/use-active-chat";
+import { isTestEnvironment } from "@/lib/constants";
 import { auth } from "../(auth)/auth";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
@@ -39,7 +40,7 @@ async function SidebarShell({ children }: { children: React.ReactNode }) {
 
   return (
     <SidebarProvider defaultOpen={!isCollapsed}>
-      <AppSidebar user={session?.user} />
+      <AppSidebar testEnvironment={isTestEnvironment} user={session?.user} />
       <SidebarInset>
         <Suspense fallback={<div className="flex h-dvh" />}>
           <ActiveChatProvider>
