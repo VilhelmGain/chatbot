@@ -1,5 +1,5 @@
+import type { Metadata } from "next";
 import { cookies } from "next/headers";
-import Script from "next/script";
 import { Suspense } from "react";
 import { Toaster } from "sonner";
 import { AppSidebar } from "@/components/chat/app-sidebar";
@@ -10,13 +10,16 @@ import { ActiveChatProvider } from "@/hooks/use-active-chat";
 import { isTestEnvironment } from "@/lib/constants";
 import { auth } from "../(auth)/auth";
 
+export const metadata: Metadata = {
+  robots: {
+    follow: true,
+    index: false,
+  },
+};
+
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <>
-      <Script
-        src="https://cdn.jsdelivr.net/pyodide/v0.23.4/full/pyodide.js"
-        strategy="lazyOnload"
-      />
       <Toaster
         position="top-center"
         theme="system"

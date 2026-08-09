@@ -1,7 +1,17 @@
+"use client";
+
+import dynamic from "next/dynamic";
 import { toast } from "sonner";
 import { Artifact } from "@/components/chat/create-artifact";
 import { CopyIcon, RedoIcon, UndoIcon } from "@/components/chat/icons";
-import { ImageEditor } from "@/components/chat/image-editor";
+
+const ImageEditor = dynamic(
+  () =>
+    import("@/components/chat/image-editor").then(
+      (module) => module.ImageEditor
+    ),
+  { ssr: false }
+);
 
 export const imageArtifact = new Artifact({
   actions: [
@@ -59,7 +69,23 @@ export const imageArtifact = new Artifact({
       },
     },
   ],
-  content: ImageEditor,
+  content: ({
+    content,
+    currentVersionIndex,
+    isCurrentVersion,
+    isInline,
+    status,
+    title,
+  }) => (
+    <ImageEditor
+      content={content}
+      currentVersionIndex={currentVersionIndex}
+      isCurrentVersion={isCurrentVersion}
+      isInline={isInline}
+      status={status}
+      title={title}
+    />
+  ),
   description: "Useful for image generation",
   kind: "image",
   onStreamPart: ({ streamPart, setArtifact }) => {

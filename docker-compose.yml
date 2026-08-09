@@ -1,6 +1,9 @@
 services:
   app:
-    build: .
+    build:
+      context: .
+      args:
+        NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-http://localhost:3001}
     ports:
       - "3001:3000"
     environment:
@@ -13,7 +16,7 @@ services:
       - ENCRYPTION_KEY=${ENCRYPTION_KEY}
       - POSTGRES_URL=postgresql://chatbot:chatbot@postgres:5432/chatbot
       - REDIS_URL=redis://redis:6379
-      - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
+      - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL:-http://localhost:3001}
       - UPLOAD_DIR=/app/uploads
     volumes:
       - uploads:/app/uploads

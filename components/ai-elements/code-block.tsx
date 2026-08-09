@@ -99,7 +99,7 @@ const LineSpan = ({
 );
 
 // Types
-type CodeBlockProps = HTMLAttributes<HTMLDivElement> & {
+export type CodeBlockProps = HTMLAttributes<HTMLDivElement> & {
   code: string;
   language: BundledLanguage;
   showLineNumbers?: boolean;

@@ -1,6 +1,7 @@
 "use client";
 
 import type { ComponentProps, HTMLAttributes, ReactNode } from "react";
+import dynamic from "next/dynamic";
 
 import { useControllableState } from "@radix-ui/react-use-controllable-state";
 import {
@@ -8,10 +9,6 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
-import { cjk } from "@streamdown/cjk";
-import { code } from "@streamdown/code";
-import { math } from "@streamdown/math";
-import { mermaid } from "@streamdown/mermaid";
 import { ChevronDownIcon } from "lucide-react";
 import {
   createContext,
@@ -23,9 +20,14 @@ import {
   useRef,
   useState,
 } from "react";
-import { Streamdown } from "streamdown";
 
 import { Shimmer } from "./shimmer";
+import type { ReasoningMarkdownProps } from "./reasoning-markdown";
+
+const ReasoningMarkdown = dynamic<ReasoningMarkdownProps>(
+  () => import("./reasoning-markdown").then((m) => m.ReasoningMarkdown),
+  { loading: () => null, ssr: false }
+);
 
 interface ReasoningContextValue {
   isStreaming: boolean;
@@ -201,8 +203,6 @@ export type ReasoningContentProps = HTMLAttributes<HTMLDivElement> & {
   children: string;
 };
 
-const streamdownPlugins = { cjk, code, math, mermaid };
-
 export const ReasoningContent = memo(
   ({ className, children, ...props }: ReasoningContentProps) => {
     const { isStreaming, isOpen } = useReasoning();
@@ -227,9 +227,7 @@ export const ReasoningContent = memo(
           ref={scrollRef}
           style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
         >
-          <Streamdown plugins={streamdownPlugins} {...props}>
-            {children}
-          </Streamdown>
+          <ReasoningMarkdown {...props}>{children}</ReasoningMarkdown>
         </div>
       </div>
     );

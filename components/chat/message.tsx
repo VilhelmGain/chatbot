@@ -3,7 +3,8 @@ import type { UseChatHelpers } from "@ai-sdk/react";
 import { useCallback } from "react";
 import type { ChatMessage } from "@/lib/types";
 import { cn, sanitizeText } from "@/lib/utils";
-import { MessageContent, MessageResponse } from "../ai-elements/message";
+import { MessageContent } from "../ai-elements/message";
+import { MessageResponse } from "../ai-elements/message-response";
 import { Shimmer } from "../ai-elements/shimmer";
 import {
   Tool,

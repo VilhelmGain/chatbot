@@ -1,23 +1,47 @@
 import { ClerkProvider } from "@clerk/nextjs";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { isTestEnvironment } from "@/lib/constants";
+import { getCanonicalUrl, getMetadataBase } from "@/lib/seo";
 
 import "./globals.css";
 
 export const metadata: Metadata = {
-  description: "Bring your own key AI Chat",
-  metadataBase: new URL(
-    process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"
-  ),
-  title: "Visbyr Chat",
+  alternates: {
+    canonical: getCanonicalUrl("/"),
+  },
+  applicationName: "Visbyr Chat",
+  description:
+    "Visbyr Chat is a bring-your-own-key AI chat app for custom OpenAI-compatible and Anthropic-compatible providers.",
+  metadataBase: getMetadataBase(),
+  openGraph: {
+    description:
+      "Visbyr Chat is a bring-your-own-key AI chat app for custom OpenAI-compatible and Anthropic-compatible providers.",
+    locale: "en_US",
+    siteName: "Visbyr Chat",
+    title: "Visbyr Chat",
+    type: "website",
+    url: getCanonicalUrl("/"),
+  },
+  title: {
+    default: "Visbyr Chat",
+    template: "%s | Visbyr Chat",
+  },
+  twitter: {
+    card: "summary_large_image",
+    description:
+      "Visbyr Chat is a bring-your-own-key AI chat app for custom OpenAI-compatible and Anthropic-compatible providers.",
+    title: "Visbyr Chat",
+  },
 };
 
-export const viewport = {
-  interactiveWidget: "resizes-content" as const,
-  maximumScale: 1,
+export const viewport: Viewport = {
+  initialScale: 1,
+  interactiveWidget: "resizes-content",
+  viewportFit: "cover",
+  width: "device-width",
 };
 
 const geist = Geist({

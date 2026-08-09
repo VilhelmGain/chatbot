@@ -40,6 +40,7 @@ Required variables:
 | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk publishable key (dashboard.clerk.com) |
 | `CLERK_SECRET_KEY` | Clerk secret key |
 | `NEXT_PUBLIC_CLERK_SIGN_IN_URL` / `NEXT_PUBLIC_CLERK_SIGN_UP_URL` | Clerk hosted sign-in/up page URLs |
+| `NEXT_PUBLIC_APP_URL` | Production origin used for canonical URLs and social images |
 | `ENCRYPTION_KEY` | Random secret for encrypting provider API keys (`openssl rand -base64 32`) |
 | `POSTGRES_URL` | Postgres connection string |
 | `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` / `GOOGLE_API_KEY` / `XAI_API_KEY` | At least one provider key |

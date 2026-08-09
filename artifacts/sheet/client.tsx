@@ -1,3 +1,6 @@
+"use client";
+
+import dynamic from "next/dynamic";
 import { parse, unparse } from "papaparse";
 import { toast } from "sonner";
 import { Artifact } from "@/components/chat/create-artifact";
@@ -8,7 +11,14 @@ import {
   SparklesIcon,
   UndoIcon,
 } from "@/components/chat/icons";
-import { SpreadsheetEditor } from "@/components/chat/sheet-editor";
+
+const SpreadsheetEditor = dynamic(
+  () =>
+    import("@/components/chat/sheet-editor").then(
+      (module) => module.SpreadsheetEditor
+    ),
+  { ssr: false }
+);
 
 type Metadata = Record<string, never>;
 

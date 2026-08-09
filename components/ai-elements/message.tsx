@@ -2,6 +2,7 @@
 
 import type { UIMessage } from "ai";
 import type { ComponentProps, HTMLAttributes, ReactElement } from "react";
+import dynamic from "next/dynamic";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -15,10 +16,6 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { cjk } from "@streamdown/cjk";
-import { code } from "@streamdown/code";
-import { math } from "@streamdown/math";
-import { mermaid } from "@streamdown/mermaid";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import {
   createContext,
@@ -29,7 +26,13 @@ import {
   useMemo,
   useState,
 } from "react";
-import { Streamdown } from "streamdown";
+
+import type { MessageResponseProps } from "./message-response";
+
+const MessageResponse = dynamic<MessageResponseProps>(
+  () => import("./message-response").then((m) => m.MessageResponse),
+  { loading: () => null, ssr: false }
+);
 
 export type MessageProps = HTMLAttributes<HTMLDivElement> & {
   from: UIMessage["role"];
@@ -317,26 +320,6 @@ export const MessageBranchPage = ({
     </ButtonGroupText>
   );
 };
-
-export type MessageResponseProps = ComponentProps<typeof Streamdown>;
-
-const streamdownPlugins = { cjk, code, math, mermaid };
-
-export const MessageResponse = memo(
-  ({ className, ...props }: MessageResponseProps) => (
-    <Streamdown
-      className={cn(
-        "size-full [&>*:first-child]:mt-0 [&>*:last-child]:mb-0",
-        className
-      )}
-      plugins={streamdownPlugins}
-      {...props}
-    />
-  ),
-  (prevProps, nextProps) => prevProps.children === nextProps.children
-);
-
-MessageResponse.displayName = "MessageResponse";
 
 export type MessageToolbarProps = ComponentProps<"div">;
 
