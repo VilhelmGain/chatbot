@@ -552,6 +552,7 @@ function PureMultimodalInput({
             />
             <ModelSelectorCompact
               onModelChange={onModelChange}
+              preserveComposerFocus
               reasoningEffort={reasoningEffort}
               selectedModelId={selectedModelId}
               setReasoningEffort={setReasoningEffort}
@@ -662,6 +663,14 @@ function PureAttachmentsButton({
     },
     [fileInputRef]
   );
+  const handlePointerDown = useCallback(
+    (event: React.PointerEvent<HTMLButtonElement>) => {
+      if (window.matchMedia("(max-width: 767px)").matches) {
+        event.preventDefault();
+      }
+    },
+    []
+  );
 
   return (
     <Tooltip>
@@ -671,6 +680,7 @@ function PureAttachmentsButton({
           data-testid="attachments-button"
           disabled={status !== "ready"}
           onClick={handleClick}
+          onPointerDown={handlePointerDown}
           variant="ghost"
         >
           <PaperclipIcon size={14} style={{ height: 14, width: 14 }} />
@@ -905,6 +915,7 @@ function PureModelSelectorCompact({
   setReasoningEffort,
   defaultLabel,
   modelCookieName = "chat-model",
+  preserveComposerFocus = false,
 }: {
   selectedModelId: string;
   onModelChange?: (modelId: string) => void;
@@ -912,6 +923,7 @@ function PureModelSelectorCompact({
   setReasoningEffort: (effort: ReasoningEffort) => void;
   defaultLabel?: string;
   modelCookieName?: string;
+  preserveComposerFocus?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [pendingModelId, setPendingModelId] = useState<string | null>(null);
@@ -955,6 +967,55 @@ function PureModelSelectorCompact({
         ?.focus();
     }, 50);
   }, []);
+
+  const handlePreserveComposerPointerDown = useCallback(
+    (event: React.PointerEvent) => {
+      if (!preserveComposerFocus) {
+        return;
+      }
+      if (!window.matchMedia("(max-width: 767px)").matches) {
+        return;
+      }
+
+      const target = event.target as Element;
+      if (!target.closest("input, textarea, select")) {
+        event.preventDefault();
+      }
+    },
+    [preserveComposerFocus]
+  );
+
+  const handlePreserveComposerClick = useCallback(() => {
+    if (!preserveComposerFocus) {
+      return;
+    }
+    if (!window.matchMedia("(max-width: 767px)").matches) {
+      return;
+    }
+
+    requestAnimationFrame(() => {
+      document
+        .querySelector<HTMLInputElement>("[data-slot='command-input']")
+        ?.focus();
+    });
+  }, [preserveComposerFocus]);
+
+  const handleCloseAutoFocus = useCallback(
+    (event: Event) => {
+      if (!preserveComposerFocus) {
+        return;
+      }
+      event.preventDefault();
+      requestAnimationFrame(() => {
+        document
+          .querySelector<HTMLTextAreaElement>(
+            "[data-testid='multimodal-input']"
+          )
+          ?.focus();
+      });
+    },
+    [preserveComposerFocus]
+  );
 
   const commitModel = useCallback(
     (modelId: string, effort: ReasoningEffort) => {
@@ -1039,6 +1100,11 @@ function PureModelSelectorCompact({
         <Button
           className="h-7 justify-between gap-1.5 rounded-lg px-2 text-[12px] text-muted-foreground transition-colors hover:text-foreground"
           data-testid="model-selector"
+          onPointerDown={
+            preserveComposerFocus
+              ? handlePreserveComposerPointerDown
+              : undefined
+          }
           variant="ghost"
         >
           {isDefaultSelected ? (
@@ -1052,9 +1118,16 @@ function PureModelSelectorCompact({
         </Button>
       </ModelSelectorTrigger>
       <ModelSelectorContent
-        className="w-[min(360px,calc(100vw-24px))]"
+        className="max-h-[min(360px,calc(var(--visual-viewport-height,100dvh)-132px))] w-[min(360px,calc(100vw-24px))] overflow-hidden"
+        collisionPadding={16}
         commandDefaultValue={
           isDefaultSelected ? "default" : (selectedModel?.id ?? "default")
+        }
+        onClickCapture={
+          preserveComposerFocus ? handlePreserveComposerClick : undefined
+        }
+        onCloseAutoFocus={
+          preserveComposerFocus ? handleCloseAutoFocus : undefined
         }
       >
         <ModelSelectorInput placeholder="Search models..." />

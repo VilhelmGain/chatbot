@@ -16,6 +16,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport = {
+  interactiveWidget: "resizes-content" as const,
   maximumScale: 1,
 };
 

@@ -10,6 +10,7 @@ import {
   useArtifact,
   useArtifactSelector,
 } from "@/hooks/use-artifact";
+import { useVisualViewport } from "@/hooks/use-visual-viewport";
 import type { Attachment, ChatMessage } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { Artifact } from "./artifact";
@@ -47,6 +48,15 @@ export function ChatShell() {
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const isArtifactVisible = useArtifactSelector((state) => state.isVisible);
   const { setArtifact } = useArtifact();
+  const visualViewport = useVisualViewport();
+  const shellStyle = visualViewport
+    ? {
+        height: `${visualViewport.height}px`,
+        transform: visualViewport.offsetTop
+          ? `translateY(${visualViewport.offsetTop}px)`
+          : undefined,
+      }
+    : undefined;
 
   const stopRef = useRef(stop);
   stopRef.current = stop;
@@ -117,7 +127,10 @@ export function ChatShell() {
 
   return (
     <>
-      <div className="flex h-dvh w-full flex-row overflow-hidden">
+      <div
+        className="flex h-dvh w-full flex-row overflow-hidden"
+        style={shellStyle}
+      >
         <div
           className={cn(
             "flex min-w-0 flex-col bg-sidebar transition-[width] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]",
