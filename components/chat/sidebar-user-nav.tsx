@@ -1,7 +1,9 @@
 "use client";
 
+import { useClerk } from "@clerk/nextjs";
 import { ChevronUp, Settings } from "lucide-react";
 import Link from "next/link";
+import { useCallback } from "react";
 import type { User } from "@/app/(auth)/auth";
 import { signOut } from "@/app/(chat)/actions";
 import {
@@ -16,6 +18,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import { isTestEnvironment } from "@/lib/constants";
 
 function emailToHue(email: string): number {
   let hash = 0;
@@ -23,6 +26,30 @@ function emailToHue(email: string): number {
     hash = char.charCodeAt(0) + ((hash << 5) - hash);
   }
   return Math.abs(hash) % 360;
+}
+
+function TestSignOutItem() {
+  return (
+    <DropdownMenuItem asChild data-testid="user-nav-item-auth">
+      <form action={signOut}>
+        <button className="w-full cursor-pointer text-[13px]" type="submit">
+          Sign out
+        </button>
+      </form>
+    </DropdownMenuItem>
+  );
+}
+
+function ClerkSignOutItem() {
+  const { signOut: clerkSignOut } = useClerk();
+  const handleSignOut = useCallback(() => {
+    clerkSignOut({ redirectUrl: "/" });
+  }, [clerkSignOut]);
+  return (
+    <DropdownMenuItem data-testid="user-nav-item-auth" onSelect={handleSignOut}>
+      <span className="w-full cursor-pointer text-[13px]">Sign out</span>
+    </DropdownMenuItem>
+  );
 }
 
 export function SidebarUserNav({ user }: { user: User }) {
@@ -63,16 +90,7 @@ export function SidebarUserNav({ user }: { user: User }) {
               </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem asChild data-testid="user-nav-item-auth">
-              <form action={signOut}>
-                <button
-                  className="w-full cursor-pointer text-[13px]"
-                  type="submit"
-                >
-                  Sign out
-                </button>
-              </form>
-            </DropdownMenuItem>
+            {isTestEnvironment ? <TestSignOutItem /> : <ClerkSignOutItem />}
           </DropdownMenuContent>
         </DropdownMenu>
       </SidebarMenuItem>

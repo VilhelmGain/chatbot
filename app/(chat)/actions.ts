@@ -59,7 +59,11 @@ export async function signOut() {
 
   const { sessionId } = await clerkAuth();
   if (sessionId) {
-    await (await clerkClient()).sessions.revokeSession(sessionId);
+    try {
+      await (await clerkClient()).sessions.revokeSession(sessionId);
+    } catch (error) {
+      console.error("Failed to revoke Clerk session:", error);
+    }
   }
 
   redirect("/");
