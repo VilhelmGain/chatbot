@@ -1,5 +1,4 @@
 @import "tailwindcss";
-@import "katex/dist/katex.min.css";
 
 @source "../node_modules/streamdown/dist/index.js";
 

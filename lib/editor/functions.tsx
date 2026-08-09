@@ -5,7 +5,7 @@ import { DOMParser, type Node } from "prosemirror-model";
 import { Decoration, DecorationSet, type EditorView } from "prosemirror-view";
 import { renderToString } from "react-dom/server";
 
-import { MessageResponse } from "@/components/ai-elements/message";
+import { MessageResponse } from "@/components/ai-elements/message-response";
 
 import { documentSchema } from "./config";
 import type { UISuggestion } from "./suggestions";

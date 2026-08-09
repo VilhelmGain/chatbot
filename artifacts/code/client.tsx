@@ -1,10 +1,11 @@
+"use client";
+
+import dynamic from "next/dynamic";
 import { useCallback } from "react";
 import { toast } from "sonner";
-import { CodeEditor } from "@/components/chat/code-editor";
-import {
-  Console,
-  type ConsoleOutput,
-  type ConsoleOutputContent,
+import type {
+  ConsoleOutput,
+  ConsoleOutputContent,
 } from "@/components/chat/console";
 import { Artifact } from "@/components/chat/create-artifact";
 import {
@@ -15,7 +16,18 @@ import {
   RedoIcon,
   UndoIcon,
 } from "@/components/chat/icons";
+import { loadPyodideRuntime } from "@/lib/pyodide";
 import { generateUUID } from "@/lib/utils";
+
+const CodeEditor = dynamic(
+  () =>
+    import("@/components/chat/code-editor").then((module) => module.CodeEditor),
+  { ssr: false }
+);
+const Console = dynamic(
+  () => import("@/components/chat/console").then((module) => module.Console),
+  { ssr: false }
+);
 
 const OUTPUT_HANDLERS = {
   basic: `
@@ -115,10 +127,7 @@ export const codeArtifact = new Artifact<"code", Metadata>({
         }));
 
         try {
-          // @ts-expect-error - loadPyodide is not defined
-          const currentPyodideInstance = await globalThis.loadPyodide({
-            indexURL: "https://cdn.jsdelivr.net/pyodide/v0.23.4/full/",
-          });
+          const currentPyodideInstance = await loadPyodideRuntime();
 
           currentPyodideInstance.setStdout({
             batched: (output: string) => {

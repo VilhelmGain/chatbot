@@ -7,7 +7,7 @@ const isProtectedRoute = createRouteMatcher([
   "/chat/:id",
   "/settings",
   "/api/:path*",
-  "/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)",
+  "/((?!_next/static|_next/image|favicon.ico|opengraph-image|twitter-image|sitemap.xml|robots.txt).*)",
 ]);
 
 function handlePing(request: NextRequest) {
@@ -35,6 +35,6 @@ export default isTestEnvironment
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)",
+    "/((?!_next/static|_next/image|favicon.ico|opengraph-image|twitter-image|sitemap.xml|robots.txt).*)",
   ],
 };

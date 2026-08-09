@@ -2,6 +2,7 @@
 
 import type { DynamicToolUIPart, ToolUIPart } from "ai";
 import type { ComponentProps, ReactNode } from "react";
+import dynamic from "next/dynamic";
 
 import { Badge } from "@/components/ui/badge";
 import {
@@ -20,7 +21,12 @@ import {
 } from "lucide-react";
 import { isValidElement } from "react";
 
-import { CodeBlock } from "./code-block";
+import type { CodeBlockProps } from "./code-block";
+
+const CodeBlock = dynamic<CodeBlockProps>(
+  () => import("./code-block").then((m) => m.CodeBlock),
+  { loading: () => null, ssr: false }
+);
 
 export type ToolProps = ComponentProps<typeof Collapsible>;
 

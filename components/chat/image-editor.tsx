@@ -6,7 +6,7 @@ type ImageEditorProps = {
   content: string;
   isCurrentVersion: boolean;
   currentVersionIndex: number;
-  status: string;
+  status: "streaming" | "idle";
   isInline: boolean;
 };
 
