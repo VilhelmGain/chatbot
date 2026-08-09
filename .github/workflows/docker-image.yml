@@ -28,10 +28,15 @@ jobs:
           context: .
           # Pushes to Docker Hub on 'push' events, but only builds/tests on 'pull_request'
           push: ${{ github.event_name != 'pull_request' }}
-          # NEXT_PUBLIC_* vars are inlined at build time; inject the public URL so
-          # metadataBase resolves correctly in the deployed image.
+          # NEXT_PUBLIC_* vars are inlined at build time; inject the public URL and
+          # Clerk keys so the deployed image can initialize the client SDK.
           build-args: |
             NEXT_PUBLIC_APP_URL=${{ vars.NEXT_PUBLIC_APP_URL }}
+            NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${{ vars.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
+            NEXT_PUBLIC_CLERK_SIGN_IN_URL=${{ vars.NEXT_PUBLIC_CLERK_SIGN_IN_URL }}
+            NEXT_PUBLIC_CLERK_SIGN_UP_URL=${{ vars.NEXT_PUBLIC_CLERK_SIGN_UP_URL }}
+            NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL=${{ vars.NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL }}
+            NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL=${{ vars.NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL }}
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/chat:latest
             ${{ secrets.DOCKERHUB_USERNAME }}/chat:${{ github.sha }}
