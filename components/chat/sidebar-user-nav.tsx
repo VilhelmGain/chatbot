@@ -21,6 +21,10 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { isTestEnvironment } from "@/lib/constants";
+import {
+  type IdentityDisplayMode,
+  useIdentityDisplayMode,
+} from "@/lib/identity-display";
 
 function TestSignOutItem() {
   return (
@@ -52,8 +56,42 @@ function ClerkAvatar({ user }: { user: User }) {
   return <UserAvatar email={user.email ?? ""} src={src} />;
 }
 
+function IdentityLabel({
+  mode,
+  user,
+}: {
+  mode: IdentityDisplayMode;
+  user: User;
+}) {
+  if (mode === "email") {
+    return (
+      <span className="truncate text-[13px]" data-testid="user-nav-label">
+        {user.email}
+      </span>
+    );
+  }
+  if (mode === "name-email") {
+    return (
+      <div className="flex min-w-0 flex-col" data-testid="user-nav-label">
+        <span className="truncate text-[13px]">{user.name ?? user.email}</span>
+        {user.name ? (
+          <span className="truncate text-[11px] text-sidebar-foreground/40">
+            {user.email}
+          </span>
+        ) : null}
+      </div>
+    );
+  }
+  return (
+    <span className="truncate text-[13px]" data-testid="user-nav-label">
+      {user.name ?? user.email}
+    </span>
+  );
+}
+
 export function SidebarUserNav({ user }: { user: User }) {
   const [showAccount, setShowAccount] = useState(false);
+  const identityDisplayMode = useIdentityDisplayMode();
   const handleOpenAccount = useCallback(() => {
     setShowAccount(true);
   }, []);
@@ -65,7 +103,7 @@ export function SidebarUserNav({ user }: { user: User }) {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <SidebarMenuButton
-                className="h-8 px-2 rounded-lg bg-transparent text-sidebar-foreground/70 transition-colors duration-150 hover:text-sidebar-foreground data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+                className={`${identityDisplayMode === "name-email" ? "h-10" : "h-8"} px-2 rounded-lg bg-transparent text-sidebar-foreground/70 transition-colors duration-150 hover:text-sidebar-foreground data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground`}
                 data-testid="user-nav-button"
               >
                 {isTestEnvironment ? (
@@ -73,9 +111,7 @@ export function SidebarUserNav({ user }: { user: User }) {
                 ) : (
                   <ClerkAvatar user={user} />
                 )}
-                <span className="truncate text-[13px]" data-testid="user-email">
-                  {user.email}
-                </span>
+                <IdentityLabel mode={identityDisplayMode} user={user} />
                 <ChevronUp className="ml-auto size-3.5 text-sidebar-foreground/50" />
               </SidebarMenuButton>
             </DropdownMenuTrigger>

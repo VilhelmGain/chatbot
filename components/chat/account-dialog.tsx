@@ -10,8 +10,9 @@ import { isTestEnvironment } from "@/lib/constants";
 const PROFILE_APPEARANCE = {
   elements: {
     card: "h-full w-full",
-    cardBox: "h-full w-full max-h-full rounded-none border-0 shadow-none",
-    rootBox: "h-full w-full",
+    cardBox:
+      "w-[40rem] max-w-full h-[min(45rem,80vh)] max-h-full rounded-none border-0 shadow-none",
+    rootBox: "w-fit h-fit max-w-full",
   },
 };
 
@@ -40,7 +41,7 @@ export function AccountDialog({
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent
-        className="h-[min(80vh,700px)] w-full max-w-3xl! gap-0 overflow-hidden p-0"
+        className="h-fit w-fit max-h-[calc(100vh-2rem)] max-w-[calc(100vw-2rem)]! gap-0 overflow-hidden rounded-2xl! p-0"
         data-testid="account-dialog"
         showCloseButton={isTestEnvironment}
       >
@@ -66,7 +67,7 @@ export function AccountDialog({
 function TestAccountPanel({ user }: { user: User }) {
   return (
     <div
-      className="flex h-full w-full flex-col items-center justify-center gap-4 p-6 text-center"
+      className="flex h-full w-[24rem] max-w-full flex-col items-center justify-center gap-4 p-6 text-center"
       data-testid="account-dialog-fallback"
     >
       <UserAvatar
