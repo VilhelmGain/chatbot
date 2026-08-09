@@ -8,6 +8,7 @@ import useSWR from "swr";
 import { toast } from "@/components/chat/toast";
 import { ExportAttachments } from "@/components/settings/export-attachments";
 import { ExportChats } from "@/components/settings/export-chats";
+import { IdentityDisplaySelector } from "@/components/settings/identity-display-selector";
 import { ModelManager } from "@/components/settings/model-manager";
 import { ProviderCard } from "@/components/settings/provider-card";
 import { ProviderForm } from "@/components/settings/provider-form";
@@ -114,6 +115,7 @@ export default function SettingsPage() {
       <div className="flex flex-col gap-4">
         <h2 className="text-lg font-medium">Preferences</h2>
         <TitleModelSelector />
+        <IdentityDisplaySelector />
         <div className="flex flex-col gap-2">
           <Label htmlFor="theme">Theme</Label>
           <Select onValueChange={setTheme} value={theme}>
