@@ -5,7 +5,6 @@ import { useEffect } from "react";
 import type { User } from "@/app/(auth)/auth";
 import { UserAvatar } from "@/components/chat/user-avatar";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { isTestEnvironment } from "@/lib/constants";
 
 const PROFILE_APPEARANCE = {
   elements: {
@@ -17,10 +16,12 @@ const PROFILE_APPEARANCE = {
 };
 
 export function AccountDialog({
+  testEnvironment,
   user,
   open,
   onOpenChange,
 }: {
+  testEnvironment: boolean;
   user: User;
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -43,10 +44,10 @@ export function AccountDialog({
       <DialogContent
         className="h-fit w-fit max-h-[calc(100vh-2rem)] max-w-[calc(100vw-2rem)]! gap-0 overflow-hidden rounded-2xl! p-0"
         data-testid="account-dialog"
-        showCloseButton={isTestEnvironment}
+        showCloseButton={testEnvironment}
       >
         <DialogTitle className="sr-only">Account</DialogTitle>
-        {isTestEnvironment ? (
+        {testEnvironment ? (
           <TestAccountPanel user={user} />
         ) : (
           <UserProfile

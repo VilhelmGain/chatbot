@@ -44,7 +44,13 @@ import {
 } from "../ui/alert-dialog";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 
-export function AppSidebar({ user }: { user: User | undefined }) {
+export function AppSidebar({
+  testEnvironment,
+  user,
+}: {
+  testEnvironment: boolean;
+  user: User | undefined;
+}) {
   const router = useRouter();
   const { setOpenMobile, toggleSidebar } = useSidebar();
   const { mutate } = useSWRConfig();
@@ -149,7 +155,9 @@ export function AppSidebar({ user }: { user: User | undefined }) {
           <SidebarHistory user={user} />
         </SidebarContent>
         <SidebarFooter className="border-t border-sidebar-border pt-2 pb-3">
-          {user ? <SidebarUserNav user={user} /> : null}
+          {user ? (
+            <SidebarUserNav testEnvironment={testEnvironment} user={user} />
+          ) : null}
         </SidebarFooter>
         <SidebarRail />
       </Sidebar>

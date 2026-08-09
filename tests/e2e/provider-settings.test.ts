@@ -35,6 +35,7 @@ test.describe("Provider Settings", () => {
     expect(created.status).toBe(201);
 
     await page.goto("/settings");
+    await page.getByRole("button", { name: /Providers/i }).click();
     await expect(page.locator("button[title='Test connection']")).toBeVisible();
 
     // Click the test connection button, then assert the toast is inside the

@@ -97,7 +97,9 @@ test.describe("Title Model Selector", () => {
     const titleEffort = cookies.find(
       (c) => c.name === "title-reasoning-effort"
     );
-    expect(titleModel?.value).toBe("custom-test/kimi-k2.5");
+    expect(decodeURIComponent(titleModel?.value ?? "")).toBe(
+      "custom-test/kimi-k2.5"
+    );
     expect(titleEffort?.value).toBe("medium");
   });
 

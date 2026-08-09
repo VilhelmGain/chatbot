@@ -2,12 +2,12 @@
 
 import { useClerk, useUser } from "@clerk/nextjs";
 import { ChevronUp, Settings, UserRound } from "lucide-react";
-import Link from "next/link";
 import { useCallback, useState } from "react";
 import type { User } from "@/app/(auth)/auth";
 import { signOut } from "@/app/(chat)/actions";
 import { AccountDialog } from "@/components/chat/account-dialog";
 import { UserAvatar } from "@/components/chat/user-avatar";
+import { SettingsDialog } from "@/components/settings/settings-dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,7 +20,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { isTestEnvironment } from "@/lib/constants";
 import {
   type IdentityDisplayMode,
   useIdentityDisplayMode,
@@ -89,11 +88,21 @@ function IdentityLabel({
   );
 }
 
-export function SidebarUserNav({ user }: { user: User }) {
+export function SidebarUserNav({
+  testEnvironment,
+  user,
+}: {
+  testEnvironment: boolean;
+  user: User;
+}) {
   const [showAccount, setShowAccount] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const identityDisplayMode = useIdentityDisplayMode();
   const handleOpenAccount = useCallback(() => {
     setShowAccount(true);
+  }, []);
+  const handleOpenSettings = useCallback(() => {
+    setShowSettings(true);
   }, []);
 
   return (
@@ -106,7 +115,7 @@ export function SidebarUserNav({ user }: { user: User }) {
                 className={`${identityDisplayMode === "name-email" ? "h-10" : "h-8"} px-2 rounded-lg bg-transparent text-sidebar-foreground/70 transition-colors duration-150 hover:text-sidebar-foreground data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground`}
                 data-testid="user-nav-button"
               >
-                {isTestEnvironment ? (
+                {testEnvironment ? (
                   <UserAvatar email={user.email ?? ""} src={user.image} />
                 ) : (
                   <ClerkAvatar user={user} />
@@ -121,14 +130,14 @@ export function SidebarUserNav({ user }: { user: User }) {
               side="top"
             >
               <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <Link
-                  className="flex cursor-pointer items-center text-[13px]"
-                  href="/settings"
-                >
+              <DropdownMenuItem
+                data-testid="user-nav-item-settings"
+                onSelect={handleOpenSettings}
+              >
+                <span className="flex w-full cursor-pointer items-center text-[13px]">
                   <Settings className="mr-2 size-3.5" />
                   Settings
-                </Link>
+                </span>
               </DropdownMenuItem>
               <DropdownMenuItem
                 data-testid="user-nav-item-account"
@@ -140,7 +149,7 @@ export function SidebarUserNav({ user }: { user: User }) {
                 </span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              {isTestEnvironment ? <TestSignOutItem /> : <ClerkSignOutItem />}
+              {testEnvironment ? <TestSignOutItem /> : <ClerkSignOutItem />}
             </DropdownMenuContent>
           </DropdownMenu>
         </SidebarMenuItem>
@@ -148,8 +157,10 @@ export function SidebarUserNav({ user }: { user: User }) {
       <AccountDialog
         onOpenChange={setShowAccount}
         open={showAccount}
+        testEnvironment={testEnvironment}
         user={user}
       />
+      <SettingsDialog onOpenChange={setShowSettings} open={showSettings} />
     </>
   );
 }
