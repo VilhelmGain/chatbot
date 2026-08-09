@@ -21,6 +21,7 @@ import { ProviderCard } from "@/components/settings/provider-card";
 import { ProviderForm } from "@/components/settings/provider-form";
 import { TitleModelSelector } from "@/components/settings/title-model-selector";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogClose,
@@ -38,6 +39,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
+import { setStatsForNerds, useStatsForNerds } from "@/lib/stats-for-nerds";
 import { cn } from "@/lib/utils";
 
 type CustomProvider = {
@@ -262,6 +264,7 @@ function MobileSettingsNavButton({
 
 function PreferencesPanel() {
   const { theme, setTheme } = useTheme();
+  const statsForNerds = useStatsForNerds();
 
   return (
     <>
@@ -310,6 +313,20 @@ function PreferencesPanel() {
           <p className="text-xs text-muted-foreground">
             Choose your preferred color scheme.
           </p>
+          <div className="flex items-center justify-between gap-4 rounded-lg border border-border/60 bg-muted/20 px-3 py-2.5">
+            <div className="flex flex-col gap-1">
+              <Label htmlFor="stats-for-nerds">Stats for nerds</Label>
+              <p className="text-xs text-muted-foreground">
+                Show token and latency details on responses.
+              </p>
+            </div>
+            <Checkbox
+              checked={statsForNerds}
+              data-testid="stats-for-nerds-toggle"
+              id="stats-for-nerds"
+              onCheckedChange={setStatsForNerds}
+            />
+          </div>
         </div>
       </div>
     </>

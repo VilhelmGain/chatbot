@@ -10,7 +10,7 @@ type CheckboxProps = {
   disabled?: boolean;
   id?: string;
   onCheckedChange?: (checked: boolean) => void;
-};
+} & React.ComponentPropsWithoutRef<"button">;
 
 function Checkbox({
   checked = false,
@@ -18,6 +18,7 @@ function Checkbox({
   disabled,
   id,
   onCheckedChange,
+  ...props
 }: CheckboxProps) {
   return (
     <button
@@ -32,6 +33,7 @@ function Checkbox({
         className
       )}
       onClick={() => onCheckedChange?.(!checked)}
+      {...props}
     >
       {checked ? (
         <span className="flex items-center justify-center text-current">

@@ -1,7 +1,6 @@
 "use client";
 import type { UseChatHelpers } from "@ai-sdk/react";
 import { useCallback } from "react";
-import type { Vote } from "@/lib/db/schema";
 import type { ChatMessage } from "@/lib/types";
 import { cn, sanitizeText } from "@/lib/utils";
 import { MessageContent, MessageResponse } from "../ai-elements/message";
@@ -18,6 +17,7 @@ import { DocumentToolResult } from "./document";
 import { DocumentPreview } from "./document-preview";
 import { SparklesIcon } from "./icons";
 import { MessageActions } from "./message-actions";
+import { MessageMeta } from "./message-meta";
 import { MessageReasoning } from "./message-reasoning";
 import { PreviewAttachment } from "./preview-attachment";
 import { Weather } from "./weather";
@@ -83,9 +83,7 @@ function ToolApprovalActions({
 
 const PurePreviewMessage = ({
   addToolApprovalResponse,
-  chatId,
   message,
-  vote,
   isLoading,
   setMessages: _setMessages,
   regenerate: _regenerate,
@@ -95,9 +93,7 @@ const PurePreviewMessage = ({
   onFork,
 }: {
   addToolApprovalResponse: UseChatHelpers<ChatMessage>["addToolApprovalResponse"];
-  chatId: string;
   message: ChatMessage;
-  vote: Vote | undefined;
   isLoading: boolean;
   setMessages: UseChatHelpers<ChatMessage>["setMessages"];
   regenerate: UseChatHelpers<ChatMessage>["regenerate"];
@@ -351,13 +347,11 @@ const PurePreviewMessage = ({
 
   const actions = !isReadonly && (
     <MessageActions
-      chatId={chatId}
       isLoading={isLoading}
       key={`action-${message.id}`}
       message={message}
       onEdit={onEdit ? () => onEdit(message) : undefined}
       onFork={onFork ? () => onFork(message) : undefined}
-      vote={vote}
     />
   );
 
@@ -367,6 +361,7 @@ const PurePreviewMessage = ({
     <>
       {attachments}
       {parts}
+      {isAssistant && <MessageMeta message={message} />}
       {actions}
     </>
   );
