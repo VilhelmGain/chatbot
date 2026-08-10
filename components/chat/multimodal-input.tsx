@@ -656,6 +656,9 @@ function PureAttachmentsButton({
   const caps: Record<string, ModelCapabilities> | undefined =
     modelsResponse?.capabilities ?? modelsResponse;
   const hasVision = caps?.[selectedModelId]?.vision ?? false;
+  const attachmentLabel = hasVision
+    ? "Attach image or file"
+    : "Attach file (images need a vision model)";
   const handleClick = useCallback(
     (event: React.MouseEvent<HTMLButtonElement>) => {
       event.preventDefault();
@@ -676,20 +679,20 @@ function PureAttachmentsButton({
     <Tooltip>
       <TooltipTrigger asChild>
         <Button
+          aria-label={attachmentLabel}
           className="h-7 w-7 rounded-lg border border-border/40 p-1 text-foreground transition-colors hover:border-border hover:text-foreground"
           data-testid="attachments-button"
           disabled={status !== "ready"}
           onClick={handleClick}
           onPointerDown={handlePointerDown}
+          title={attachmentLabel}
           variant="ghost"
         >
           <PaperclipIcon size={14} style={{ height: 14, width: 14 }} />
         </Button>
       </TooltipTrigger>
       <TooltipContent side="top" sideOffset={8}>
-        {hasVision
-          ? "Attach image or file"
-          : "Attach file (images need a vision model)"}
+        {attachmentLabel}
       </TooltipContent>
     </Tooltip>
   );

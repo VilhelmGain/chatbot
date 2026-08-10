@@ -3,32 +3,17 @@
 import { Gauge, Hash, Timer } from "lucide-react";
 import { useStatsForNerds } from "@/lib/stats-for-nerds";
 import type { ChatMessage } from "@/lib/types";
+import { getMessageNerdStats } from "./message-stats";
 
 export function MessageMeta({ message }: { message: ChatMessage }) {
   const statsForNerds = useStatsForNerds();
-  const {
-    modelName,
-    outputTokens,
-    reasoningEffort,
-    timeToFirstToken,
-    tokensPerSecond,
-  } = message.metadata ?? {};
+  const { modelName, reasoningEffort } = message.metadata ?? {};
 
   if (message.role !== "assistant" || !modelName) {
     return null;
   }
 
-  const stats =
-    statsForNerds &&
-    typeof outputTokens === "number" &&
-    typeof tokensPerSecond === "number" &&
-    typeof timeToFirstToken === "number"
-      ? {
-          timeToFirstToken: (timeToFirstToken / 1000).toFixed(1),
-          tokens: Math.round(outputTokens),
-          tokensPerSecond: tokensPerSecond.toFixed(2),
-        }
-      : null;
+  const stats = getMessageNerdStats(message, statsForNerds);
 
   return (
     <div
@@ -42,7 +27,7 @@ export function MessageMeta({ message }: { message: ChatMessage }) {
 
       {stats ? (
         <span
-          className="flex min-w-0 items-center gap-1 opacity-0 transition-opacity duration-150 group-hover/message:opacity-100 group-focus-within/message:opacity-100"
+          className="hidden min-w-0 items-center gap-1 md:flex md:opacity-0 md:transition-opacity md:duration-150 md:group-hover/message:opacity-100 md:group-focus-within/message:opacity-100"
           data-testid="message-nerd-stats"
         >
           <Gauge className="size-3 shrink-0" />
