@@ -45,7 +45,7 @@ export const ModelSelectorContent = ({
   <PopoverContent
     align="start"
     className={cn(
-      "w-[280px] p-0 rounded-xl border border-white/10 glass-surface backdrop-blur-xl shadow-[var(--shadow-float)]",
+      "w-[280px] p-0 rounded-lg border border-white/10 glass-surface backdrop-blur-xl shadow-[var(--shadow-float)]",
       className
     )}
     side="top"
@@ -97,7 +97,7 @@ export const ModelSelectorGroup = (props: ModelSelectorGroupProps) => (
 export type ModelSelectorItemProps = ComponentProps<typeof CommandItem>;
 
 export const ModelSelectorItem = ({ className, ...props }: ModelSelectorItemProps) => (
-  <CommandItem className={cn("w-full text-[13px] rounded-full", className)} {...props} />
+  <CommandItem className={cn("w-full text-[13px] rounded-md", className)} {...props} />
 );
 
 export type ModelSelectorShortcutProps = ComponentProps<typeof CommandShortcut>;
@@ -202,7 +202,7 @@ export const ModelSelectorLogoGroup = ({
 }: ModelSelectorLogoGroupProps) => (
   <div
     className={cn(
-      "flex shrink-0 items-center -space-x-1 [&>img]:rounded-full [&>img]:p-px [&>img]:ring-1 [&>img]:ring-border/30",
+      "flex shrink-0 items-center -space-x-1 [&>img]:rounded-md [&>img]:p-px [&>img]:ring-1 [&>img]:ring-border/30",
       className
     )}
     {...props}

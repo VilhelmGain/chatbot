@@ -5,9 +5,9 @@ import { LEGAL_DOCUMENTS, SUPPORT_EMAIL } from "@/lib/legal";
 export function LegalPanel() {
   return (
     <div className="flex flex-col gap-4" data-testid="legal-panel">
-      <div className="flex flex-col gap-5 rounded-xl border border-white/8 glass-surface p-5">
+      <div className="flex flex-col gap-5 rounded-lg border border-white/8 glass-surface p-5">
         <div className="flex items-start gap-3">
-          <div className="grid size-8 shrink-0 place-items-center rounded-xl bg-white/5">
+          <div className="grid size-8 shrink-0 place-items-center rounded-lg bg-white/5">
             <Scale className="size-3.5 text-muted-foreground" />
           </div>
           <div>
@@ -41,7 +41,7 @@ export function LegalPanel() {
 
       <div className="flex flex-col gap-3 rounded-xl border border-white/8 glass-surface p-5 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-start gap-3">
-          <div className="grid size-8 shrink-0 place-items-center rounded-xl bg-white/5">
+          <div className="grid size-8 shrink-0 place-items-center rounded-lg bg-white/5">
             <Mail className="size-3.5 text-muted-foreground" />
           </div>
           <div>

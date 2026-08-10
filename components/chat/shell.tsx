@@ -14,7 +14,6 @@ import { useVisualViewport } from "@/hooks/use-visual-viewport";
 import type { Attachment, ChatMessage } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { Artifact } from "./artifact";
-import { ChatHeader } from "./chat-header";
 import { DataStreamHandler } from "./data-stream-handler";
 import { submitEditedMessage } from "./message-editor";
 import { Messages } from "./messages";
@@ -136,9 +135,7 @@ export function ChatShell() {
             isArtifactVisible ? "w-[40%]" : "w-full"
           )}
         >
-          <ChatHeader />
-
-          <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden bg-transparent md:rounded-tl-3xl md:border-t md:border-l md:border-white/8">
+          <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden bg-transparent md:rounded-tl-xl md:border-t md:border-l md:border-white/8">
             <Messages
               addToolApprovalResponse={addToolApprovalResponse}
               chatId={chatId}
@@ -154,7 +151,7 @@ export function ChatShell() {
               status={status}
             />
 
-            <div className="sticky bottom-0 z-10 mx-auto flex w-full max-w-4xl gap-2 px-2 pb-3 md:px-4 md:pb-4 before:pointer-events-none before:absolute before:inset-x-0 before:bottom-0 before:h-32 before:bg-gradient-to-t before:from-background before:to-transparent">
+            <div className="sticky bottom-0 z-10 mx-auto flex w-full max-w-4xl gap-2 px-2 pb-3 md:px-4 md:pb-4 before:pointer-events-none before:absolute before:inset-x-0 before:bottom-0 before:h-40 before:bg-gradient-to-t before:from-background/50 before:via-background/15 before:to-transparent before:backdrop-blur-xl">
               {!isReadonly && (
                 <MultimodalInput
                   attachments={attachments}

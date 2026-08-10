@@ -49,7 +49,7 @@ function PureSuggestedActions({ chatId, sendMessage }: SuggestedActionsProps) {
           }}
         >
           <Suggestion
-            className="h-auto w-full rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-left text-[13px] leading-relaxed text-muted-foreground backdrop-blur-md transition-all duration-200 hover:-translate-y-0.5 hover:border-white/15 hover:bg-white/[0.06] hover:text-foreground hover:shadow-[var(--shadow-card)] sm:rounded-full sm:text-center sm:text-[13px]"
+            className="h-auto w-full rounded-lg border border-white/10 bg-white/[0.03] px-4 py-3 text-left text-[13px] leading-relaxed text-muted-foreground backdrop-blur-md transition-all duration-200 hover:-translate-y-0.5 hover:border-white/15 hover:bg-white/[0.06] hover:text-foreground hover:shadow-[var(--shadow-card)] sm:rounded-lg sm:text-center sm:text-[13px]"
             onClick={handleSuggestionClick}
             suggestion={suggestedAction}
           >

@@ -37,7 +37,7 @@ export const SuggestionDialog = ({
         />
         <motion.div
           animate={{ opacity: 1, scale: 1 }}
-          className="absolute left-1/2 top-1/2 z-50 flex w-[min(20rem,calc(100%-2rem))] -translate-x-1/2 -translate-y-1/2 flex-col gap-3 rounded-xl border bg-transparent p-4 font-sans text-sm shadow-xl"
+          className="absolute left-1/2 top-1/2 z-50 flex w-[min(20rem,calc(100%-2rem))] -translate-x-1/2 -translate-y-1/2 flex-col gap-3 rounded-lg border bg-transparent p-4 font-sans text-sm shadow-xl"
           exit={{ opacity: 0, scale: 0.95 }}
           initial={{ opacity: 0, scale: 0.95 }}
           key={suggestion.id}
@@ -45,13 +45,13 @@ export const SuggestionDialog = ({
         >
           <div className="flex flex-row items-center justify-between">
             <div className="flex flex-row items-center gap-2">
-              <div className="flex size-5 items-center justify-center rounded-xl bg-white/5 text-muted-foreground ring-1 ring-border/50">
+              <div className="flex size-5 items-center justify-center rounded-md bg-white/5 text-muted-foreground ring-1 ring-border/50">
                 <SparklesIcon size={10} />
               </div>
               <div className="font-medium">Suggestion</div>
             </div>
             <button
-              className="flex size-6 cursor-pointer items-center justify-center rounded-xl text-muted-foreground transition-colors hover:bg-white/5 hover:text-foreground"
+              className="flex size-6 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-white/5 hover:text-foreground"
               onClick={onClose}
               type="button"
             >
@@ -63,14 +63,14 @@ export const SuggestionDialog = ({
           </div>
           <div className="flex gap-2">
             <Button
-              className="w-fit rounded-full px-3 py-1.5"
+              className="w-fit rounded-md px-3 py-1.5"
               onClick={onApply}
               variant="outline"
             >
               Apply
             </Button>
             <Button
-              className="w-fit rounded-full px-3 py-1.5"
+              className="w-fit rounded-md px-3 py-1.5"
               onClick={onClose}
               variant="ghost"
             >

@@ -125,7 +125,7 @@ const Tool = ({
           animate={{ opacity: 1, transition: { delay: 0.1 } }}
           aria-label={description}
           aria-pressed={selectedTool === description}
-          className={cx("rounded-full p-3", {
+          className={cx("rounded-lg p-3", {
             "bg-primary text-primary-foreground!": selectedTool === description,
           })}
           exit={{
@@ -149,7 +149,7 @@ const Tool = ({
         </motion.div>
       </TooltipTrigger>
       <TooltipContent
-        className="rounded-xl bg-foreground p-3 px-4 text-background"
+        className="rounded-lg bg-foreground p-3 px-4 text-background"
         side="left"
         sideOffset={16}
       >
@@ -226,7 +226,7 @@ const ReadingLevelSelector = ({
           key={id}
           transition={{ delay: 0.1 }}
         >
-          <div className="size-2 rounded-full bg-white/5-foreground/40" />
+          <div className="size-2 rounded-md bg-white/5-foreground/40" />
         </motion.div>
       ))}
 
@@ -235,7 +235,7 @@ const ReadingLevelSelector = ({
           <TooltipTrigger asChild>
             <motion.div
               className={cx(
-                "absolute flex flex-row items-center rounded-full border bg-transparent p-3",
+                "absolute flex flex-row items-center rounded-lg border bg-transparent p-3",
                 {
                   "bg-primary text-primary-foreground": currentLevel !== 2,
                   "bg-transparent text-foreground": currentLevel === 2,
@@ -443,7 +443,7 @@ const PureToolbar = ({
     <TooltipProvider delayDuration={0}>
       <motion.div
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        className="fixed right-6 bottom-6 z-50 flex cursor-pointer flex-col items-center rounded-xl border bg-transparent py-1 shadow-lg"
+        className="fixed right-6 bottom-6 z-50 flex cursor-pointer flex-col items-center rounded-lg border bg-transparent py-1 shadow-lg"
         exit={{ opacity: 0, transition: { duration: 0.1 }, y: -20 }}
         initial={{ opacity: 0, scale: 1, y: -20 }}
         onAnimationComplete={handleAnimationComplete}

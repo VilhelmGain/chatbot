@@ -39,7 +39,7 @@ export const PreviewAttachment = ({
 
   return (
     <div
-      className="group relative h-24 w-24 shrink-0 overflow-hidden rounded-xl border border-white/10/40 bg-white/4"
+      className="group relative h-24 w-24 shrink-0 overflow-hidden rounded-lg border border-white/10/40 bg-white/4"
       data-testid="input-attachment-preview"
     >
       {contentType?.startsWith("image") ? (
@@ -59,7 +59,7 @@ export const PreviewAttachment = ({
 
       {isUploading ? (
         <div
-          className="absolute inset-0 flex items-center justify-center rounded-xl bg-black/40 backdrop-blur-sm"
+          className="absolute inset-0 flex items-center justify-center rounded-lg bg-black/40 backdrop-blur-sm"
           data-testid="input-attachment-loader"
         >
           <Spinner className="size-5" />
@@ -70,7 +70,7 @@ export const PreviewAttachment = ({
         <>
           <button
             aria-label="Remove attachment"
-            className="absolute top-1.5 right-1.5 hidden size-5 items-center justify-center rounded-full bg-black/60 text-white opacity-0 backdrop-blur-sm transition-opacity hover:bg-black/80 group-hover:opacity-100 md:flex"
+            className="absolute top-1.5 right-1.5 hidden size-5 items-center justify-center rounded-md bg-black/60 text-white opacity-0 backdrop-blur-sm transition-opacity hover:bg-black/80 group-hover:opacity-100 md:flex"
             onClick={onRemove}
             type="button"
           >

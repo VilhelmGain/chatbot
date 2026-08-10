@@ -32,7 +32,7 @@ export type ToolProps = ComponentProps<typeof Collapsible>;
 
 export const Tool = ({ className, ...props }: ToolProps) => (
   <Collapsible
-    className={cn("group not-prose mb-4 w-full rounded-xl border", className)}
+    className={cn("group not-prose mb-4 w-full rounded-lg border", className)}
     {...props}
   />
 );
@@ -72,7 +72,7 @@ const statusIcons: Record<ToolPart["state"], ReactNode> = {
 };
 
 export const getStatusBadge = (status: ToolPart["state"]) => (
-  <Badge className="gap-1.5 rounded-full text-xs" variant="secondary">
+  <Badge className="gap-1.5 rounded-md text-xs" variant="secondary">
     {statusIcons[status]}
     {statusLabels[status]}
   </Badge>
@@ -128,7 +128,7 @@ export const ToolInput = ({ className, input, ...props }: ToolInputProps) => (
     <h4 className="font-medium text-muted-foreground text-xs uppercase tracking-wide">
       Parameters
     </h4>
-    <div className="rounded-xl bg-white/5">
+    <div className="rounded-lg bg-white/5">
       <CodeBlock code={JSON.stringify(input, null, 2)} language="json" />
     </div>
   </div>
@@ -166,7 +166,7 @@ export const ToolOutput = ({
       </h4>
       <div
         className={cn(
-          "overflow-x-auto rounded-xl text-xs [&_table]:w-full",
+          "overflow-x-auto rounded-lg text-xs [&_table]:w-full",
           errorText && "bg-destructive/10 text-destructive"
         )}
       >

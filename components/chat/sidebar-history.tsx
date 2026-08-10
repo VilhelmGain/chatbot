@@ -187,11 +187,11 @@ export function SidebarHistory({ user }: { user: User | undefined }) {
           <div className="flex flex-col gap-0.5 px-1">
             {[44, 32, 28, 64, 52].map((item) => (
               <div
-                className="flex h-8 items-center gap-2 rounded-xl px-2"
+                className="flex h-8 items-center gap-2 rounded-md px-2"
                 key={item}
               >
                 <div
-                  className="h-3 max-w-(--skeleton-width) flex-1 animate-pulse rounded-xl bg-sidebar-foreground/[0.06]"
+                  className="h-3 max-w-(--skeleton-width) flex-1 animate-pulse rounded-md bg-sidebar-foreground/[0.06]"
                   style={
                     {
                       "--skeleton-width": `${item}%`,

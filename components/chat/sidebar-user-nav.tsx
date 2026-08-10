@@ -112,7 +112,7 @@ export function SidebarUserNav({
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <SidebarMenuButton
-                className={`${identityDisplayMode === "name-email" ? "h-10" : "h-8"} px-2 rounded-xl bg-transparent text-sidebar-foreground/70 transition-colors duration-150 hover:text-sidebar-foreground data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground`}
+                className={`${identityDisplayMode === "name-email" ? "h-10" : "h-8"} px-2 rounded-lg bg-transparent text-sidebar-foreground/70 transition-colors duration-150 hover:text-sidebar-foreground data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground`}
                 data-testid="user-nav-button"
               >
                 {testEnvironment ? (
@@ -125,7 +125,7 @@ export function SidebarUserNav({
               </SidebarMenuButton>
             </DropdownMenuTrigger>
             <DropdownMenuContent
-              className="w-(--radix-popper-anchor-width) rounded-xl border border-white/10 glass-surface backdrop-blur-xl shadow-[var(--shadow-float)]"
+              className="w-(--radix-popper-anchor-width) rounded-lg border border-white/10 glass-surface backdrop-blur-xl shadow-[var(--shadow-float)]"
               data-testid="user-nav-menu"
               side="top"
             >
