@@ -5,9 +5,9 @@ import { LEGAL_DOCUMENTS, SUPPORT_EMAIL } from "@/lib/legal";
 export function LegalPanel() {
   return (
     <div className="flex flex-col gap-4" data-testid="legal-panel">
-      <div className="flex flex-col gap-5 rounded-xl border border-border/70 bg-card/40 p-5">
+      <div className="flex flex-col gap-5 rounded-3xl border border-white/8/70 glass-surface/40 p-5">
         <div className="flex items-start gap-3">
-          <div className="grid size-8 shrink-0 place-items-center rounded-lg bg-muted">
+          <div className="grid size-8 shrink-0 place-items-center rounded-3xl bg-white/5">
             <Scale className="size-3.5 text-muted-foreground" />
           </div>
           <div>
@@ -17,7 +17,7 @@ export function LegalPanel() {
             </p>
           </div>
         </div>
-        <div className="divide-y divide-border/60 border-t border-border/60">
+        <div className="divide-y divide-border/60 border-t border-white/10">
           {LEGAL_DOCUMENTS.map((document) => (
             <Link
               className="group flex items-center justify-between gap-4 py-3.5 text-sm transition-colors duration-150 hover:text-foreground"
@@ -39,9 +39,9 @@ export function LegalPanel() {
         </div>
       </div>
 
-      <div className="flex flex-col gap-3 rounded-xl border border-border/70 bg-card/40 p-5 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 rounded-3xl border border-white/8/70 glass-surface/40 p-5 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-start gap-3">
-          <div className="grid size-8 shrink-0 place-items-center rounded-lg bg-muted">
+          <div className="grid size-8 shrink-0 place-items-center rounded-3xl bg-white/5">
             <Mail className="size-3.5 text-muted-foreground" />
           </div>
           <div>

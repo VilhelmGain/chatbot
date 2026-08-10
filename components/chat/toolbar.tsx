@@ -149,7 +149,7 @@ const Tool = ({
         </motion.div>
       </TooltipTrigger>
       <TooltipContent
-        className="rounded-2xl bg-foreground p-3 px-4 text-background"
+        className="rounded-3xl bg-foreground p-3 px-4 text-background"
         side="left"
         sideOffset={16}
       >
@@ -226,7 +226,7 @@ const ReadingLevelSelector = ({
           key={id}
           transition={{ delay: 0.1 }}
         >
-          <div className="size-2 rounded-full bg-muted-foreground/40" />
+          <div className="size-2 rounded-full bg-white/5-foreground/40" />
         </motion.div>
       ))}
 
@@ -235,10 +235,10 @@ const ReadingLevelSelector = ({
           <TooltipTrigger asChild>
             <motion.div
               className={cx(
-                "absolute flex flex-row items-center rounded-full border bg-background p-3",
+                "absolute flex flex-row items-center rounded-full border bg-transparent p-3",
                 {
-                  "bg-background text-foreground": currentLevel === 2,
                   "bg-primary text-primary-foreground": currentLevel !== 2,
+                  "bg-transparent text-foreground": currentLevel === 2,
                 }
               )}
               drag="y"
@@ -257,7 +257,7 @@ const ReadingLevelSelector = ({
             </motion.div>
           </TooltipTrigger>
           <TooltipContent
-            className="rounded-2xl bg-foreground p-3 px-4 text-background text-sm"
+            className="rounded-3xl bg-foreground p-3 px-4 text-background text-sm"
             side="left"
             sideOffset={16}
           >
@@ -443,7 +443,7 @@ const PureToolbar = ({
     <TooltipProvider delayDuration={0}>
       <motion.div
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        className="fixed right-6 bottom-6 z-50 flex cursor-pointer flex-col items-center rounded-3xl border bg-background py-1 shadow-lg"
+        className="fixed right-6 bottom-6 z-50 flex cursor-pointer flex-col items-center rounded-3xl border bg-transparent py-1 shadow-lg"
         exit={{ opacity: 0, transition: { duration: 0.1 }, y: -20 }}
         initial={{ opacity: 0, scale: 1, y: -20 }}
         onAnimationComplete={handleAnimationComplete}

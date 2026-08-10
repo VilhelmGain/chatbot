@@ -107,7 +107,7 @@ export function ProviderCard({
 
   return (
     <>
-      <div className="flex items-center gap-3 rounded-lg border p-3">
+      <div className="flex items-center gap-3 rounded-3xl border p-3">
         <Button
           className="size-7 p-0"
           onClick={onToggle}
@@ -128,7 +128,7 @@ export function ProviderCard({
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <span className="font-medium truncate">{provider.name}</span>
-            <span className="rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
+            <span className="rounded bg-white/5 px-1.5 py-0.5 text-xs text-muted-foreground">
               {provider.type}
             </span>
           </div>

@@ -129,7 +129,7 @@ export function AppSidebar({
               <SidebarMenu>
                 <SidebarMenuItem>
                   <SidebarMenuButton
-                    className="h-8 rounded-lg border border-sidebar-border text-[13px] text-sidebar-foreground/70 transition-colors duration-150 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+                    className="h-9 rounded-full border border-white/10 bg-white/5 text-[13px] text-sidebar-foreground/80 transition-all duration-200 hover:bg-primary/10 hover:border-primary/30 hover:text-sidebar-foreground"
                     onClick={handleNewChat}
                     tooltip="New Chat"
                   >
@@ -140,7 +140,7 @@ export function AppSidebar({
                 {user ? (
                   <SidebarMenuItem>
                     <SidebarMenuButton
-                      className="rounded-lg text-sidebar-foreground/40 transition-colors duration-150 hover:bg-destructive/10 hover:text-destructive"
+                      className="rounded-full text-sidebar-foreground/40 transition-colors duration-200 hover:bg-error/10 hover:text-error"
                       onClick={handleShowDeleteAllDialog}
                       tooltip="Delete All Chats"
                     >
@@ -166,9 +166,11 @@ export function AppSidebar({
         onOpenChange={setShowDeleteAllDialog}
         open={showDeleteAllDialog}
       >
-        <AlertDialogContent>
+        <AlertDialogContent className="glass-surface rounded-3xl border-white/10">
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete all chats?</AlertDialogTitle>
+            <AlertDialogTitle className="font-sora text-lg font-semibold">
+              Delete all chats?
+            </AlertDialogTitle>
             <AlertDialogDescription>
               This action cannot be undone. This will permanently delete all
               your chats and remove them from our servers.

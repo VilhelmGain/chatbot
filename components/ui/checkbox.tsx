@@ -29,7 +29,7 @@ function Checkbox({
       data-state={checked ? "checked" : "unchecked"}
       disabled={disabled}
       className={cn(
-        "peer size-4 shrink-0 rounded-[4px] border border-primary shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground",
+        "peer size-4 shrink-0 rounded-full border border-white/20 bg-white/5 shadow-xs transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30 disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:border-primary data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground data-[state=checked]:shadow-[0_0_12px_rgba(0,240,255,0.35)]",
         className
       )}
       onClick={() => onCheckedChange?.(!checked)}

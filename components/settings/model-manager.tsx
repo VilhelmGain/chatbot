@@ -127,7 +127,7 @@ export function ModelManager({ providerId, providerKey }: ModelManagerProps) {
   }, [error]);
 
   return (
-    <div className="ml-10 mt-2 rounded-lg border bg-muted/30 p-3">
+    <div className="ml-10 mt-2 rounded-3xl border bg-white/5/30 p-3">
       <div className="mb-3 flex items-center justify-between">
         <h3 className="text-sm font-medium">
           Models
@@ -335,7 +335,7 @@ function ModelRow({
   }, [capabilities, model.id, onUpdated, providerId]);
 
   return (
-    <div className="flex items-center justify-between rounded-md bg-background px-3 py-2">
+    <div className="flex items-center justify-between rounded-3xl bg-transparent px-3 py-2">
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-medium">{model.name}</p>
         <p className="truncate text-xs text-muted-foreground">
@@ -346,7 +346,7 @@ function ModelRow({
             className={`cursor-pointer rounded px-1.5 py-0.5 text-[10px] transition-opacity ${
               capabilities.tools
                 ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
-                : "bg-muted text-muted-foreground line-through"
+                : "bg-white/5 text-muted-foreground line-through"
             } ${isSaving ? "opacity-50" : ""}`}
             disabled={isSaving}
             onClick={handleToggleTools}
@@ -358,7 +358,7 @@ function ModelRow({
             className={`cursor-pointer rounded px-1.5 py-0.5 text-[10px] transition-opacity ${
               capabilities.vision
                 ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
-                : "bg-muted text-muted-foreground line-through"
+                : "bg-white/5 text-muted-foreground line-through"
             } ${isSaving ? "opacity-50" : ""}`}
             disabled={isSaving}
             onClick={handleToggleVision}
@@ -370,7 +370,7 @@ function ModelRow({
             className={`cursor-pointer rounded px-1.5 py-0.5 text-[10px] transition-opacity ${
               capabilities.reasoning
                 ? "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300"
-                : "bg-muted text-muted-foreground line-through"
+                : "bg-white/5 text-muted-foreground line-through"
             } ${isSaving ? "opacity-50" : ""}`}
             disabled={isSaving}
             onClick={handleToggleReasoning}

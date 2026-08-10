@@ -12,9 +12,9 @@ export function ChatHeader() {
   }
 
   return (
-    <header className="sticky top-0 flex h-14 items-center gap-2 bg-sidebar px-3">
+    <header className="sticky top-0 flex h-14 items-center gap-2 bg-transparent px-3">
       <Button
-        className="md:hidden"
+        className="rounded-full md:hidden"
         onClick={toggleSidebar}
         size="icon-sm"
         variant="ghost"

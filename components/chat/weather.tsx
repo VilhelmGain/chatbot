@@ -330,7 +330,7 @@ export function Weather({
   return (
     <div
       className={cx(
-        "relative flex w-full flex-col gap-3 overflow-hidden rounded-2xl p-4 shadow-lg backdrop-blur-sm",
+        "relative flex w-full flex-col gap-3 overflow-hidden rounded-3xl p-4 shadow-lg backdrop-blur-sm",
         {
           "bg-gradient-to-br from-sky-400 via-blue-500 to-blue-600": isDay,
         },
@@ -376,7 +376,7 @@ export function Weather({
           </div>
         </div>
 
-        <div className="rounded-xl bg-white/10 p-3 backdrop-blur-sm">
+        <div className="rounded-3xl bg-white/10 p-3 backdrop-blur-sm">
           <div className="mb-2 font-medium text-white/80 text-xs">
             Hourly Forecast
           </div>
@@ -389,7 +389,7 @@ export function Weather({
               return (
                 <div
                   className={cx(
-                    "flex min-w-0 flex-1 flex-col items-center gap-1 rounded-md px-1 py-1.5",
+                    "flex min-w-0 flex-1 flex-col items-center gap-1 rounded-3xl px-1 py-1.5",
                     {
                       "bg-white/20": isCurrentHour,
                     }

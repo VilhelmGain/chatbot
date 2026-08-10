@@ -86,7 +86,7 @@ export function AddModelForm({ providerId, onModelAdded }: AddModelFormProps) {
 
   return (
     <form
-      className="flex flex-col gap-3 rounded-md border bg-background p-3"
+      className="flex flex-col gap-3 rounded-3xl border bg-transparent p-3"
       onSubmit={handleSubmit}
     >
       <div className="grid grid-cols-2 gap-3">
