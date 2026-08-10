@@ -172,7 +172,7 @@ const PureChatItem = ({
       ) : (
         <SidebarMenuButton
           asChild
-          className="h-8 rounded-lg text-[13px] text-sidebar-foreground/80 transition-all duration-150 hover:bg-white/5 hover:text-sidebar-foreground data-active:bg-sidebar-primary/10 data-active:text-sidebar-primary data-active:font-medium"
+          className="h-8 rounded-lg text-[13px] text-sidebar-foreground/80 transition-all duration-150 hover:bg-foreground/5 hover:text-sidebar-foreground data-active:bg-sidebar-primary/10 data-active:text-sidebar-primary data-active:font-medium"
           isActive={isActive}
         >
           <Link

@@ -65,14 +65,14 @@ function ToolApprovalActions({
   return (
     <div className="flex items-center justify-end gap-2 border-t px-4 py-3">
       <button
-        className="rounded-md border border-white/10 bg-white/4 px-3 py-1.5 text-muted-foreground text-sm transition-all hover:bg-white/6 hover:text-foreground"
+        className="rounded-md border border-input bg-foreground/4 px-3 py-1.5 text-muted-foreground text-sm transition-all hover:bg-foreground/6 hover:text-foreground"
         onClick={handleDeny}
         type="button"
       >
         Deny
       </button>
       <button
-        className="rounded-md bg-primary px-4 py-1.5 text-primary-foreground text-sm font-semibold transition-all hover:brightness-110 shadow-[0_0_16px_rgba(0,240,255,0.25)]"
+        className="rounded-md bg-primary px-4 py-1.5 text-primary-foreground text-sm font-semibold transition-all hover:brightness-110 glow-primary"
         onClick={handleAllow}
         type="button"
       >
@@ -182,7 +182,7 @@ const PurePreviewMessage = ({
       return (
         <MessageContent
           className={cn("text-[13px] leading-[1.65]", {
-            "w-fit max-w-[min(80%,56ch)] overflow-hidden break-words rounded-lg rounded-br-md border border-primary/20 bg-gradient-to-br from-primary/10 to-primary/5 px-4 py-2.5 text-foreground shadow-[0_0_20px_rgba(0,240,255,0.12)] message-slide-right":
+            "w-fit max-w-[min(80%,56ch)] overflow-hidden break-words rounded-lg rounded-br-md border border-primary/20 bg-gradient-to-br from-primary/10 to-primary/5 px-4 py-2.5 text-foreground glow-primary message-slide-right":
               message.role === "user",
           })}
           data-testid="message-content"
@@ -383,7 +383,7 @@ const PurePreviewMessage = ({
       >
         {isAssistant && (
           <div className="flex h-[calc(13px*1.65)] shrink-0 items-center">
-            <div className="flex size-8 items-center justify-center rounded-lg bg-white/5 text-primary ring-1 ring-primary/20 shadow-[0_0_12px_rgba(0,240,255,0.15)]">
+            <div className="flex size-8 items-center justify-center rounded-lg bg-foreground/5 text-primary ring-1 ring-primary/20 glow-primary">
               <SparklesIcon size={13} />
             </div>
           </div>
@@ -408,7 +408,7 @@ export const ThinkingMessage = () => (
   >
     <div className="flex items-start gap-3">
       <div className="flex h-[calc(13px*1.65)] shrink-0 items-center">
-        <div className="flex size-8 items-center justify-center rounded-lg bg-white/5 text-primary ring-1 ring-primary/20 shadow-[0_0_12px_rgba(0,240,255,0.15)]">
+        <div className="flex size-8 items-center justify-center rounded-lg bg-foreground/5 text-primary ring-1 ring-primary/20 glow-primary">
           <SparklesIcon size={13} />
         </div>
       </div>

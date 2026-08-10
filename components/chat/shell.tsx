@@ -135,7 +135,7 @@ export function ChatShell() {
             isArtifactVisible ? "w-[40%]" : "w-full"
           )}
         >
-          <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden bg-transparent md:rounded-tl-xl md:border-t md:border-l md:border-white/8">
+          <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden bg-transparent md:rounded-tl-xl md:border-t md:border-l md:border-border">
             <Messages
               addToolApprovalResponse={addToolApprovalResponse}
               chatId={chatId}

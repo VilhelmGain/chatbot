@@ -226,7 +226,7 @@ const ReadingLevelSelector = ({
           key={id}
           transition={{ delay: 0.1 }}
         >
-          <div className="size-2 rounded-md bg-white/5-foreground/40" />
+          <div className="size-2 rounded-md bg-foreground/40" />
         </motion.div>
       ))}
 
