@@ -11,9 +11,13 @@ const iconsByType: Record<"success" | "error", ReactNode> = {
 };
 
 export function toast(props: Omit<ToastProps, "id">) {
-  return sonnerToast.custom((id) => (
-    <Toast description={props.description} id={id} type={props.type} />
-  ));
+  return sonnerToast.custom(
+    (id) => <Toast description={props.description} id={id} type={props.type} />,
+    {
+      className: "!rounded-none !border-none !bg-transparent !p-0 !shadow-none",
+      style: { fontFamily: "var(--font-family-manrope)" },
+    }
+  );
 }
 
 function Toast(props: ToastProps) {
@@ -45,7 +49,7 @@ function Toast(props: ToastProps) {
     <div className="flex toast-mobile:w-[356px] w-full justify-center">
       <div
         className={cn(
-          "flex toast-mobile:w-fit w-full flex-row gap-3 rounded-lg glass-surface border border-white/10 shadow-[var(--shadow-float)] p-3",
+          "flex toast-mobile:w-fit w-full flex-row gap-3 rounded-lg glass-surface shadow-[var(--shadow-float)] p-3",
           multiLine ? "items-start" : "items-center"
         )}
         data-testid="toast"
@@ -60,7 +64,11 @@ function Toast(props: ToastProps) {
         >
           {iconsByType[type]}
         </div>
-        <div className="text-sm text-foreground" ref={descriptionRef}>
+        <div
+          className="text-[13px] leading-5 text-foreground"
+          ref={descriptionRef}
+          style={{ fontFamily: "var(--font-family-manrope)" }}
+        >
           {description}
         </div>
       </div>

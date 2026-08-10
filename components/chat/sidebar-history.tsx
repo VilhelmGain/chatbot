@@ -241,7 +241,7 @@ export function SidebarHistory({ user }: { user: User | undefined }) {
                     <div className="flex flex-col gap-4">
                       {groupedChats.today.length > 0 && (
                         <div>
-                          <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-sidebar-foreground/70">
+                          <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-sidebar-primary">
                             Today
                           </div>
                           {groupedChats.today.map((chat) => (
@@ -258,7 +258,7 @@ export function SidebarHistory({ user }: { user: User | undefined }) {
 
                       {groupedChats.yesterday.length > 0 && (
                         <div>
-                          <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-sidebar-foreground/70">
+                          <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-sidebar-primary">
                             Yesterday
                           </div>
                           {groupedChats.yesterday.map((chat) => (
@@ -275,7 +275,7 @@ export function SidebarHistory({ user }: { user: User | undefined }) {
 
                       {groupedChats.lastWeek.length > 0 && (
                         <div>
-                          <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-sidebar-foreground/70">
+                          <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-sidebar-primary">
                             Last 7 days
                           </div>
                           {groupedChats.lastWeek.map((chat) => (
@@ -292,7 +292,7 @@ export function SidebarHistory({ user }: { user: User | undefined }) {
 
                       {groupedChats.lastMonth.length > 0 && (
                         <div>
-                          <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-sidebar-foreground/70">
+                          <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-sidebar-primary">
                             Last 30 days
                           </div>
                           {groupedChats.lastMonth.map((chat) => (
@@ -309,7 +309,7 @@ export function SidebarHistory({ user }: { user: User | undefined }) {
 
                       {groupedChats.older.length > 0 && (
                         <div>
-                          <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-sidebar-foreground/70">
+                          <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-sidebar-primary">
                             Older
                           </div>
                           {groupedChats.older.map((chat) => (

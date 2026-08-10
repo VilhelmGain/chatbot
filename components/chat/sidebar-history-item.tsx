@@ -172,8 +172,7 @@ const PureChatItem = ({
       ) : (
         <SidebarMenuButton
           asChild
-          className="h-8 rounded-lg text-[13px] text-sidebar-foreground/80 transition-all duration-150 hover:bg-white/5 hover:text-sidebar-foreground data-active:bg-sidebar-primary/10 data-active:text-sidebar-primary data-active:font-medium"
-          isActive={isActive}
+          className="h-8 rounded-lg text-[13px] text-sidebar-foreground/45 transition-[background-color,color,box-shadow] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] hover:bg-sidebar-primary/10 hover:text-sidebar-primary hover:shadow-[0_0_16px_rgba(0,240,255,0.12)]"
         >
           <Link
             href={`/chat/${chat.id}`}
