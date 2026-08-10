@@ -55,7 +55,7 @@ function AttachmentRow({
 
   return (
     <label
-      className="flex cursor-pointer items-center gap-3 rounded-xl px-2 py-2 transition-colors hover:bg-white/5"
+      className="flex cursor-pointer items-center gap-3 rounded-xl px-2 py-2 transition-colors hover:bg-foreground/5"
       htmlFor={`export-attachment-${attachment.id}`}
     >
       <Checkbox

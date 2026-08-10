@@ -223,7 +223,7 @@ export const ReasoningContent = memo(
         )}
       >
         <div
-          className="max-h-[200px] overflow-y-auto rounded-xl border border-white/8/20 bg-white/5/30 px-3 py-2 text-[11px] leading-relaxed"
+          className="max-h-[200px] overflow-y-auto rounded-xl border border-border bg-muted/60 px-3 py-2 text-[11px] leading-relaxed"
           ref={scrollRef}
           style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
         >

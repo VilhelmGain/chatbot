@@ -74,7 +74,7 @@ function IdentityLabel({
       <div className="flex min-w-0 flex-col" data-testid="user-nav-label">
         <span className="truncate text-[13px]">{user.name ?? user.email}</span>
         {user.name ? (
-          <span className="truncate text-[11px] text-sidebar-foreground/40">
+          <span className="truncate text-[11px] text-sidebar-foreground/60">
             {user.email}
           </span>
         ) : null}
@@ -125,7 +125,7 @@ export function SidebarUserNav({
               </SidebarMenuButton>
             </DropdownMenuTrigger>
             <DropdownMenuContent
-              className="w-(--radix-popper-anchor-width) rounded-lg border border-white/10 glass-surface backdrop-blur-xl shadow-[var(--shadow-float)]"
+              className="w-(--radix-popper-anchor-width) rounded-lg border border-border glass-surface backdrop-blur-xl shadow-[var(--shadow-float)]"
               data-testid="user-nav-menu"
               side="top"
             >

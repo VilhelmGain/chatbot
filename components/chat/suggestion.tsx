@@ -45,13 +45,13 @@ export const SuggestionDialog = ({
         >
           <div className="flex flex-row items-center justify-between">
             <div className="flex flex-row items-center gap-2">
-              <div className="flex size-5 items-center justify-center rounded-md bg-white/5 text-muted-foreground ring-1 ring-border/50">
+              <div className="flex size-5 items-center justify-center rounded-md bg-foreground/5 text-muted-foreground ring-1 ring-border/50">
                 <SparklesIcon size={10} />
               </div>
               <div className="font-medium">Suggestion</div>
             </div>
             <button
-              className="flex size-6 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-white/5 hover:text-foreground"
+              className="flex size-6 cursor-pointer items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-foreground/5 hover:text-foreground"
               onClick={onClose}
               type="button"
             >

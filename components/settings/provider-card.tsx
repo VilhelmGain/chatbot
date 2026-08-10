@@ -128,7 +128,7 @@ export function ProviderCard({
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <span className="font-medium truncate">{provider.name}</span>
-            <span className="rounded bg-white/5 px-1.5 py-0.5 text-xs text-muted-foreground">
+            <span className="rounded bg-foreground/5 px-1.5 py-0.5 text-xs text-muted-foreground">
               {provider.type}
             </span>
           </div>

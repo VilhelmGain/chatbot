@@ -128,7 +128,7 @@ export const ToolInput = ({ className, input, ...props }: ToolInputProps) => (
     <h4 className="font-medium text-muted-foreground text-xs uppercase tracking-wide">
       Parameters
     </h4>
-    <div className="rounded-lg bg-white/5">
+    <div className="rounded-lg bg-foreground/5">
       <CodeBlock code={JSON.stringify(input, null, 2)} language="json" />
     </div>
   </div>

@@ -39,7 +39,7 @@ export const PreviewAttachment = ({
 
   return (
     <div
-      className="group relative h-24 w-24 shrink-0 overflow-hidden rounded-lg border border-white/10/40 bg-white/4"
+      className="group relative h-24 w-24 shrink-0 overflow-hidden rounded-lg border border-border/40 bg-foreground/4"
       data-testid="input-attachment-preview"
     >
       {contentType?.startsWith("image") ? (
