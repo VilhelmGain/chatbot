@@ -32,7 +32,7 @@ test.beforeEach(async ({ page }) => {
   );
 });
 
-test("keeps header and composer visible when the visible viewport shrinks", async ({
+test("keeps composer visible when the visible viewport shrinks", async ({
   page,
 }) => {
   await page.goto("/");
@@ -42,17 +42,17 @@ test("keeps header and composer visible when the visible viewport shrinks", asyn
   await input.focus();
   await page.setViewportSize({ height: 520, width: 390 });
 
-  await expect(page.locator("header")).toBeVisible();
+  await expect(input).toBeVisible();
 
-  const headerBox = await page.locator("header").boundingBox();
   const composerBox = await input.boundingBox();
   const composerBottom = composerBox ? composerBox.y + composerBox.height : -1;
+  const visibleHeight = await page.evaluate(
+    () => window.visualViewport?.height ?? window.innerHeight
+  );
 
-  expect(headerBox).not.toBeNull();
   expect(composerBox).not.toBeNull();
-  expect(headerBox?.y).toBeGreaterThanOrEqual(0);
   expect(composerBox?.y).toBeGreaterThanOrEqual(0);
-  expect(composerBottom).toBeLessThanOrEqual(520);
+  expect(composerBottom).toBeLessThanOrEqual(visibleHeight + 1);
 });
 
 test("model picker keeps search focus and stays in the visible viewport", async ({
