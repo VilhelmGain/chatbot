@@ -132,13 +132,13 @@ export function ChatShell() {
       >
         <div
           className={cn(
-            "flex min-w-0 flex-col bg-sidebar transition-[width] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]",
+            "flex min-w-0 flex-col glass-surface transition-[width] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]",
             isArtifactVisible ? "w-[40%]" : "w-full"
           )}
         >
           <ChatHeader />
 
-          <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden bg-background md:rounded-tl-[12px] md:border-t md:border-l md:border-border/40">
+          <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden bg-transparent md:rounded-tl-3xl md:border-t md:border-l md:border-white/8">
             <Messages
               addToolApprovalResponse={addToolApprovalResponse}
               chatId={chatId}
@@ -154,7 +154,7 @@ export function ChatShell() {
               status={status}
             />
 
-            <div className="sticky bottom-0 z-1 mx-auto flex w-full max-w-4xl gap-2 border-t-0 bg-background px-2 pb-3 md:px-4 md:pb-4">
+            <div className="sticky bottom-0 z-10 mx-auto flex w-full max-w-4xl gap-2 px-2 pb-3 md:px-4 md:pb-4 before:pointer-events-none before:absolute before:inset-x-0 before:bottom-0 before:h-32 before:bg-gradient-to-t before:from-background before:to-transparent">
               {!isReadonly && (
                 <MultimodalInput
                   attachments={attachments}

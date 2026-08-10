@@ -101,7 +101,7 @@ export const VersionFooter = ({
   return (
     <motion.div
       animate={{ opacity: 1 }}
-      className="z-50 flex w-full shrink-0 items-center justify-between gap-3 border-t border-border/50 bg-background px-4 py-3"
+      className="z-50 flex w-full shrink-0 items-center justify-between gap-3 border-t border-white/10 bg-transparent px-4 py-3"
       exit={{ opacity: 0, transition: { duration: 0 } }}
       initial={{ opacity: 0 }}
       transition={{ duration: 0.2 }}
@@ -109,7 +109,7 @@ export const VersionFooter = ({
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-1">
           <button
-            className="flex size-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-30"
+            className="flex size-7 items-center justify-center rounded-3xl text-muted-foreground transition-colors hover:bg-white/5 hover:text-foreground disabled:pointer-events-none disabled:opacity-30"
             disabled={isFirst}
             onClick={handlePrevious}
             type="button"
@@ -120,7 +120,7 @@ export const VersionFooter = ({
             {currentVersionIndex + 1} of {documents.length}
           </span>
           <button
-            className="flex size-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-30"
+            className="flex size-7 items-center justify-center rounded-3xl text-muted-foreground transition-colors hover:bg-white/5 hover:text-foreground disabled:pointer-events-none disabled:opacity-30"
             disabled={isLast}
             onClick={handleNext}
             type="button"
@@ -131,8 +131,8 @@ export const VersionFooter = ({
 
         <button
           className={cn(
-            "flex size-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
-            mode === "diff" && "bg-muted text-foreground"
+            "flex size-7 items-center justify-center rounded-3xl text-muted-foreground transition-colors hover:bg-white/5 hover:text-foreground",
+            mode === "diff" && "bg-white/5 text-foreground"
           )}
           onClick={handleToggleMode}
           title="Show changes"
@@ -144,7 +144,7 @@ export const VersionFooter = ({
 
       <div className="flex flex-row gap-2">
         <button
-          className="inline-flex items-center justify-center gap-2 rounded-lg bg-foreground px-3 py-1.5 text-sm font-medium text-background transition-all duration-150 hover:opacity-90 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50"
+          className="inline-flex items-center justify-center gap-2 rounded-3xl bg-foreground px-3 py-1.5 text-sm font-medium text-background transition-all duration-150 hover:opacity-90 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50"
           disabled={isMutating}
           onClick={handleRestore}
           type="button"
@@ -157,7 +157,7 @@ export const VersionFooter = ({
           ) : null}
         </button>
         <button
-          className="inline-flex items-center justify-center rounded-lg border border-border px-3 py-1.5 text-sm font-medium transition-all duration-150 hover:bg-muted active:scale-[0.98]"
+          className="inline-flex items-center justify-center rounded-3xl border border-white/8 px-3 py-1.5 text-sm font-medium transition-all duration-150 hover:bg-white/5 active:scale-[0.98]"
           onClick={handleLatest}
           type="button"
         >

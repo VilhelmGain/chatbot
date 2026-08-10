@@ -1,6 +1,6 @@
 import { ClerkProvider } from "@clerk/nextjs";
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Manrope, Montserrat, Sora } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { isTestEnvironment } from "@/lib/constants";
@@ -44,20 +44,29 @@ export const viewport: Viewport = {
   width: "device-width",
 };
 
-const geist = Geist({
+const sora = Sora({
   display: "swap",
   subsets: ["latin"],
-  variable: "--font-geist",
+  variable: "--font-sora",
+  weight: ["400", "500", "600", "700"],
 });
 
-const geistMono = Geist_Mono({
+const montserrat = Montserrat({
   display: "swap",
   subsets: ["latin"],
-  variable: "--font-geist-mono",
+  variable: "--font-montserrat",
+  weight: ["400", "500", "600", "700"],
+});
+
+const manrope = Manrope({
+  display: "swap",
+  subsets: ["latin"],
+  variable: "--font-manrope",
+  weight: ["400", "500", "600", "700"],
 });
 
 const LIGHT_THEME_COLOR = "hsl(0 0% 100%)";
-const DARK_THEME_COLOR = "hsl(240deg 10% 3.92%)";
+const DARK_THEME_COLOR = "hsl(190deg 18% 8%)";
 const THEME_COLOR_SCRIPT = `\
 (function() {
   var html = document.documentElement;
@@ -83,7 +92,7 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      className={`${geist.variable} ${geistMono.variable}`}
+      className={`${sora.variable} ${montserrat.variable} ${manrope.variable}`}
       lang="en"
       suppressHydrationWarning
     >
@@ -96,6 +105,8 @@ export default function RootLayout({
         />
       </head>
       <body className="antialiased">
+        <div aria-hidden className="bg-aurora" />
+        <div aria-hidden className="bg-noise" />
         <ThemeProvider
           attribute="class"
           defaultTheme="system"

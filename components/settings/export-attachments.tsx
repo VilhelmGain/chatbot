@@ -55,7 +55,7 @@ function AttachmentRow({
 
   return (
     <label
-      className="flex cursor-pointer items-center gap-3 rounded-md px-2 py-2 transition-colors hover:bg-muted/50"
+      className="flex cursor-pointer items-center gap-3 rounded-3xl px-2 py-2 transition-colors hover:bg-white/5"
       htmlFor={`export-attachment-${attachment.id}`}
     >
       <Checkbox
@@ -203,7 +203,7 @@ export function ExportAttachments() {
           <Spinner />
         </div>
       ) : attachments.length === 0 ? (
-        <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed py-12 text-center">
+        <div className="flex flex-col items-center gap-3 rounded-3xl border border-dashed py-12 text-center">
           <Paperclip className="size-8 text-muted-foreground" />
           <div>
             <p className="font-medium">No attachments to export</p>
@@ -227,7 +227,7 @@ export function ExportAttachments() {
               Select all
             </label>
           </div>
-          <div className="flex max-h-72 flex-col gap-1 overflow-y-auto rounded-lg border p-1.5">
+          <div className="flex max-h-72 flex-col gap-1 overflow-y-auto rounded-3xl border p-1.5">
             {attachments.map((attachment) => (
               <AttachmentRow
                 attachment={attachment}

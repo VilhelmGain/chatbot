@@ -112,14 +112,14 @@ export function SettingsDialog({
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent
-        className="h-[min(46rem,calc(100dvh-1rem))] w-[min(64rem,calc(100vw-1rem))] max-w-[calc(100vw-1rem)] gap-0 overflow-hidden rounded-2xl! p-0 md:h-[min(46rem,calc(100dvh-2rem))] md:w-[min(68rem,calc(100vw-2rem))] md:max-w-[calc(100vw-2rem)]"
+        className="h-[min(46rem,calc(100dvh-1rem))] w-[min(64rem,calc(100vw-1rem))] max-w-[calc(100vw-1rem)] gap-0 overflow-hidden rounded-3xl! p-0 md:h-[min(46rem,calc(100dvh-2rem))] md:w-[min(68rem,calc(100vw-2rem))] md:max-w-[calc(100vw-2rem)]"
         data-testid="settings-dialog"
         showCloseButton={false}
       >
         <div className="grid h-full min-h-0 md:grid-cols-[16.5rem_minmax(0,1fr)]">
           <aside className="hidden border-r border-sidebar-border bg-sidebar text-sidebar-foreground md:flex md:flex-col">
             <div className="flex items-start gap-3 px-5 pb-5 pt-6">
-              <div className="grid size-9 shrink-0 place-items-center rounded-xl bg-sidebar-foreground/10 text-sidebar-foreground">
+              <div className="grid size-9 shrink-0 place-items-center rounded-3xl bg-sidebar-foreground/10 text-sidebar-foreground">
                 <Settings2 className="size-4" />
               </div>
               <div className="flex flex-col gap-1">
@@ -144,8 +144,8 @@ export function SettingsDialog({
             </nav>
           </aside>
 
-          <main className="flex min-h-0 flex-col overflow-hidden bg-background">
-            <header className="flex shrink-0 items-start justify-between gap-4 border-b border-border/70 bg-background/95 px-5 py-4 backdrop-blur-xl md:px-8 md:py-5">
+          <main className="flex min-h-0 flex-col overflow-hidden bg-transparent">
+            <header className="flex shrink-0 items-start justify-between gap-4 border-b border-white/8/70 bg-transparent/95 px-5 py-4 backdrop-blur-xl md:px-8 md:py-5">
               <div className="flex min-w-0 flex-col gap-1">
                 <p className="text-[11px] font-medium tracking-[0.18em] text-muted-foreground uppercase">
                   {activeItem.label}
@@ -170,7 +170,7 @@ export function SettingsDialog({
               </DialogClose>
             </header>
 
-            <div className="flex shrink-0 gap-1 overflow-x-auto border-b border-border/70 bg-card/40 px-3 py-2 no-scrollbar md:hidden">
+            <div className="flex shrink-0 gap-1 overflow-x-auto border-b border-white/8/70 glass-surface/40 px-3 py-2 no-scrollbar md:hidden">
               {NAV_ITEMS.map((item) => (
                 <MobileSettingsNavButton
                   active={item.id === activeSection}
@@ -219,7 +219,7 @@ function SettingsNavButton({
     <button
       aria-current={active ? "page" : undefined}
       className={cn(
-        "flex items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm transition-colors duration-150",
+        "flex items-center gap-3 rounded-3xl px-3 py-2.5 text-left text-sm transition-colors duration-150",
         active
           ? "bg-sidebar-accent text-sidebar-accent-foreground"
           : "text-sidebar-foreground/60 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground"
@@ -259,10 +259,10 @@ function MobileSettingsNavButton({
     <button
       aria-current={active ? "page" : undefined}
       className={cn(
-        "flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-[13px] font-medium transition-colors duration-150",
+        "flex shrink-0 items-center gap-2 rounded-3xl px-3 py-2 text-[13px] font-medium transition-colors duration-150",
         active
           ? "bg-foreground text-background"
-          : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
+          : "bg-white/5 text-muted-foreground hover:bg-white/5 hover:text-foreground"
       )}
       onClick={handleSelect}
       type="button"
@@ -279,9 +279,9 @@ function PreferencesPanel() {
 
   return (
     <>
-      <div className="flex flex-col gap-5 rounded-xl border border-border/70 bg-card/40 p-5">
+      <div className="flex flex-col gap-5 rounded-3xl border border-white/8/70 glass-surface/40 p-5">
         <div className="flex items-start gap-3">
-          <div className="grid size-8 shrink-0 place-items-center rounded-lg bg-muted">
+          <div className="grid size-8 shrink-0 place-items-center rounded-3xl bg-white/5">
             <SlidersHorizontal className="size-3.5 text-muted-foreground" />
           </div>
           <div>
@@ -291,15 +291,15 @@ function PreferencesPanel() {
             </p>
           </div>
         </div>
-        <div className="grid gap-5 border-t border-border/60 pt-5">
+        <div className="grid gap-5 border-t border-white/10 pt-5">
           <TitleModelSelector />
           <IdentityDisplaySelector />
         </div>
       </div>
 
-      <div className="flex flex-col gap-5 rounded-xl border border-border/70 bg-card/40 p-5">
+      <div className="flex flex-col gap-5 rounded-3xl border border-white/8/70 glass-surface/40 p-5">
         <div className="flex items-start gap-3">
-          <div className="grid size-8 shrink-0 place-items-center rounded-lg bg-muted">
+          <div className="grid size-8 shrink-0 place-items-center rounded-3xl bg-white/5">
             <Palette className="size-3.5 text-muted-foreground" />
           </div>
           <div>
@@ -309,7 +309,7 @@ function PreferencesPanel() {
             </p>
           </div>
         </div>
-        <div className="flex flex-col gap-2 border-t border-border/60 pt-5">
+        <div className="flex flex-col gap-2 border-t border-white/10 pt-5">
           <Label htmlFor="theme">Theme</Label>
           <Select onValueChange={setTheme} value={theme}>
             <SelectTrigger className="w-full sm:w-64" id="theme">
@@ -324,7 +324,7 @@ function PreferencesPanel() {
           <p className="text-xs text-muted-foreground">
             Choose your preferred color scheme.
           </p>
-          <div className="flex items-center justify-between gap-4 rounded-lg border border-border/60 bg-muted/20 px-3 py-2.5">
+          <div className="flex items-center justify-between gap-4 rounded-3xl border border-white/10 bg-white/5/20 px-3 py-2.5">
             <div className="flex flex-col gap-1">
               <Label htmlFor="stats-for-nerds">Stats for nerds</Label>
               <p className="text-xs text-muted-foreground">
@@ -436,7 +436,7 @@ function ProvidersPanel() {
           ))}
         </div>
       ) : (
-        <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed py-12 text-center">
+        <div className="flex flex-col items-center gap-3 rounded-3xl border border-dashed py-12 text-center">
           <Server className="size-8 text-muted-foreground" />
           <div>
             <p className="font-medium">No custom providers</p>

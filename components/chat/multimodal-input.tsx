@@ -457,10 +457,10 @@ function PureMultimodalInput({
   return (
     <div className={cn("relative flex w-full flex-col gap-4", className)}>
       {editingMessage && onCancelEdit ? (
-        <div className="flex items-center gap-2 text-[12px] text-muted-foreground">
+        <div className="flex items-center gap-2 text-[12px] text-muted-foreground font-manrope">
           <span>Editing message</span>
           <button
-            className="rounded px-1.5 py-0.5 text-muted-foreground/50 transition-colors hover:bg-muted hover:text-foreground"
+            className="rounded-full px-2 py-0.5 text-muted-foreground/60 transition-colors hover:bg-white/5 hover:text-foreground"
             onMouseDown={handleCancelEditMouseDown}
             type="button"
           >
@@ -502,7 +502,7 @@ function PureMultimodalInput({
       </div>
 
       <PromptInput
-        className="[&>div]:rounded-2xl [&>div]:border [&>div]:border-border/30 [&>div]:bg-card/70 [&>div]:shadow-[var(--shadow-composer)] [&>div]:transition-shadow [&>div]:duration-300 [&>div]:focus-within:shadow-[var(--shadow-composer-focus)]"
+        className="[&>div]:rounded-3xl [&>div]:border [&>div]:border-input [&>div]:bg-input/30 [&>div]:transition-all [&>div]:duration-300 dark:[&>div]:border-white/6 dark:[&>div]:border-b-primary/20 dark:[&>div]:bg-white/4 dark:[&>div]:backdrop-blur-xl dark:[&>div]:focus-within:border-b-primary/50 dark:[&>div]:focus-within:bg-white/6"
         onSubmit={handlePromptSubmit}
       >
         {(attachments.length > 0 || uploadQueue.length > 0) && (
@@ -564,10 +564,10 @@ function PureMultimodalInput({
           ) : (
             <PromptInputSubmit
               className={cn(
-                "h-7 w-7 rounded-xl transition-all duration-200",
+                "h-7 w-7 rounded-3xl transition-all duration-200",
                 input.trim()
                   ? "bg-foreground text-background hover:opacity-85 active:scale-95"
-                  : "bg-muted text-muted-foreground/25 cursor-not-allowed"
+                  : "bg-white/5 text-muted-foreground/25 cursor-not-allowed"
               )}
               data-testid="send-button"
               disabled={!input.trim() || uploadQueue.length > 0}
@@ -680,7 +680,7 @@ function PureAttachmentsButton({
       <TooltipTrigger asChild>
         <Button
           aria-label={attachmentLabel}
-          className="h-7 w-7 rounded-lg border border-border/40 p-1 text-foreground transition-colors hover:border-border hover:text-foreground"
+          className="h-7 w-7 rounded-full border border-white/10 bg-white/5 p-1 text-foreground transition-all hover:border-primary/30 hover:bg-primary/10 hover:text-primary"
           data-testid="attachments-button"
           disabled={status !== "ready"}
           onClick={handleClick}
@@ -758,7 +758,7 @@ function ModelSelectorOption({
       aria-current={model.id === selectedModelId ? "true" : undefined}
       className={cn(
         "flex w-full py-2.5 transition-[background-color,color,box-shadow]",
-        "data-[selected=true]:bg-muted data-[selected=true]:text-foreground",
+        "data-[selected=true]:bg-white/5 data-[selected=true]:text-foreground",
         isPending &&
           "bg-primary/8 text-foreground ring-1 ring-inset ring-primary/20 data-[selected=true]:bg-primary/10"
       )}
@@ -843,12 +843,12 @@ function ReasoningEffortPicker({
   return (
     <fieldset
       aria-label={`Reasoning effort for ${modelName}`}
-      className="mx-1 mb-2 mt-1 rounded-xl border border-border/60 bg-muted/35 px-3 pb-3 pt-2.5 shadow-inner"
+      className="mx-1 mb-2 mt-1 rounded-3xl border border-white/8 bg-white/4 px-3 pb-3 pt-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
       data-testid="reasoning-effort-picker"
     >
       <div className="mb-3 flex items-start justify-between gap-3">
         <div>
-          <div className="flex items-center gap-1.5 text-[11px] font-semibold text-foreground">
+          <div className="flex items-center gap-1.5 font-manrope text-[11px] font-bold uppercase tracking-wider text-foreground">
             <BrainIcon className="size-3.5 text-primary" />
             Reasoning effort
           </div>
@@ -856,7 +856,7 @@ function ReasoningEffortPicker({
             Adjust, then click {modelName} again to confirm.
           </p>
         </div>
-        <span className="rounded-md bg-background/80 px-1.5 py-0.5 text-[10px] font-medium capitalize text-foreground shadow-sm ring-1 ring-border/50">
+        <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold capitalize text-primary ring-1 ring-primary/20">
           {value}
         </span>
       </div>
@@ -883,7 +883,7 @@ function ReasoningEffortPicker({
               aria-label={`Set reasoning effort to ${effort}`}
               aria-pressed={active}
               className={cn(
-                "relative flex min-w-0 cursor-pointer flex-col items-center gap-1 text-[9px] capitalize transition-colors",
+                "relative flex min-w-0 cursor-pointer flex-col items-center gap-1 text-[9px] capitalize transition-colors font-manrope",
                 active
                   ? "font-semibold text-foreground"
                   : "text-muted-foreground hover:text-foreground"
@@ -897,9 +897,9 @@ function ReasoningEffortPicker({
                 className={cn(
                   "h-1.5 w-1.5 rounded-full border transition-colors",
                   active
-                    ? "border-primary bg-primary"
-                    : "border-border bg-background",
-                  index === 0 && "rounded-sm"
+                    ? "border-primary bg-primary shadow-[0_0_8px_rgba(0,240,255,0.45)]"
+                    : "border-white/20 bg-white/5",
+                  index === 0 && "rounded-3xl"
                 )}
               />
               <span className="max-w-full truncate">{effort}</span>
@@ -1067,7 +1067,7 @@ function PureModelSelectorCompact({
   if (isLoading) {
     return (
       <Button
-        className="h-7 max-w-[200px] justify-between gap-1.5 rounded-lg px-2 text-[12px] text-muted-foreground"
+        className="h-7 max-w-[200px] justify-between gap-1.5 rounded-full border border-white/8 bg-white/4 px-2 text-[12px] text-muted-foreground"
         data-testid="model-selector"
         disabled
         variant="ghost"
@@ -1081,7 +1081,7 @@ function PureModelSelectorCompact({
   if (activeModels.length === 0) {
     return (
       <Button
-        className="h-7 max-w-[200px] justify-between gap-1.5 rounded-lg px-2 text-[12px] text-muted-foreground"
+        className="h-7 max-w-[200px] justify-between gap-1.5 rounded-full border border-white/8 bg-white/4 px-2 text-[12px] text-muted-foreground"
         data-testid="model-selector"
         disabled
         variant="ghost"
@@ -1101,7 +1101,7 @@ function PureModelSelectorCompact({
     <ModelSelector onOpenChange={handleOpenChange} open={open}>
       <ModelSelectorTrigger asChild>
         <Button
-          className="h-7 justify-between gap-1.5 rounded-lg px-2 text-[12px] text-muted-foreground transition-colors hover:text-foreground"
+          className="h-7 justify-between gap-1.5 rounded-full border border-white/8 bg-white/4 px-2 text-[12px] text-muted-foreground transition-all hover:border-primary/30 hover:text-foreground"
           data-testid="model-selector"
           onPointerDown={
             preserveComposerFocus
@@ -1140,7 +1140,7 @@ function PureModelSelectorCompact({
               aria-current={isDefaultSelected ? "true" : undefined}
               className={cn(
                 "flex w-full py-2.5 transition-[background-color,color,box-shadow]",
-                "data-[selected=true]:bg-muted data-[selected=true]:text-foreground"
+                "data-[selected=true]:bg-white/5 data-[selected=true]:text-foreground"
               )}
               onSelect={handleDefaultSelect}
               value="default"
@@ -1215,7 +1215,7 @@ function PureStopButton({
 
   return (
     <Button
-      className="h-7 w-7 rounded-xl bg-foreground p-1 text-background transition-all duration-200 hover:opacity-85 active:scale-95 disabled:bg-muted disabled:text-muted-foreground/25 disabled:cursor-not-allowed"
+      className="h-7 w-7 rounded-full bg-primary p-1 text-primary-foreground transition-all duration-200 shadow-[0_0_16px_rgba(0,240,255,0.35)] hover:brightness-110 active:scale-95 disabled:bg-white/5 disabled:text-muted-foreground/25 disabled:cursor-not-allowed"
       data-testid="stop-button"
       onClick={handleClick}
     >
