@@ -174,7 +174,7 @@ export function ProviderForm({
           </p>
         </div>
 
-        <Command className="border rounded-3xl">
+        <Command className="border rounded-xl">
           <CommandInput placeholder="Search providers..." />
           <CommandList>
             <CommandEmpty>No providers found.</CommandEmpty>

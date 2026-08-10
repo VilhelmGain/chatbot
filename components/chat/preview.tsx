@@ -18,7 +18,7 @@ function PreviewSuggestionButton({
 
   return (
     <button
-      className="rounded-3xl border border-white/8 glass-surface/20 px-3 py-2.5 text-left text-[11px] leading-relaxed text-muted-foreground/70 transition-all duration-200 hover:border-white/10 hover:glass-surface/40 hover:text-muted-foreground"
+      className="rounded-xl border border-white/8 glass-surface px-3 py-2.5 text-left text-[11px] leading-relaxed text-muted-foreground/70 transition-all duration-200 hover:border-white/10 hover:glass-surface hover:text-muted-foreground"
       onClick={handleClick}
       type="button"
     >
@@ -74,7 +74,7 @@ export function Preview() {
 
       <div className="shrink-0 px-5 pb-5">
         <button
-          className="flex w-full items-center rounded-3xl border border-white/8 glass-surface/30 px-4 py-3 text-left text-[13px] text-muted-foreground/40 transition-colors hover:border-white/10 hover:text-muted-foreground/60"
+          className="flex w-full items-center rounded-xl border border-white/8 glass-surface px-4 py-3 text-left text-[13px] text-muted-foreground/40 transition-colors hover:border-white/10 hover:text-muted-foreground/60"
           onClick={handleDefaultAction}
           type="button"
         >

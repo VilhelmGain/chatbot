@@ -314,7 +314,7 @@ export const CodeBlockContainer = ({
 }: HTMLAttributes<HTMLDivElement> & { language: string }) => (
   <div
     className={cn(
-      "group relative w-full overflow-hidden rounded-3xl border bg-transparent text-foreground",
+      "group relative w-full overflow-hidden rounded-xl border bg-transparent text-foreground",
       className
     )}
     data-language={language}

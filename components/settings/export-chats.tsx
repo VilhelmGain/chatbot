@@ -63,7 +63,7 @@ function ChatRow({
 
   return (
     <label
-      className="flex cursor-pointer items-center gap-3 rounded-3xl px-2 py-2 transition-colors hover:bg-white/5"
+      className="flex cursor-pointer items-center gap-3 rounded-xl px-2 py-2 transition-colors hover:bg-white/5"
       htmlFor={`export-chat-${chat.id}`}
     >
       <Checkbox
@@ -218,7 +218,7 @@ export function ExportChats() {
           <Spinner />
         </div>
       ) : chats.length === 0 ? (
-        <div className="flex flex-col items-center gap-3 rounded-3xl border border-dashed py-12 text-center">
+        <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed py-12 text-center">
           <Inbox className="size-8 text-muted-foreground" />
           <div>
             <p className="font-medium">No chats to export</p>
@@ -242,7 +242,7 @@ export function ExportChats() {
               Select all
             </label>
           </div>
-          <div className="flex max-h-72 flex-col gap-1 overflow-y-auto rounded-3xl border p-1.5">
+          <div className="flex max-h-72 flex-col gap-1 overflow-y-auto rounded-xl border p-1.5">
             {chats.map((chat) => (
               <ChatRow
                 chat={chat}

@@ -107,7 +107,7 @@ export function ProviderCard({
 
   return (
     <>
-      <div className="flex items-center gap-3 rounded-3xl border p-3">
+      <div className="flex items-center gap-3 rounded-xl border p-3">
         <Button
           className="size-7 p-0"
           onClick={onToggle}
