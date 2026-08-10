@@ -7,7 +7,7 @@ const isProtectedRoute = createRouteMatcher([
   "/chat/:id",
   "/settings",
   "/api/:path*",
-  "/((?!_next/static|_next/image|favicon.ico|opengraph-image|twitter-image|sitemap.xml|robots.txt).*)",
+  "/((?!_next/static|_next/image|favicon.ico|opengraph-image|twitter-image|sitemap.xml|robots.txt|privacy|terms).*)",
 ]);
 
 function handlePing(request: NextRequest) {

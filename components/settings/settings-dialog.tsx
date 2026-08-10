@@ -2,8 +2,10 @@
 
 import {
   Download,
+  type LucideIcon,
   Palette,
   Plus,
+  Scale,
   Server,
   Settings2,
   SlidersHorizontal,
@@ -16,6 +18,7 @@ import { toast } from "@/components/chat/toast";
 import { ExportAttachments } from "@/components/settings/export-attachments";
 import { ExportChats } from "@/components/settings/export-chats";
 import { IdentityDisplaySelector } from "@/components/settings/identity-display-selector";
+import { LegalPanel } from "@/components/settings/legal-panel";
 import { ModelManager } from "@/components/settings/model-manager";
 import { ProviderCard } from "@/components/settings/provider-card";
 import { ProviderForm } from "@/components/settings/provider-form";
@@ -53,7 +56,7 @@ type CustomProvider = {
   userId: string;
 };
 
-type SettingsSection = "preferences" | "data" | "providers";
+type SettingsSection = "preferences" | "data" | "providers" | "legal";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
@@ -79,9 +82,16 @@ const NAV_ITEMS = [
     label: "Providers",
     title: "Providers & models",
   },
+  {
+    description: "Privacy policy and terms of service",
+    icon: Scale,
+    id: "legal",
+    label: "Legal",
+    title: "Legal",
+  },
 ] as const satisfies ReadonlyArray<{
   description: string;
-  icon: typeof SlidersHorizontal;
+  icon: LucideIcon;
   id: SettingsSection;
   label: string;
   title: string;
@@ -178,6 +188,7 @@ export function SettingsDialog({
                 {activeSection === "preferences" ? <PreferencesPanel /> : null}
                 {activeSection === "data" ? <DataPanel /> : null}
                 {activeSection === "providers" ? <ProvidersPanel /> : null}
+                {activeSection === "legal" ? <LegalPanel /> : null}
               </div>
             </div>
           </main>
@@ -195,7 +206,7 @@ function SettingsNavButton({
   onSelect,
 }: {
   active: boolean;
-  icon: typeof SlidersHorizontal;
+  icon: LucideIcon;
   id: SettingsSection;
   label: string;
   onSelect: (id: SettingsSection) => void;
@@ -235,7 +246,7 @@ function MobileSettingsNavButton({
   onSelect,
 }: {
   active: boolean;
-  icon: typeof SlidersHorizontal;
+  icon: LucideIcon;
   id: SettingsSection;
   label: string;
   onSelect: (id: SettingsSection) => void;
