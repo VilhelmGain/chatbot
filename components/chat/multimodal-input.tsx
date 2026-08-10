@@ -464,7 +464,7 @@ function PureMultimodalInput({
         <div className="flex items-center gap-2 text-[12px] text-muted-foreground font-manrope">
           <span>Editing message</span>
           <button
-            className="rounded-md px-2 py-0.5 text-muted-foreground/60 transition-colors hover:bg-white/5 hover:text-foreground"
+            className="rounded-md px-2 py-0.5 text-muted-foreground/60 transition-colors hover:bg-foreground/5 hover:text-foreground"
             onMouseDown={handleCancelEditMouseDown}
             type="button"
           >
@@ -506,7 +506,7 @@ function PureMultimodalInput({
       </div>
 
       <PromptInput
-        className="[&>div]:rounded-lg [&>div]:border [&>div]:border-input [&>div]:bg-input/30 [&>div]:transition-all [&>div]:duration-300 dark:[&>div]:border-white/6 dark:[&>div]:border-b-primary/20 dark:[&>div]:bg-white/4 dark:[&>div]:backdrop-blur-xl dark:[&>div]:focus-within:border-b-primary/50 dark:[&>div]:focus-within:bg-white/6"
+        className="[&>div]:rounded-lg [&>div]:border [&>div]:border-input [&>div]:bg-input/30 [&>div]:transition-all [&>div]:duration-300 dark:[&>div]:border-input dark:[&>div]:border-b-primary/20 dark:[&>div]:bg-foreground/4 dark:[&>div]:backdrop-blur-xl dark:[&>div]:focus-within:border-b-primary/50 dark:[&>div]:focus-within:bg-foreground/6"
         onSubmit={handlePromptSubmit}
       >
         {(attachments.length > 0 || uploadQueue.length > 0) && (
@@ -537,7 +537,7 @@ function PureMultimodalInput({
           </div>
         )}
         <PromptInputTextarea
-          className="min-h-24 text-[13px] leading-relaxed px-4 pt-3.5 pb-1.5 placeholder:text-muted-foreground/35"
+          className="min-h-24 text-[13px] leading-relaxed px-4 pt-3.5 pb-1.5 placeholder:text-muted-foreground/55"
           data-testid="multimodal-input"
           onChange={handleInput}
           onKeyDown={handleTextareaKeyDown}
@@ -572,7 +572,7 @@ function PureMultimodalInput({
                 "h-7 w-7 rounded-lg transition-all duration-200",
                 input.trim()
                   ? "bg-foreground text-background hover:opacity-85 active:scale-95"
-                  : "bg-white/5 text-muted-foreground/25 cursor-not-allowed"
+                  : "bg-foreground/5 text-muted-foreground/25 cursor-not-allowed"
               )}
               data-testid="send-button"
               disabled={!input.trim() || uploadQueue.length > 0}
@@ -685,7 +685,7 @@ function PureAttachmentsButton({
       <TooltipTrigger asChild>
         <Button
           aria-label={attachmentLabel}
-          className="h-7 w-7 rounded-md border border-white/10 bg-white/5 p-1 text-foreground transition-all hover:border-primary/30 hover:bg-primary/10 hover:text-primary"
+          className="h-7 w-7 rounded-md border border-input bg-foreground/5 p-1 text-foreground transition-all hover:border-primary/30 hover:bg-primary/10 hover:text-primary"
           data-testid="attachments-button"
           disabled={status !== "ready"}
           onClick={handleClick}
@@ -763,7 +763,7 @@ function ModelSelectorOption({
       aria-current={model.id === selectedModelId ? "true" : undefined}
       className={cn(
         "flex w-full py-2.5 transition-[background-color,color,box-shadow]",
-        "data-[selected=true]:bg-white/5 data-[selected=true]:text-foreground",
+        "data-[selected=true]:bg-accent data-[selected=true]:text-foreground",
         isPending &&
           "bg-primary/8 text-foreground ring-1 ring-inset ring-primary/20 data-[selected=true]:bg-primary/10"
       )}
@@ -848,7 +848,7 @@ function ReasoningEffortPicker({
   return (
     <fieldset
       aria-label={`Reasoning effort for ${modelName}`}
-      className="mx-1 mb-2 mt-1 rounded-lg border border-white/8 bg-white/4 px-3 pb-3 pt-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
+      className="mx-1 mb-2 mt-1 rounded-lg border border-border bg-muted/60 px-3 pb-3 pt-2.5 shadow-[inset_0_1px_0_color-mix(in_srgb,var(--foreground)_4%,transparent)]"
       data-testid="reasoning-effort-picker"
     >
       <div className="mb-3 flex items-start justify-between gap-3">
@@ -902,8 +902,8 @@ function ReasoningEffortPicker({
                 className={cn(
                   "h-1.5 w-1.5 rounded-md border transition-colors",
                   active
-                    ? "border-primary bg-primary shadow-[0_0_8px_rgba(0,240,255,0.45)]"
-                    : "border-white/20 bg-white/5",
+                    ? "border-primary bg-primary glow-primary"
+                    : "border-foreground/20 bg-foreground/5",
                   index === 0 && "rounded-lg"
                 )}
               />
@@ -1072,7 +1072,7 @@ function PureModelSelectorCompact({
   if (isLoading) {
     return (
       <Button
-        className="h-7 max-w-[200px] justify-between gap-1.5 rounded-md border border-white/8 bg-white/4 px-2 text-[12px] text-muted-foreground"
+        className="h-7 max-w-[200px] justify-between gap-1.5 rounded-md border border-input bg-foreground/4 px-2 text-[12px] text-muted-foreground"
         data-testid="model-selector"
         disabled
         variant="ghost"
@@ -1086,7 +1086,7 @@ function PureModelSelectorCompact({
   if (activeModels.length === 0) {
     return (
       <Button
-        className="h-7 max-w-[200px] justify-between gap-1.5 rounded-md border border-white/8 bg-white/4 px-2 text-[12px] text-muted-foreground"
+        className="h-7 max-w-[200px] justify-between gap-1.5 rounded-md border border-input bg-foreground/4 px-2 text-[12px] text-muted-foreground"
         data-testid="model-selector"
         disabled
         variant="ghost"
@@ -1106,7 +1106,7 @@ function PureModelSelectorCompact({
     <ModelSelector onOpenChange={handleOpenChange} open={open}>
       <ModelSelectorTrigger asChild>
         <Button
-          className="h-7 justify-between gap-1.5 rounded-md border border-white/8 bg-white/4 px-2 text-[12px] text-muted-foreground transition-all hover:border-primary/30 hover:text-foreground"
+          className="h-7 justify-between gap-1.5 rounded-md border border-input bg-foreground/4 px-2 text-[12px] text-muted-foreground transition-all hover:border-primary/30 hover:text-foreground"
           data-testid="model-selector"
           onPointerDown={
             preserveComposerFocus
@@ -1145,7 +1145,7 @@ function PureModelSelectorCompact({
               aria-current={isDefaultSelected ? "true" : undefined}
               className={cn(
                 "flex w-full py-2.5 transition-[background-color,color,box-shadow]",
-                "data-[selected=true]:bg-white/5 data-[selected=true]:text-foreground"
+                "data-[selected=true]:bg-accent data-[selected=true]:text-foreground"
               )}
               onSelect={handleDefaultSelect}
               value="default"
@@ -1220,7 +1220,7 @@ function PureStopButton({
 
   return (
     <Button
-      className="h-7 w-7 rounded-md bg-primary p-1 text-primary-foreground transition-all duration-200 shadow-[0_0_16px_rgba(0,240,255,0.35)] hover:brightness-110 active:scale-95 disabled:bg-white/5 disabled:text-muted-foreground/25 disabled:cursor-not-allowed"
+      className="h-7 w-7 rounded-md bg-primary p-1 text-primary-foreground transition-all duration-200 glow-primary hover:brightness-110 active:scale-95 disabled:bg-foreground/5 disabled:text-muted-foreground/25 disabled:cursor-not-allowed"
       data-testid="stop-button"
       onClick={handleClick}
     >
@@ -1241,7 +1241,7 @@ function MobileSidebarToggle() {
   return (
     <Button
       aria-label="Toggle Sidebar"
-      className="h-7 w-7 rounded-md border border-white/10 bg-white/5 p-1 text-foreground transition-all hover:border-primary/30 hover:bg-primary/10 hover:text-primary md:hidden"
+      className="h-7 w-7 rounded-md border border-input bg-foreground/5 p-1 text-foreground transition-all hover:border-primary/30 hover:bg-primary/10 hover:text-primary md:hidden"
       onClick={handleToggle}
       type="button"
       variant="ghost"

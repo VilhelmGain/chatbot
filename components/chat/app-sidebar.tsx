@@ -131,7 +131,7 @@ export function AppSidebar({
               <SidebarMenu>
                 <SidebarMenuItem>
                   <SidebarMenuButton
-                    className="h-9 rounded-md border border-white/10 bg-white/5 text-[13px] text-sidebar-foreground/80 transition-all duration-200 hover:bg-primary/10 hover:border-primary/30 hover:text-sidebar-foreground"
+                    className="h-9 rounded-md border border-input bg-foreground/5 text-[13px] text-sidebar-foreground/80 transition-all duration-200 hover:bg-primary/10 hover:border-primary/30 hover:text-sidebar-foreground"
                     onClick={handleNewChat}
                     tooltip="New Chat"
                   >
@@ -142,7 +142,7 @@ export function AppSidebar({
                 {user ? (
                   <SidebarMenuItem>
                     <SidebarMenuButton
-                      className="rounded-md text-sidebar-foreground/40 transition-colors duration-200 hover:bg-error/10 hover:text-error"
+                      className="rounded-md text-sidebar-foreground/60 transition-colors duration-200 hover:bg-error/10 hover:text-error"
                       onClick={handleShowDeleteAllDialog}
                       tooltip="Delete All Chats"
                     >
@@ -168,7 +168,7 @@ export function AppSidebar({
         onOpenChange={setShowDeleteAllDialog}
         open={showDeleteAllDialog}
       >
-        <AlertDialogContent className="glass-surface rounded-lg border-white/10">
+        <AlertDialogContent className="glass-surface rounded-lg border-border">
           <AlertDialogHeader>
             <AlertDialogTitle className="font-sora text-lg font-semibold">
               Delete all chats?

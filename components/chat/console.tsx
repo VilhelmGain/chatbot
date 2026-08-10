@@ -110,13 +110,13 @@ export function Console({ consoleOutputs, setConsoleOutputs }: ConsoleProps) {
 
       <div
         className={cn(
-          "fixed bottom-0 z-40 flex w-full flex-col overflow-x-hidden overflow-y-auto border-t border-white/10 bg-transparent",
+          "fixed bottom-0 z-40 flex w-full flex-col overflow-x-hidden overflow-y-auto border-t border-border bg-transparent",
           { "select-none": isResizing }
         )}
         ref={consoleContainerRef}
         style={{ height }}
       >
-        <div className="sticky top-0 z-50 flex h-10 w-full items-center justify-between border-b border-white/10 bg-transparent px-3">
+        <div className="sticky top-0 z-50 flex h-10 w-full items-center justify-between border-b border-border bg-transparent px-3">
           <div className="flex items-center gap-2.5 text-[13px] text-muted-foreground">
             <TerminalWindowIcon />
             <span>Console</span>
@@ -134,17 +134,17 @@ export function Console({ consoleOutputs, setConsoleOutputs }: ConsoleProps) {
         <div className="bg-transparent">
           {[...consoleOutputs].reverse().map((consoleOutput, index) => (
             <div
-              className="flex border-b border-white/8 px-4 py-2.5 font-mono text-[12px] leading-relaxed"
+              className="flex border-b border-border px-4 py-2.5 font-mono text-[12px] leading-relaxed"
               key={consoleOutput.id}
             >
               <div
                 className={cn("w-10 shrink-0 tabular-nums", {
                   "text-emerald-500": consoleOutput.status === "completed",
+                  "text-error": consoleOutput.status === "failed",
                   "text-muted-foreground": [
                     "in_progress",
                     "loading_packages",
                   ].includes(consoleOutput.status),
-                  "text-red-400": consoleOutput.status === "failed",
                 })}
               >
                 [{consoleOutputs.length - index}]

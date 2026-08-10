@@ -97,63 +97,63 @@
 }
 
 :root {
-  --background: #ffffff;
-  --foreground: #101415;
+  --background: #f7f9fa;
+  --foreground: #13191b;
   --card: #ffffff;
-  --card-foreground: #101415;
+  --card-foreground: #13191b;
   --popover: #ffffff;
-  --popover-foreground: #101415;
-  --primary: #101415;
+  --popover-foreground: #13191b;
+  --primary: #0e171a;
   --primary-foreground: #ffffff;
-  --secondary: #f4f5f6;
-  --secondary-foreground: #272a2c;
-  --muted: #f4f5f6;
-  --muted-foreground: #6e7879;
-  --accent: #f4f5f6;
-  --accent-foreground: #101415;
-  --destructive: #b91c1c;
-  --border: #e4e7e8;
-  --input: #e4e7e8;
-  --ring: #00dbe9;
-  --chart-1: #00dbe9;
-  --chart-2: #7000ff;
-  --chart-3: #323537;
-  --chart-4: #ffb4ab;
-  --chart-5: #d1bcff;
-  --sidebar: #f9fafb;
-  --sidebar-foreground: #272a2c;
-  --sidebar-primary: #101415;
+  --secondary: #e8edee;
+  --secondary-foreground: #1c2527;
+  --muted: #edf1f2;
+  --muted-foreground: #566163;
+  --accent: #e3f0f1;
+  --accent-foreground: #123033;
+  --destructive: #b42318;
+  --border: #d3dcde;
+  --input: #c4cfd2;
+  --ring: #008d99;
+  --chart-1: #008d99;
+  --chart-2: #6a2fd1;
+  --chart-3: #566163;
+  --chart-4: #c64a3a;
+  --chart-5: #8b6cc9;
+  --sidebar: #f1f4f5;
+  --sidebar-foreground: #1c2527;
+  --sidebar-primary: #0e171a;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #f4f5f6;
-  --sidebar-accent-foreground: #101415;
-  --sidebar-border: #e4e7e8;
-  --sidebar-ring: #00dbe9;
+  --sidebar-accent: #e3ecee;
+  --sidebar-accent-foreground: #1c2527;
+  --sidebar-border: #d3dcde;
+  --sidebar-ring: #008d99;
 
-  --surface: #ffffff;
-  --surface-dim: #f4f5f6;
+  --surface: #f7f9fa;
+  --surface-dim: #e5eaeb;
   --surface-bright: #ffffff;
   --surface-container-lowest: #ffffff;
-  --surface-container-low: #f9fafb;
-  --surface-container: #f4f5f6;
-  --surface-container-high: #ebedee;
-  --surface-container-highest: #e4e7e8;
-  --on-surface: #101415;
-  --on-surface-variant: #4b5355;
-  --inverse-surface: #101415;
-  --inverse-on-surface: #e0e3e5;
-  --outline: #b9cacb;
-  --outline-variant: #e4e7e8;
-  --surface-tint: #00dbe9;
-  --surface-variant: #e4e7e8;
-  --primary-fixed: #dbfcff;
-  --primary-fixed-dim: #00dbe9;
+  --surface-container-low: #f2f5f6;
+  --surface-container: #e9edee;
+  --surface-container-high: #dfe5e6;
+  --surface-container-highest: #d3dcde;
+  --on-surface: #13191b;
+  --on-surface-variant: #465154;
+  --inverse-surface: #13191b;
+  --inverse-on-surface: #e7ecee;
+  --outline: #78868a;
+  --outline-variant: #d3dcde;
+  --surface-tint: #008d99;
+  --surface-variant: #dde5e7;
+  --primary-fixed: #d0f2f5;
+  --primary-fixed-dim: #009aa6;
   --on-primary-fixed: #00363a;
-  --on-primary-fixed-variant: #004f54;
-  --secondary-fixed: #e9ddff;
-  --secondary-fixed-dim: #d1bcff;
+  --on-primary-fixed-variant: #005f66;
+  --secondary-fixed: #e5e0f4;
+  --secondary-fixed-dim: #cfc5e8;
   --on-secondary-fixed: #23005b;
-  --on-secondary-fixed-variant: #5700c9;
-  --tertiary: #f5f4ff;
+  --on-secondary-fixed-variant: #4f2d9d;
+  --tertiary: #f2f2f7;
   --on-tertiary: #2e3039;
   --tertiary-container: #d8d8e4;
   --on-tertiary-container: #5c5e68;
@@ -161,23 +161,24 @@
   --tertiary-fixed-dim: #c5c6d1;
   --on-tertiary-fixed: #191b23;
   --on-tertiary-fixed-variant: #454650;
-  --error: #b91c1c;
+  --error: #b42318;
   --on-error: #ffffff;
-  --error-container: #fee2e2;
-  --on-error-container: #7f1d1d;
+  --error-container: #fee4e2;
+  --on-error-container: #7a271a;
 
-  --shadow-card: 0 1px 3px rgb(0 0 0 / 0.05), 0 1px 1px rgb(0 0 0 / 0.03);
+  --shadow-card: 0 1px 2px rgb(15 23 25 / 0.06), 0 1px 1px rgb(15 23 25 / 0.04);
   --shadow-float:
-    0 8px 24px -6px rgb(0 0 0 / 0.1), 0 2px 8px -2px rgb(0 0 0 / 0.04);
-  --shadow-composer: 0 1px 2px rgb(0 0 0 / 0.04);
+    0 12px 32px -8px rgb(15 23 25 / 0.14), 0 2px 8px -2px rgb(15 23 25 / 0.06);
+  --shadow-composer: 0 1px 2px rgb(15 23 25 / 0.04);
   --shadow-composer-focus:
-    0 0 0 1px rgb(0 0 0 / 0.06), 0 2px 8px -2px rgb(0 0 0 / 0.06);
-  --shadow-inset: inset 0 1px 1px rgb(0 0 0 / 0.03);
-  --shadow-glow: 0 0 20px rgb(0 219 233 / 0.25);
+    0 0 0 1px rgb(196 207 210 / 0.9), 0 4px 16px -6px rgb(15 23 25 / 0.08);
+  --shadow-inset: inset 0 1px 1px rgb(15 23 25 / 0.04);
+  --shadow-glow: 0 0 18px rgb(0 141 153 / 0.18);
 
   --ease-spring: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
   --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+  color-scheme: light;
 }
 
 .dark {
@@ -262,6 +263,7 @@
     0 0 0 1px rgb(255 255 255 / 0.1), 0 4px 16px -4px rgb(0 0 0 / 0.3),
     inset 0 1px 0 rgb(255 255 255 / 0.04);
   --shadow-glow: 0 0 24px rgb(0 240 255 / 0.35);
+  color-scheme: dark;
 }
 
 @layer base {
@@ -359,8 +361,8 @@ textarea:focus-visible {
     position: relative;
     background: linear-gradient(
       180deg,
-      rgba(255, 255, 255, 0.07) 0%,
-      rgba(255, 255, 255, 0.02) 100%
+      color-mix(in srgb, var(--foreground) 6%, transparent) 0%,
+      color-mix(in srgb, var(--foreground) 2%, transparent) 100%
     );
     isolation: isolate;
     -webkit-backdrop-filter: blur(30px);
@@ -379,8 +381,8 @@ textarea:focus-visible {
     content: "";
     background: linear-gradient(
       180deg,
-      rgba(255, 255, 255, 0.14) 0%,
-      rgba(255, 255, 255, 0.02) 100%
+      color-mix(in srgb, var(--foreground) 14%, transparent) 0%,
+      color-mix(in srgb, var(--foreground) 3%, transparent) 100%
     );
     border-radius: inherit;
     -webkit-mask:
@@ -394,18 +396,24 @@ textarea:focus-visible {
     position: relative;
     background: linear-gradient(
       180deg,
-      rgba(255, 255, 255, 0.1) 0%,
-      rgba(255, 255, 255, 0.03) 100%
+      color-mix(in srgb, var(--foreground) 9%, transparent) 0%,
+      color-mix(in srgb, var(--foreground) 3%, transparent) 100%
     );
     box-shadow:
-      inset 0 0 40px rgba(0, 240, 255, 0.05),
-      0 16px 48px -6px rgba(0, 0, 0, 0.35);
+      inset 0 0 40px color-mix(in srgb, var(--surface-tint) 8%, transparent),
+      0 16px 48px -6px rgb(15 23 25 / 0.18);
     isolation: isolate;
     -webkit-backdrop-filter: blur(60px);
     backdrop-filter: blur(60px);
     transition:
       transform 200ms var(--ease-spring),
       box-shadow 200ms var(--ease-spring);
+  }
+
+  .dark .glass-floating {
+    box-shadow:
+      inset 0 0 40px rgba(0, 240, 255, 0.05),
+      0 16px 48px -6px rgba(0, 0, 0, 0.35);
   }
 
   .glass-floating::before {
@@ -417,8 +425,8 @@ textarea:focus-visible {
     content: "";
     background: linear-gradient(
       180deg,
-      rgba(255, 255, 255, 0.22) 0%,
-      rgba(255, 255, 255, 0.04) 100%
+      color-mix(in srgb, var(--foreground) 20%, transparent) 0%,
+      color-mix(in srgb, var(--foreground) 5%, transparent) 100%
     );
     border-radius: inherit;
     -webkit-mask:
@@ -430,8 +438,9 @@ textarea:focus-visible {
 
   .glass-trough {
     position: relative;
-    background: rgba(255, 255, 255, 0.04);
-    border-bottom: 1px solid rgba(0, 240, 255, 0.25);
+    background: color-mix(in srgb, var(--foreground) 4%, transparent);
+    border-bottom: 1px solid
+      color-mix(in srgb, var(--surface-tint) 35%, transparent);
     isolation: isolate;
     -webkit-backdrop-filter: blur(20px);
     backdrop-filter: blur(20px);
@@ -450,8 +459,8 @@ textarea:focus-visible {
     content: "";
     background: linear-gradient(
       180deg,
-      rgba(255, 255, 255, 0.06) 0%,
-      rgba(255, 255, 255, 0.02) 100%
+      color-mix(in srgb, var(--foreground) 7%, transparent) 0%,
+      color-mix(in srgb, var(--foreground) 2%, transparent) 100%
     );
     border-radius: inherit;
     -webkit-mask:
@@ -467,7 +476,7 @@ textarea:focus-visible {
   background: linear-gradient(
     90deg,
     transparent 0%,
-    rgba(255, 255, 255, 0.2) 50%,
+    color-mix(in srgb, var(--foreground) 18%, transparent) 50%,
     transparent 100%
   );
 }
@@ -477,7 +486,7 @@ textarea:focus-visible {
 }
 
 @utility text-glow {
-  text-shadow: 0 0 18px rgba(0, 240, 255, 0.45);
+  text-shadow: 0 0 18px color-mix(in srgb, var(--surface-tint) 45%, transparent);
 }
 
 @utility surface-glow {
@@ -496,11 +505,13 @@ textarea:focus-visible {
   }
 
   .glow-primary {
-    box-shadow: 0 0 16px rgba(0, 240, 255, 0.25);
+    box-shadow: 0 0 16px
+      color-mix(in srgb, var(--surface-tint) 25%, transparent);
   }
 
   .glow-primary-strong {
-    box-shadow: 0 0 24px rgba(0, 240, 255, 0.4);
+    box-shadow: 0 0 24px
+      color-mix(in srgb, var(--surface-tint) 40%, transparent);
   }
 
   .glow-secondary {
@@ -653,10 +664,11 @@ textarea:focus-visible {
 @keyframes glow-pulse {
   0%,
   100% {
-    box-shadow: 0 0 0 0 rgba(0, 240, 255, 0%);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--surface-tint) 0%, transparent);
   }
   50% {
-    box-shadow: 0 0 0 3px rgba(0, 240, 255, 8%);
+    box-shadow: 0 0 0 3px
+      color-mix(in srgb, var(--surface-tint) 8%, transparent);
   }
 }
 
@@ -683,7 +695,7 @@ textarea:focus-visible {
   background: linear-gradient(
     90deg,
     transparent,
-    rgba(255, 255, 255, 0.04),
+    color-mix(in srgb, var(--foreground) 5%, transparent),
     transparent
   );
   background-size: 200% 100%;
@@ -758,7 +770,11 @@ textarea:focus-visible {
 .ˉo.cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground,
 .ˉo.cm-selectionBackground,
 .ˉo.cm-content::selection {
-  background: rgba(0, 240, 255, 0.15) !important;
+  background: color-mix(
+    in srgb,
+    var(--surface-tint) 18%,
+    transparent
+  ) !important;
 }
 
 .dark
@@ -793,13 +809,17 @@ textarea:focus-visible {
 }
 
 .cm-cursor {
-  border-left-color: #00f0ff !important;
+  border-left-color: var(--surface-tint) !important;
   border-left-width: 2px !important;
 }
 
 .cm-matchingBracket {
-  outline: 1px solid rgba(0, 240, 255, 0.3);
-  background: rgba(0, 240, 255, 0.12) !important;
+  outline: 1px solid color-mix(in srgb, var(--surface-tint) 55%, transparent);
+  background: color-mix(
+    in srgb,
+    var(--surface-tint) 15%,
+    transparent
+  ) !important;
   border-radius: 2px;
 }
 

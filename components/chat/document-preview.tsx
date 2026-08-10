@@ -84,15 +84,15 @@ export function DocumentPreview({
         {title ? (
           <DocumentHeader isStreaming={true} kind={kind} title={title} />
         ) : (
-          <div className="flex flex-row items-center justify-between gap-2 rounded-t-2xl border border-b-0 border-white/10 px-4 py-3 dark:bg-white/5">
+          <div className="flex flex-row items-center justify-between gap-2 rounded-t-2xl border border-b-0 border-border px-4 py-3 dark:bg-foreground/5">
             <div className="flex flex-row items-center gap-2.5">
-              <div className="size-3.5 animate-pulse rounded bg-white/5-foreground/15" />
-              <div className="h-3.5 w-24 animate-pulse rounded bg-white/5-foreground/15" />
+              <div className="size-3.5 animate-pulse rounded bg-foreground/15" />
+              <div className="h-3.5 w-24 animate-pulse rounded bg-foreground/15" />
             </div>
             <div className="w-8" />
           </div>
         )}
-        <div className="h-[257px] overflow-hidden rounded-b-2xl border border-t-0 border-white/10 bg-white/5 p-6">
+        <div className="h-[257px] overflow-hidden rounded-b-2xl border border-t-0 border-border bg-foreground/5 p-6">
           <InlineDocumentSkeleton />
         </div>
       </div>
@@ -135,19 +135,19 @@ export function DocumentPreview({
 
 const LoadingSkeleton = ({ artifactKind }: { artifactKind: ArtifactKind }) => (
   <div className="w-full max-w-[450px]">
-    <div className="flex flex-row items-center justify-between gap-2 rounded-t-2xl border border-b-0 border-white/10 px-4 py-3 dark:bg-white/5">
+    <div className="flex flex-row items-center justify-between gap-2 rounded-t-2xl border border-b-0 border-border px-4 py-3 dark:bg-foreground/5">
       <div className="flex flex-row items-center gap-2.5">
-        <div className="size-3.5 animate-pulse rounded bg-white/5-foreground/15" />
-        <div className="h-3.5 w-24 animate-pulse rounded bg-white/5-foreground/15" />
+        <div className="size-3.5 animate-pulse rounded bg-foreground/15" />
+        <div className="h-3.5 w-24 animate-pulse rounded bg-foreground/15" />
       </div>
       <div className="w-8" />
     </div>
     {artifactKind === "image" ? (
-      <div className="overflow-hidden rounded-b-2xl border border-t-0 border-white/10 bg-white/5">
-        <div className="h-[257px] w-full animate-pulse bg-white/5-foreground/10" />
+      <div className="overflow-hidden rounded-b-2xl border border-t-0 border-border bg-foreground/5">
+        <div className="h-[257px] w-full animate-pulse bg-foreground/10" />
       </div>
     ) : (
-      <div className="h-[257px] overflow-hidden rounded-b-2xl border border-t-0 border-white/10 bg-white/5 p-6">
+      <div className="h-[257px] overflow-hidden rounded-b-2xl border border-t-0 border-border bg-foreground/5 p-6">
         <InlineDocumentSkeleton />
       </div>
     )}
@@ -195,7 +195,7 @@ const PureHitboxLayer = ({
       role="presentation"
     >
       <div className="flex w-full items-center justify-end p-4">
-        <div className="absolute top-[13px] right-[9px] rounded-xl p-1.5 text-muted-foreground transition-colors hover:bg-white/5 hover:text-foreground">
+        <div className="absolute top-[13px] right-[9px] rounded-xl p-1.5 text-muted-foreground transition-colors hover:bg-foreground/5 hover:text-foreground">
           <FullscreenIcon />
         </div>
       </div>
@@ -219,7 +219,7 @@ const PureDocumentHeader = ({
   kind: ArtifactKind;
   isStreaming: boolean;
 }) => (
-  <div className="flex flex-row items-center justify-between gap-2 rounded-t-2xl border border-b-0 border-white/10 px-4 py-3 dark:bg-white/5">
+  <div className="flex flex-row items-center justify-between gap-2 rounded-t-2xl border border-b-0 border-border px-4 py-3 dark:bg-foreground/5">
     <div className="flex flex-row items-center gap-2.5">
       <div className="text-muted-foreground">
         {isStreaming ? (
@@ -255,7 +255,7 @@ const DocumentContent = ({ document }: { document: Document }) => {
   const { artifact } = useArtifact();
 
   const containerClassName = cn(
-    "h-[257px] overflow-hidden rounded-b-2xl border border-t-0 border-white/10 dark:bg-white/5",
+    "h-[257px] overflow-hidden rounded-b-2xl border border-t-0 border-border dark:bg-foreground/5",
     {
       "p-0": document.kind === "code",
       "p-4 sm:px-10 sm:py-10": document.kind === "text",
