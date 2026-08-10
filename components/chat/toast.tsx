@@ -45,7 +45,7 @@ function Toast(props: ToastProps) {
     <div className="flex toast-mobile:w-[356px] w-full justify-center">
       <div
         className={cn(
-          "flex toast-mobile:w-fit w-full flex-row gap-3 rounded-xl glass-surface border border-white/10 shadow-[var(--shadow-float)] p-3",
+          "flex toast-mobile:w-fit w-full flex-row gap-3 rounded-lg glass-surface border border-white/10 shadow-[var(--shadow-float)] p-3",
           multiLine ? "items-start" : "items-center"
         )}
         data-testid="toast"

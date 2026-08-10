@@ -112,14 +112,14 @@ export function SettingsDialog({
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent
-        className="h-[min(46rem,calc(100dvh-1rem))] w-[min(64rem,calc(100vw-1rem))] max-w-[calc(100vw-1rem)] gap-0 overflow-hidden rounded-xl! p-0 md:h-[min(46rem,calc(100dvh-2rem))] md:w-[min(68rem,calc(100vw-2rem))] md:max-w-[calc(100vw-2rem)]"
+        className="h-[min(46rem,calc(100dvh-1rem))] w-[min(64rem,calc(100vw-1rem))] max-w-[calc(100vw-1rem)] gap-0 overflow-hidden rounded-lg! p-0 md:h-[min(46rem,calc(100dvh-2rem))] md:w-[min(68rem,calc(100vw-2rem))] md:max-w-[calc(100vw-2rem)]"
         data-testid="settings-dialog"
         showCloseButton={false}
       >
         <div className="grid h-full min-h-0 md:grid-cols-[16.5rem_minmax(0,1fr)]">
           <aside className="hidden border-r border-sidebar-border bg-sidebar text-sidebar-foreground md:flex md:flex-col">
             <div className="flex items-start gap-3 px-5 pb-5 pt-6">
-              <div className="grid size-9 shrink-0 place-items-center rounded-xl bg-sidebar-foreground/10 text-sidebar-foreground">
+              <div className="grid size-9 shrink-0 place-items-center rounded-lg bg-sidebar-foreground/10 text-sidebar-foreground">
                 <Settings2 className="size-4" />
               </div>
               <div className="flex flex-col gap-1">
@@ -219,7 +219,7 @@ function SettingsNavButton({
     <button
       aria-current={active ? "page" : undefined}
       className={cn(
-        "flex items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm transition-colors duration-150",
+        "flex items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm transition-colors duration-150",
         active
           ? "bg-sidebar-accent text-sidebar-accent-foreground"
           : "text-sidebar-foreground/60 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground"
@@ -259,7 +259,7 @@ function MobileSettingsNavButton({
     <button
       aria-current={active ? "page" : undefined}
       className={cn(
-        "flex shrink-0 items-center gap-2 rounded-xl px-3 py-2 text-[13px] font-medium transition-colors duration-150",
+        "flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-[13px] font-medium transition-colors duration-150",
         active
           ? "bg-foreground text-background"
           : "bg-white/5 text-muted-foreground hover:bg-white/5 hover:text-foreground"
@@ -279,9 +279,9 @@ function PreferencesPanel() {
 
   return (
     <>
-      <div className="flex flex-col gap-5 rounded-xl border border-white/8 glass-surface p-5">
+      <div className="flex flex-col gap-5 rounded-lg border border-white/8 glass-surface p-5">
         <div className="flex items-start gap-3">
-          <div className="grid size-8 shrink-0 place-items-center rounded-xl bg-white/5">
+          <div className="grid size-8 shrink-0 place-items-center rounded-lg bg-white/5">
             <SlidersHorizontal className="size-3.5 text-muted-foreground" />
           </div>
           <div>
@@ -297,9 +297,9 @@ function PreferencesPanel() {
         </div>
       </div>
 
-      <div className="flex flex-col gap-5 rounded-xl border border-white/8 glass-surface p-5">
+      <div className="flex flex-col gap-5 rounded-lg border border-white/8 glass-surface p-5">
         <div className="flex items-start gap-3">
-          <div className="grid size-8 shrink-0 place-items-center rounded-xl bg-white/5">
+          <div className="grid size-8 shrink-0 place-items-center rounded-lg bg-white/5">
             <Palette className="size-3.5 text-muted-foreground" />
           </div>
           <div>
@@ -324,7 +324,7 @@ function PreferencesPanel() {
           <p className="text-xs text-muted-foreground">
             Choose your preferred color scheme.
           </p>
-          <div className="flex items-center justify-between gap-4 rounded-xl border border-white/10 bg-white/5/20 px-3 py-2.5">
+          <div className="flex items-center justify-between gap-4 rounded-lg border border-white/10 bg-white/5/20 px-3 py-2.5">
             <div className="flex flex-col gap-1">
               <Label htmlFor="stats-for-nerds">Stats for nerds</Label>
               <p className="text-xs text-muted-foreground">
@@ -436,7 +436,7 @@ function ProvidersPanel() {
           ))}
         </div>
       ) : (
-        <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed py-12 text-center">
+        <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed py-12 text-center">
           <Server className="size-8 text-muted-foreground" />
           <div>
             <p className="font-medium">No custom providers</p>

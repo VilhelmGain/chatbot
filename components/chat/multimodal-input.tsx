@@ -53,9 +53,10 @@ import {
   PromptInputTools,
 } from "../ai-elements/prompt-input";
 import { Button } from "../ui/button";
+import { useSidebar } from "../ui/sidebar";
 import { Slider } from "../ui/slider";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
-import { PaperclipIcon, StopIcon } from "./icons";
+import { PaperclipIcon, SidebarLeftIcon, StopIcon } from "./icons";
 import { PreviewAttachment } from "./preview-attachment";
 import {
   type SlashCommand,
@@ -463,7 +464,7 @@ function PureMultimodalInput({
         <div className="flex items-center gap-2 text-[12px] text-muted-foreground font-manrope">
           <span>Editing message</span>
           <button
-            className="rounded-full px-2 py-0.5 text-muted-foreground/60 transition-colors hover:bg-white/5 hover:text-foreground"
+            className="rounded-md px-2 py-0.5 text-muted-foreground/60 transition-colors hover:bg-white/5 hover:text-foreground"
             onMouseDown={handleCancelEditMouseDown}
             type="button"
           >
@@ -505,7 +506,7 @@ function PureMultimodalInput({
       </div>
 
       <PromptInput
-        className="[&>div]:rounded-2xl [&>div]:border [&>div]:border-input [&>div]:bg-input/30 [&>div]:transition-all [&>div]:duration-300 dark:[&>div]:border-white/6 dark:[&>div]:border-b-primary/20 dark:[&>div]:bg-white/4 dark:[&>div]:backdrop-blur-xl dark:[&>div]:focus-within:border-b-primary/50 dark:[&>div]:focus-within:bg-white/6"
+        className="[&>div]:rounded-lg [&>div]:border [&>div]:border-input [&>div]:bg-input/30 [&>div]:transition-all [&>div]:duration-300 dark:[&>div]:border-white/6 dark:[&>div]:border-b-primary/20 dark:[&>div]:bg-white/4 dark:[&>div]:backdrop-blur-xl dark:[&>div]:focus-within:border-b-primary/50 dark:[&>div]:focus-within:bg-white/6"
         onSubmit={handlePromptSubmit}
       >
         {(attachments.length > 0 || uploadQueue.length > 0) && (
@@ -548,6 +549,7 @@ function PureMultimodalInput({
         />
         <PromptInputFooter className="px-3 pb-3">
           <PromptInputTools>
+            <MobileSidebarToggle />
             <AttachmentsButton
               fileInputRef={fileInputRef}
               selectedModelId={selectedModelId}
@@ -567,7 +569,7 @@ function PureMultimodalInput({
           ) : (
             <PromptInputSubmit
               className={cn(
-                "h-7 w-7 rounded-3xl transition-all duration-200",
+                "h-7 w-7 rounded-lg transition-all duration-200",
                 input.trim()
                   ? "bg-foreground text-background hover:opacity-85 active:scale-95"
                   : "bg-white/5 text-muted-foreground/25 cursor-not-allowed"
@@ -683,7 +685,7 @@ function PureAttachmentsButton({
       <TooltipTrigger asChild>
         <Button
           aria-label={attachmentLabel}
-          className="h-7 w-7 rounded-full border border-white/10 bg-white/5 p-1 text-foreground transition-all hover:border-primary/30 hover:bg-primary/10 hover:text-primary"
+          className="h-7 w-7 rounded-md border border-white/10 bg-white/5 p-1 text-foreground transition-all hover:border-primary/30 hover:bg-primary/10 hover:text-primary"
           data-testid="attachments-button"
           disabled={status !== "ready"}
           onClick={handleClick}
@@ -773,7 +775,7 @@ function ModelSelectorOption({
         {model.name}
       </ModelSelectorName>
       {isPending ? (
-        <span className="ml-auto rounded-full border border-primary/20 bg-primary/10 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.12em] text-primary">
+        <span className="ml-auto rounded-md border border-primary/20 bg-primary/10 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.12em] text-primary">
           Confirm
         </span>
       ) : (
@@ -846,7 +848,7 @@ function ReasoningEffortPicker({
   return (
     <fieldset
       aria-label={`Reasoning effort for ${modelName}`}
-      className="mx-1 mb-2 mt-1 rounded-3xl border border-white/8 bg-white/4 px-3 pb-3 pt-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
+      className="mx-1 mb-2 mt-1 rounded-lg border border-white/8 bg-white/4 px-3 pb-3 pt-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
       data-testid="reasoning-effort-picker"
     >
       <div className="mb-3 flex items-start justify-between gap-3">
@@ -859,7 +861,7 @@ function ReasoningEffortPicker({
             Adjust, then click {modelName} again to confirm.
           </p>
         </div>
-        <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold capitalize text-primary ring-1 ring-primary/20">
+        <span className="rounded-md bg-primary/10 px-2 py-0.5 text-[10px] font-semibold capitalize text-primary ring-1 ring-primary/20">
           {value}
         </span>
       </div>
@@ -898,11 +900,11 @@ function ReasoningEffortPicker({
             >
               <span
                 className={cn(
-                  "h-1.5 w-1.5 rounded-full border transition-colors",
+                  "h-1.5 w-1.5 rounded-md border transition-colors",
                   active
                     ? "border-primary bg-primary shadow-[0_0_8px_rgba(0,240,255,0.45)]"
                     : "border-white/20 bg-white/5",
-                  index === 0 && "rounded-3xl"
+                  index === 0 && "rounded-lg"
                 )}
               />
               <span className="max-w-full truncate">{effort}</span>
@@ -1070,7 +1072,7 @@ function PureModelSelectorCompact({
   if (isLoading) {
     return (
       <Button
-        className="h-7 max-w-[200px] justify-between gap-1.5 rounded-full border border-white/8 bg-white/4 px-2 text-[12px] text-muted-foreground"
+        className="h-7 max-w-[200px] justify-between gap-1.5 rounded-md border border-white/8 bg-white/4 px-2 text-[12px] text-muted-foreground"
         data-testid="model-selector"
         disabled
         variant="ghost"
@@ -1084,7 +1086,7 @@ function PureModelSelectorCompact({
   if (activeModels.length === 0) {
     return (
       <Button
-        className="h-7 max-w-[200px] justify-between gap-1.5 rounded-full border border-white/8 bg-white/4 px-2 text-[12px] text-muted-foreground"
+        className="h-7 max-w-[200px] justify-between gap-1.5 rounded-md border border-white/8 bg-white/4 px-2 text-[12px] text-muted-foreground"
         data-testid="model-selector"
         disabled
         variant="ghost"
@@ -1104,7 +1106,7 @@ function PureModelSelectorCompact({
     <ModelSelector onOpenChange={handleOpenChange} open={open}>
       <ModelSelectorTrigger asChild>
         <Button
-          className="h-7 justify-between gap-1.5 rounded-full border border-white/8 bg-white/4 px-2 text-[12px] text-muted-foreground transition-all hover:border-primary/30 hover:text-foreground"
+          className="h-7 justify-between gap-1.5 rounded-md border border-white/8 bg-white/4 px-2 text-[12px] text-muted-foreground transition-all hover:border-primary/30 hover:text-foreground"
           data-testid="model-selector"
           onPointerDown={
             preserveComposerFocus
@@ -1218,7 +1220,7 @@ function PureStopButton({
 
   return (
     <Button
-      className="h-7 w-7 rounded-full bg-primary p-1 text-primary-foreground transition-all duration-200 shadow-[0_0_16px_rgba(0,240,255,0.35)] hover:brightness-110 active:scale-95 disabled:bg-white/5 disabled:text-muted-foreground/25 disabled:cursor-not-allowed"
+      className="h-7 w-7 rounded-md bg-primary p-1 text-primary-foreground transition-all duration-200 shadow-[0_0_16px_rgba(0,240,255,0.35)] hover:brightness-110 active:scale-95 disabled:bg-white/5 disabled:text-muted-foreground/25 disabled:cursor-not-allowed"
       data-testid="stop-button"
       onClick={handleClick}
     >
@@ -1228,3 +1230,23 @@ function PureStopButton({
 }
 
 const StopButton = memo(PureStopButton);
+
+function MobileSidebarToggle() {
+  const { openMobile, setOpenMobile } = useSidebar();
+
+  const handleToggle = useCallback(() => {
+    setOpenMobile(!openMobile);
+  }, [openMobile, setOpenMobile]);
+
+  return (
+    <Button
+      aria-label="Toggle Sidebar"
+      className="h-7 w-7 rounded-md border border-white/10 bg-white/5 p-1 text-foreground transition-all hover:border-primary/30 hover:bg-primary/10 hover:text-primary md:hidden"
+      onClick={handleToggle}
+      type="button"
+      variant="ghost"
+    >
+      <SidebarLeftIcon size={14} />
+    </Button>
+  );
+}

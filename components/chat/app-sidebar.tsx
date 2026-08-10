@@ -1,11 +1,7 @@
 "use client";
 
-import {
-  MessageSquareIcon,
-  PanelLeftIcon,
-  PenSquareIcon,
-  TrashIcon,
-} from "lucide-react";
+import { PanelLeftIcon, PenSquareIcon, TrashIcon } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
@@ -100,7 +96,13 @@ export function AppSidebar({
                   tooltip="Chatbot"
                 >
                   <Link href="/" onClick={closeMobile}>
-                    <MessageSquareIcon className="size-4 text-sidebar-foreground/50" />
+                    <Image
+                      alt="Visbyr Chat"
+                      className="size-5"
+                      height={20}
+                      src="/icon.png"
+                      width={20}
+                    />
                   </Link>
                 </SidebarMenuButton>
                 <Tooltip>
@@ -129,7 +131,7 @@ export function AppSidebar({
               <SidebarMenu>
                 <SidebarMenuItem>
                   <SidebarMenuButton
-                    className="h-9 rounded-full border border-white/10 bg-white/5 text-[13px] text-sidebar-foreground/80 transition-all duration-200 hover:bg-primary/10 hover:border-primary/30 hover:text-sidebar-foreground"
+                    className="h-9 rounded-md border border-white/10 bg-white/5 text-[13px] text-sidebar-foreground/80 transition-all duration-200 hover:bg-primary/10 hover:border-primary/30 hover:text-sidebar-foreground"
                     onClick={handleNewChat}
                     tooltip="New Chat"
                   >
@@ -140,7 +142,7 @@ export function AppSidebar({
                 {user ? (
                   <SidebarMenuItem>
                     <SidebarMenuButton
-                      className="rounded-full text-sidebar-foreground/40 transition-colors duration-200 hover:bg-error/10 hover:text-error"
+                      className="rounded-md text-sidebar-foreground/40 transition-colors duration-200 hover:bg-error/10 hover:text-error"
                       onClick={handleShowDeleteAllDialog}
                       tooltip="Delete All Chats"
                     >
@@ -166,7 +168,7 @@ export function AppSidebar({
         onOpenChange={setShowDeleteAllDialog}
         open={showDeleteAllDialog}
       >
-        <AlertDialogContent className="glass-surface rounded-3xl border-white/10">
+        <AlertDialogContent className="glass-surface rounded-lg border-white/10">
           <AlertDialogHeader>
             <AlertDialogTitle className="font-sora text-lg font-semibold">
               Delete all chats?

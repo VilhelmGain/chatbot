@@ -42,7 +42,7 @@ export function AccountDialog({
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent
-        className="h-fit w-fit max-h-[calc(100vh-2rem)] max-w-[calc(100vw-2rem)]! gap-0 overflow-hidden rounded-xl! p-0"
+        className="h-fit w-fit max-h-[calc(100vh-2rem)] max-w-[calc(100vw-2rem)]! gap-0 overflow-hidden rounded-lg! p-0"
         data-testid="account-dialog"
         showCloseButton={testEnvironment}
       >
