@@ -4,7 +4,7 @@ import { PanelLeftIcon, PenSquareIcon, TrashIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useSWRConfig } from "swr";
 import { unstable_serialize } from "swr/infinite";
@@ -51,6 +51,18 @@ export function AppSidebar({
   const { setOpenMobile, toggleSidebar } = useSidebar();
   const { mutate } = useSWRConfig();
   const [showDeleteAllDialog, setShowDeleteAllDialog] = useState(false);
+  const [faviconHref, setFaviconHref] = useState(
+    `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/icon.png`
+  );
+
+  useEffect(() => {
+    const href = document
+      .querySelector('link[rel="icon"]')
+      ?.getAttribute("href");
+    if (href) {
+      setFaviconHref(href);
+    }
+  }, []);
 
   const closeMobile = useCallback(() => {
     setOpenMobile(false);
@@ -100,7 +112,8 @@ export function AppSidebar({
                       alt="Visbyr Chat"
                       className="size-5"
                       height={20}
-                      src="/icon.png"
+                      src={faviconHref}
+                      unoptimized
                       width={20}
                     />
                   </Link>
