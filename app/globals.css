@@ -9,12 +9,11 @@
 
 @theme inline {
   --radius-sm: 0.5rem;
-  --radius-md: 1.5rem;
-  --radius-lg: 2rem;
-  --radius-xl: 3rem;
-  --radius-2xl: 3rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+  --radius-2xl: 2rem;
   --radius-3xl: 3rem;
-  --radius-4xl: 9999px;
 
   --font-family-sora: var(--font-sora), ui-sans-serif, system-ui, sans-serif;
   --font-family-montserrat:
@@ -355,57 +354,112 @@ textarea:focus-visible {
   }
 }
 
-@utility glass-surface {
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.07) 0%,
-    rgba(255, 255, 255, 0.02) 100%
-  );
-  border: 1px solid transparent;
-  border-image: linear-gradient(
+@layer utilities {
+  .glass-surface {
+    position: relative;
+    background: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.07) 0%,
+      rgba(255, 255, 255, 0.02) 100%
+    );
+    isolation: isolate;
+    -webkit-backdrop-filter: blur(30px);
+    backdrop-filter: blur(30px);
+    transition:
+      transform 200ms var(--ease-spring),
+      box-shadow 200ms var(--ease-spring);
+  }
+
+  .glass-surface::before {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    padding: 1px;
+    pointer-events: none;
+    content: "";
+    background: linear-gradient(
       180deg,
       rgba(255, 255, 255, 0.14) 0%,
       rgba(255, 255, 255, 0.02) 100%
-    )
-    1;
-  -webkit-backdrop-filter: blur(30px);
-  backdrop-filter: blur(30px);
-}
+    );
+    border-radius: inherit;
+    -webkit-mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+  }
 
-@utility glass-floating {
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.1) 0%,
-    rgba(255, 255, 255, 0.03) 100%
-  );
-  border: 1px solid transparent;
-  border-image: linear-gradient(
+  .glass-floating {
+    position: relative;
+    background: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.1) 0%,
+      rgba(255, 255, 255, 0.03) 100%
+    );
+    box-shadow:
+      inset 0 0 40px rgba(0, 240, 255, 0.05),
+      0 16px 48px -6px rgba(0, 0, 0, 0.35);
+    isolation: isolate;
+    -webkit-backdrop-filter: blur(60px);
+    backdrop-filter: blur(60px);
+    transition:
+      transform 200ms var(--ease-spring),
+      box-shadow 200ms var(--ease-spring);
+  }
+
+  .glass-floating::before {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    padding: 1px;
+    pointer-events: none;
+    content: "";
+    background: linear-gradient(
       180deg,
       rgba(255, 255, 255, 0.22) 0%,
       rgba(255, 255, 255, 0.04) 100%
-    )
-    1;
-  box-shadow:
-    inset 0 0 40px rgba(0, 240, 255, 0.05),
-    0 16px 48px -6px rgba(0, 0, 0, 0.35);
-  -webkit-backdrop-filter: blur(60px);
-  backdrop-filter: blur(60px);
-}
+    );
+    border-radius: inherit;
+    -webkit-mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+  }
 
-@utility glass-trough {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-bottom: 1px solid rgba(0, 240, 255, 0.25);
-  -webkit-backdrop-filter: blur(20px);
-  backdrop-filter: blur(20px);
-  transition:
-    border-color 200ms var(--ease-smooth),
-    box-shadow 200ms var(--ease-smooth);
-}
+  .glass-trough {
+    position: relative;
+    background: rgba(255, 255, 255, 0.04);
+    border-bottom: 1px solid rgba(0, 240, 255, 0.25);
+    isolation: isolate;
+    -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
+    transition:
+      border-color 200ms var(--ease-smooth),
+      box-shadow 200ms var(--ease-smooth),
+      background-color 200ms var(--ease-smooth);
+  }
 
-@utility glass-trough-focus {
-  border-bottom-color: rgba(0, 240, 255, 0.8);
-  box-shadow: 0 8px 24px -8px rgba(0, 240, 255, 0.22);
+  .glass-trough::before {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    padding: 1px;
+    pointer-events: none;
+    content: "";
+    background: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.06) 0%,
+      rgba(255, 255, 255, 0.02) 100%
+    );
+    border-radius: inherit;
+    -webkit-mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+  }
 }
 
 @utility divider-glass {
@@ -428,6 +482,30 @@ textarea:focus-visible {
 
 @utility surface-glow {
   box-shadow: var(--shadow-glow);
+}
+
+@layer utilities {
+  .hover-lift {
+    transition:
+      transform 200ms var(--ease-spring),
+      box-shadow 200ms var(--ease-spring);
+  }
+
+  .hover-lift:hover {
+    transform: translateY(-1px);
+  }
+
+  .glow-primary {
+    box-shadow: 0 0 16px rgba(0, 240, 255, 0.25);
+  }
+
+  .glow-primary-strong {
+    box-shadow: 0 0 24px rgba(0, 240, 255, 0.4);
+  }
+
+  .glow-secondary {
+    box-shadow: 0 0 16px rgba(112, 0, 255, 0.25);
+  }
 }
 
 @layer utilities {
@@ -484,25 +562,6 @@ textarea:focus-visible {
   }
 }
 
-.skeleton {
-  * {
-    pointer-events: none !important;
-  }
-
-  *[class^="text-"] {
-    color: transparent;
-    @apply rounded-md bg-foreground/20 select-none animate-pulse;
-  }
-
-  .skeleton-bg {
-    @apply bg-foreground/10;
-  }
-
-  .skeleton-div {
-    @apply bg-foreground/20 animate-pulse;
-  }
-}
-
 @keyframes fade-up {
   from {
     opacity: 0;
@@ -520,6 +579,28 @@ textarea:focus-visible {
   }
   to {
     opacity: 1;
+  }
+}
+
+@keyframes message-slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes message-slide-in-left {
+  from {
+    opacity: 0;
+    transform: translateX(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
   }
 }
 
@@ -591,7 +672,7 @@ textarea:focus-visible {
 }
 
 @utility fade-up {
-  animation: fade-up 0.25s var(--ease-spring) both;
+  animation: fade-up 0.3s var(--ease-spring) both;
 }
 
 @utility fade-in {
@@ -615,6 +696,34 @@ textarea:focus-visible {
 
 @utility message-fade-in {
   animation: message-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@utility message-slide-right {
+  animation: message-slide-in-right 0.25s var(--ease-spring) both;
+}
+
+@utility message-slide-left {
+  animation: message-slide-in-left 0.25s var(--ease-spring) both;
+}
+
+@utility delay-100 {
+  animation-delay: 100ms;
+}
+
+@utility delay-150 {
+  animation-delay: 150ms;
+}
+
+@utility delay-200 {
+  animation-delay: 200ms;
+}
+
+@utility delay-250 {
+  animation-delay: 250ms;
+}
+
+@utility delay-300 {
+  animation-delay: 300ms;
 }
 
 @utility thinking-dot {

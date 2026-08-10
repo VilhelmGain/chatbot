@@ -354,7 +354,7 @@ function PureArtifact({
                   <div className="h-3 w-24 animate-pulse rounded bg-white/5-foreground/10" />
                 )}
                 {documents && documents.length > 1 && (
-                  <div className="rounded-3xl bg-white/5 px-1.5 py-0.5 text-[10px] font-medium tabular-nums text-muted-foreground">
+                  <div className="rounded-xl bg-white/5 px-1.5 py-0.5 text-[10px] font-medium tabular-nums text-muted-foreground">
                     v{currentVersionIndex + 1}/{documents.length}
                   </div>
                 )}

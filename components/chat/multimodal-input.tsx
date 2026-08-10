@@ -455,7 +455,10 @@ function PureMultimodalInput({
   );
 
   return (
-    <div className={cn("relative flex w-full flex-col gap-4", className)}>
+    <div
+      className={cn("relative flex w-full flex-col gap-4 fade-up", className)}
+      style={{ animationDelay: "250ms" }}
+    >
       {editingMessage && onCancelEdit ? (
         <div className="flex items-center gap-2 text-[12px] text-muted-foreground font-manrope">
           <span>Editing message</span>
@@ -502,7 +505,7 @@ function PureMultimodalInput({
       </div>
 
       <PromptInput
-        className="[&>div]:rounded-3xl [&>div]:border [&>div]:border-input [&>div]:bg-input/30 [&>div]:transition-all [&>div]:duration-300 dark:[&>div]:border-white/6 dark:[&>div]:border-b-primary/20 dark:[&>div]:bg-white/4 dark:[&>div]:backdrop-blur-xl dark:[&>div]:focus-within:border-b-primary/50 dark:[&>div]:focus-within:bg-white/6"
+        className="[&>div]:rounded-2xl [&>div]:border [&>div]:border-input [&>div]:bg-input/30 [&>div]:transition-all [&>div]:duration-300 dark:[&>div]:border-white/6 dark:[&>div]:border-b-primary/20 dark:[&>div]:bg-white/4 dark:[&>div]:backdrop-blur-xl dark:[&>div]:focus-within:border-b-primary/50 dark:[&>div]:focus-within:bg-white/6"
         onSubmit={handlePromptSubmit}
       >
         {(attachments.length > 0 || uploadQueue.length > 0) && (

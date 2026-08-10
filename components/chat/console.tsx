@@ -173,7 +173,7 @@ export function Console({ consoleOutputs, setConsoleOutputs }: ConsoleProps) {
                       >
                         <img
                           alt="output"
-                          className="max-w-full rounded-3xl"
+                          className="max-w-full rounded-xl"
                           src={content.value}
                         />
                       </picture>

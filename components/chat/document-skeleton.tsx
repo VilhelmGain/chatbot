@@ -9,18 +9,18 @@ export const DocumentSkeleton = ({
 }) =>
   artifactKind === "image" ? (
     <div className="flex h-[calc(100dvh-60px)] w-full flex-col items-center justify-center gap-4">
-      <div className="size-96 animate-pulse rounded-3xl bg-white/5-foreground/10" />
+      <div className="size-96 animate-pulse rounded-xl bg-white/5-foreground/10" />
     </div>
   ) : (
     <div className="flex w-full flex-col gap-4 px-4 py-8 md:px-20 md:py-12">
-      <div className="h-8 w-2/5 animate-pulse rounded-3xl bg-white/5-foreground/10" />
-      <div className="h-4 w-full animate-pulse rounded-3xl bg-white/5-foreground/8" />
-      <div className="h-4 w-full animate-pulse rounded-3xl bg-white/5-foreground/8" />
-      <div className="h-4 w-3/4 animate-pulse rounded-3xl bg-white/5-foreground/8" />
-      <div className="h-4 w-0 rounded-3xl" />
-      <div className="h-6 w-1/3 animate-pulse rounded-3xl bg-white/5-foreground/10" />
-      <div className="h-4 w-5/6 animate-pulse rounded-3xl bg-white/5-foreground/8" />
-      <div className="h-4 w-2/3 animate-pulse rounded-3xl bg-white/5-foreground/8" />
+      <div className="h-8 w-2/5 animate-pulse rounded-xl bg-white/5-foreground/10" />
+      <div className="h-4 w-full animate-pulse rounded-xl bg-white/5-foreground/8" />
+      <div className="h-4 w-full animate-pulse rounded-xl bg-white/5-foreground/8" />
+      <div className="h-4 w-3/4 animate-pulse rounded-xl bg-white/5-foreground/8" />
+      <div className="h-4 w-0 rounded-xl" />
+      <div className="h-6 w-1/3 animate-pulse rounded-xl bg-white/5-foreground/10" />
+      <div className="h-4 w-5/6 animate-pulse rounded-xl bg-white/5-foreground/8" />
+      <div className="h-4 w-2/3 animate-pulse rounded-xl bg-white/5-foreground/8" />
     </div>
   );
 

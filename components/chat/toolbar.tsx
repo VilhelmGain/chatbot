@@ -149,7 +149,7 @@ const Tool = ({
         </motion.div>
       </TooltipTrigger>
       <TooltipContent
-        className="rounded-3xl bg-foreground p-3 px-4 text-background"
+        className="rounded-xl bg-foreground p-3 px-4 text-background"
         side="left"
         sideOffset={16}
       >
@@ -257,7 +257,7 @@ const ReadingLevelSelector = ({
             </motion.div>
           </TooltipTrigger>
           <TooltipContent
-            className="rounded-3xl bg-foreground p-3 px-4 text-background text-sm"
+            className="rounded-xl bg-foreground p-3 px-4 text-background text-sm"
             side="left"
             sideOffset={16}
           >
@@ -443,7 +443,7 @@ const PureToolbar = ({
     <TooltipProvider delayDuration={0}>
       <motion.div
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        className="fixed right-6 bottom-6 z-50 flex cursor-pointer flex-col items-center rounded-3xl border bg-transparent py-1 shadow-lg"
+        className="fixed right-6 bottom-6 z-50 flex cursor-pointer flex-col items-center rounded-xl border bg-transparent py-1 shadow-lg"
         exit={{ opacity: 0, transition: { duration: 0.1 }, y: -20 }}
         initial={{ opacity: 0, scale: 1, y: -20 }}
         onAnimationComplete={handleAnimationComplete}

@@ -607,7 +607,7 @@ function SidebarMenuSkeleton({
     <div
       data-slot="sidebar-menu-skeleton"
       data-sidebar="menu-skeleton"
-      className={cn("flex h-8 items-center gap-2 rounded-full px-2", className)}
+      className={cn("flex h-8 items-center gap-2 rounded-xl px-2", className)}
       {...props}
     >
       {showIcon && (

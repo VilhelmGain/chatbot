@@ -127,7 +127,7 @@ export function ModelManager({ providerId, providerKey }: ModelManagerProps) {
   }, [error]);
 
   return (
-    <div className="ml-10 mt-2 rounded-3xl border bg-white/5/30 p-3">
+    <div className="ml-10 mt-2 rounded-xl border bg-white/5/30 p-3">
       <div className="mb-3 flex items-center justify-between">
         <h3 className="text-sm font-medium">
           Models
@@ -335,7 +335,7 @@ function ModelRow({
   }, [capabilities, model.id, onUpdated, providerId]);
 
   return (
-    <div className="flex items-center justify-between rounded-3xl bg-transparent px-3 py-2">
+    <div className="flex items-center justify-between rounded-xl bg-transparent px-3 py-2">
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-medium">{model.name}</p>
         <p className="truncate text-xs text-muted-foreground">
