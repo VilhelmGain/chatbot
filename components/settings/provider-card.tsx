@@ -139,6 +139,7 @@ export function ProviderCard({
 
         <div className="flex items-center gap-1">
           <Button
+            aria-label="Test connection"
             className="size-7 p-0"
             disabled={isTesting}
             onClick={handleTest}

@@ -50,6 +50,7 @@ function ArtifactActionButton({
     <Tooltip>
       <TooltipTrigger asChild>
         <button
+          aria-label={action.description}
           className={cn(
             "flex items-center justify-center rounded-full p-3 text-muted-foreground transition-all duration-150",
             "hover:text-foreground",

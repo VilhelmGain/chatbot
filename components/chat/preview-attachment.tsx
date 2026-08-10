@@ -1,7 +1,14 @@
 import Image from "next/image";
 import type { Attachment } from "@/lib/types";
+import { Button } from "../ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "../ui/dropdown-menu";
 import { Spinner } from "../ui/spinner";
-import { CrossSmallIcon } from "./icons";
+import { CrossSmallIcon, MoreHorizontalIcon } from "./icons";
 
 export const PreviewAttachment = ({
   attachment,
@@ -60,13 +67,43 @@ export const PreviewAttachment = ({
       ) : null}
 
       {onRemove && !isUploading && (
-        <button
-          className="absolute top-1.5 right-1.5 flex size-5 items-center justify-center rounded-full bg-black/60 text-white opacity-0 backdrop-blur-sm transition-opacity hover:bg-black/80 group-hover:opacity-100"
-          onClick={onRemove}
-          type="button"
-        >
-          <CrossSmallIcon size={10} />
-        </button>
+        <>
+          <button
+            aria-label="Remove attachment"
+            className="absolute top-1.5 right-1.5 hidden size-5 items-center justify-center rounded-full bg-black/60 text-white opacity-0 backdrop-blur-sm transition-opacity hover:bg-black/80 group-hover:opacity-100 md:flex"
+            onClick={onRemove}
+            type="button"
+          >
+            <CrossSmallIcon size={10} />
+          </button>
+
+          <div className="absolute top-1.5 right-1.5 md:hidden">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  aria-label="Attachment options"
+                  className="relative size-8 text-white after:absolute after:-inset-[6px] md:after:hidden"
+                  data-testid="attachment-options"
+                  size="icon-sm"
+                  type="button"
+                  variant="ghost"
+                >
+                  <MoreHorizontalIcon />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  className="cursor-pointer"
+                  data-testid="attachment-remove"
+                  onClick={onRemove}
+                  variant="destructive"
+                >
+                  <span>Remove attachment</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </>
       )}
     </div>
   );

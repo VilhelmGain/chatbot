@@ -123,6 +123,8 @@ const Tool = ({
       <TooltipTrigger asChild>
         <motion.div
           animate={{ opacity: 1, transition: { delay: 0.1 } }}
+          aria-label={description}
+          aria-pressed={selectedTool === description}
           className={cx("rounded-full p-3", {
             "bg-primary text-primary-foreground!": selectedTool === description,
           })}
