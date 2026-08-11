@@ -9,6 +9,7 @@ import {
   Server,
   Settings2,
   SlidersHorizontal,
+  Type,
   X,
 } from "lucide-react";
 import { useTheme } from "next-themes";
@@ -17,6 +18,7 @@ import useSWR from "swr";
 import { toast } from "@/components/chat/toast";
 import { ExportAttachments } from "@/components/settings/export-attachments";
 import { ExportChats } from "@/components/settings/export-chats";
+import { FontSelectors } from "@/components/settings/font-selectors";
 import { IdentityDisplaySelector } from "@/components/settings/identity-display-selector";
 import { LegalPanel } from "@/components/settings/legal-panel";
 import { ModelManager } from "@/components/settings/model-manager";
@@ -294,6 +296,23 @@ function PreferencesPanel() {
         <div className="grid gap-5 border-t border-border pt-5">
           <TitleModelSelector />
           <IdentityDisplaySelector />
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-5 rounded-lg border border-border glass-surface p-5">
+        <div className="flex items-start gap-3">
+          <div className="grid size-8 shrink-0 place-items-center rounded-lg bg-foreground/5">
+            <Type className="size-3.5 text-muted-foreground" />
+          </div>
+          <div>
+            <h3 className="text-sm font-medium">Fonts</h3>
+            <p className="text-xs text-muted-foreground">
+              Choose typefaces for body text, headings, labels, and code.
+            </p>
+          </div>
+        </div>
+        <div className="grid gap-5 border-t border-border pt-5">
+          <FontSelectors />
         </div>
       </div>
 

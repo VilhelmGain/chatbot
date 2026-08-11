@@ -15,7 +15,7 @@ export function toast(props: Omit<ToastProps, "id">) {
     (id) => <Toast description={props.description} id={id} type={props.type} />,
     {
       className: "!rounded-none !border-none !bg-transparent !p-0 !shadow-none",
-      style: { fontFamily: "var(--font-family-manrope)" },
+      style: { fontFamily: "var(--app-font-label)" },
     }
   );
 }
@@ -67,7 +67,7 @@ function Toast(props: ToastProps) {
         <div
           className="text-[13px] leading-5 text-foreground"
           ref={descriptionRef}
-          style={{ fontFamily: "var(--font-family-manrope)" }}
+          style={{ fontFamily: "var(--app-font-label)" }}
         >
           {description}
         </div>

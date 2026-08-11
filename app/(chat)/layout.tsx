@@ -26,7 +26,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         toastOptions={{
           className:
             "!rounded-lg !bg-card !text-foreground !border-border/50 !shadow-[var(--shadow-float)]",
-          style: { fontFamily: "var(--font-family-manrope)" },
+          style: { fontFamily: "var(--app-font-label)" },
         }}
       />
       <DataStreamProvider>
