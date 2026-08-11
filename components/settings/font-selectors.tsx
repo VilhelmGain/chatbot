@@ -9,7 +9,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { FONT_ROLES, type FontRole, setFontId, useFontId } from "@/lib/fonts";
+import { FONT_ROLES, type FontRole, setFontId } from "@/lib/fonts";
+import { useFontId } from "@/lib/fonts-hooks";
 
 function FontSelect({ fontRole }: { fontRole: FontRole }) {
   const fontId = useFontId(fontRole);

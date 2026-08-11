@@ -1,5 +1,3 @@
-import { useSyncExternalStore } from "react";
-
 export type FontOption = { id: string; label: string; stack: string };
 
 const SANS_FALLBACK = "ui-sans-serif, system-ui, sans-serif";
@@ -183,17 +181,9 @@ function notifyFontListeners() {
   }
 }
 
-function subscribeFonts(onStoreChange: () => void) {
+export function subscribeFonts(onStoreChange: () => void) {
   fontListeners.add(onStoreChange);
   return () => {
     fontListeners.delete(onStoreChange);
   };
-}
-
-export function useFontId(role: FontRole): string {
-  return useSyncExternalStore(
-    subscribeFonts,
-    () => getFontId(role),
-    () => FONT_ROLES[role].defaultId
-  );
 }
