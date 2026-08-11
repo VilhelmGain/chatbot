@@ -36,14 +36,33 @@ test.describe("Provider Settings", () => {
 
     await page.goto("/settings");
     await page.getByRole("button", { name: /Providers/i }).click();
-    await expect(page.locator("button[title='Test connection']")).toBeVisible();
+    const toastProviderCard = page
+      .locator("div.rounded-xl.border")
+      .filter({ hasText: "Toast Provider" });
+    const testConnectionButton = toastProviderCard.getByRole("button", {
+      name: "Test connection",
+    });
+    await expect(testConnectionButton).toBeVisible();
 
     // Click the test connection button, then assert the toast is inside the
     // visible viewport (this failed before the fix: toasts rendered at
-    // negative y-offsets, i.e. above the screen).
-    await page.locator("button[title='Test connection']").click();
+    // negative y-offsets, i.e. above the screen). The toast slides in from
+    // above, so wait for it to settle before measuring.
+    await testConnectionButton.click();
     const toast = page.locator("[data-testid=toast]").first();
     await expect(toast).toBeVisible();
+    await expect
+      .poll(
+        async () => {
+          const box = await toast.boundingBox();
+          if (!box) {
+            return Number.NEGATIVE_INFINITY;
+          }
+          return box.y;
+        },
+        { timeout: 5000 }
+      )
+      .toBeGreaterThanOrEqual(0);
     const box = (await toast.boundingBox()) ?? {
       height: 0,
       width: 0,

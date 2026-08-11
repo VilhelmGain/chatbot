@@ -1,0 +1,812 @@
+import "server-only";
+
+import type { ArtifactKind } from "@/components/chat/artifact";
+import type { ModelCapabilities } from "@/lib/ai/models.client";
+import type { VisibilityType } from "@/lib/types";
+import { ChatbotError } from "../errors";
+import { generateUUID } from "../utils";
+import type {
+  Chat,
+  CustomModel,
+  CustomProvider,
+  DBMessage,
+  Document,
+  Stream,
+  Suggestion,
+  User,
+} from "./schema";
+
+const GLOBAL_STORE_KEY = "__chatbotInMemoryStore";
+
+type Store = {
+  users: Map<string, User>;
+  chats: Map<string, Chat>;
+  messages: Map<string, DBMessage>;
+  documents: Document[];
+  suggestions: Map<string, Suggestion>;
+  streams: Map<string, Stream>;
+  providers: Map<string, CustomProvider>;
+  models: Map<string, CustomModel>;
+  apiKeys: Map<string, string>;
+};
+
+function getOrCreateStore(): Store {
+  const globalStore = globalThis as unknown as Record<
+    string,
+    Store | undefined
+  >;
+  if (!globalStore[GLOBAL_STORE_KEY]) {
+    globalStore[GLOBAL_STORE_KEY] = {
+      apiKeys: new Map(),
+      chats: new Map(),
+      documents: [],
+      messages: new Map(),
+      models: new Map(),
+      providers: new Map(),
+      streams: new Map(),
+      suggestions: new Map(),
+      users: new Map(),
+    };
+  }
+  return globalStore[GLOBAL_STORE_KEY] as Store;
+}
+
+const store: Store = getOrCreateStore();
+
+function seedProviderAndModel(userId: string) {
+  const now = new Date();
+  const providerId = generateUUID();
+  const provider: CustomProvider = {
+    baseURL: "http://localhost:9999/v1",
+    createdAt: now,
+    encryptedApiKey: "",
+    id: providerId,
+    iv: "",
+    name: "Mock Provider",
+    providerKey: null,
+    type: "openai",
+    updatedAt: now,
+    userId,
+  };
+  store.providers.set(providerId, provider);
+
+  const model: CustomModel = {
+    capabilities: { reasoning: false, tools: true, vision: false },
+    createdAt: now,
+    id: generateUUID(),
+    modelId: "chat-model",
+    name: "Mock Chat Model",
+    providerId,
+  };
+  store.models.set(model.id, model);
+}
+
+function getUserByClerkId(clerkId: string): User | null {
+  for (const user of store.users.values()) {
+    if (user.clerkId === clerkId) {
+      return user;
+    }
+  }
+  return null;
+}
+
+function createUserFromClerk({
+  clerkId,
+  email,
+  emailVerified,
+  image,
+  name,
+}: {
+  clerkId: string;
+  email: string;
+  emailVerified?: boolean;
+  image?: string | null;
+  name?: string | null;
+}): User {
+  const now = new Date();
+  const user: User = {
+    clerkId,
+    createdAt: now,
+    email,
+    emailVerified: emailVerified ?? false,
+    id: generateUUID(),
+    image: image ?? null,
+    name: name ?? null,
+    updatedAt: now,
+  };
+  store.users.set(user.id, user);
+  seedProviderAndModel(user.id);
+  return user;
+}
+
+function getOrCreateUserByEmail(email: string): User {
+  for (const user of store.users.values()) {
+    if (user.email === email) {
+      return user;
+    }
+  }
+  return createUserFromClerk({ clerkId: `test-${email}`, email });
+}
+
+function saveChat({
+  id,
+  userId,
+  title,
+  visibility,
+}: {
+  id: string;
+  userId: string;
+  title: string;
+  visibility: VisibilityType;
+}) {
+  const chat: Chat = {
+    createdAt: new Date(),
+    id,
+    title,
+    userId,
+    visibility,
+  };
+  store.chats.set(id, chat);
+}
+
+function deleteChatById({ id }: { id: string }): Chat | undefined {
+  for (const [messageId, message] of store.messages) {
+    if (message.chatId === id) {
+      store.messages.delete(messageId);
+    }
+  }
+  for (const [streamId, stream] of store.streams) {
+    if (stream.chatId === id) {
+      store.streams.delete(streamId);
+    }
+  }
+  const chat = store.chats.get(id);
+  if (chat) {
+    store.chats.delete(id);
+  }
+  return chat;
+}
+
+function deleteAllChatsByUserId({ userId }: { userId: string }) {
+  const chatIds = [...store.chats.values()]
+    .filter((chat) => chat.userId === userId)
+    .map((chat) => chat.id);
+
+  if (chatIds.length === 0) {
+    return { deletedCount: 0 };
+  }
+
+  const chatIdSet = new Set(chatIds);
+  for (const [messageId, message] of store.messages) {
+    if (chatIdSet.has(message.chatId)) {
+      store.messages.delete(messageId);
+    }
+  }
+  for (const [streamId, stream] of store.streams) {
+    if (chatIdSet.has(stream.chatId)) {
+      store.streams.delete(streamId);
+    }
+  }
+  for (const id of chatIds) {
+    store.chats.delete(id);
+  }
+
+  return { deletedCount: chatIds.length };
+}
+
+function getChatsByUserId({
+  id,
+  limit,
+  startingAfter,
+  endingBefore,
+}: {
+  id: string;
+  limit: number;
+  startingAfter: string | null;
+  endingBefore: string | null;
+}) {
+  let chats = [...store.chats.values()].filter((chat) => chat.userId === id);
+
+  if (startingAfter) {
+    const cursor = store.chats.get(startingAfter);
+    if (!cursor) {
+      throw new ChatbotError(
+        "not_found:database",
+        `Chat with id ${startingAfter} not found`
+      );
+    }
+    chats = chats.filter(
+      (chat) => chat.createdAt.getTime() > cursor.createdAt.getTime()
+    );
+  } else if (endingBefore) {
+    const cursor = store.chats.get(endingBefore);
+    if (!cursor) {
+      throw new ChatbotError(
+        "not_found:database",
+        `Chat with id ${endingBefore} not found`
+      );
+    }
+    chats = chats.filter(
+      (chat) => chat.createdAt.getTime() < cursor.createdAt.getTime()
+    );
+  }
+
+  chats.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+
+  const hasMore = chats.length > limit;
+
+  return {
+    chats: hasMore ? chats.slice(0, limit) : chats,
+    hasMore,
+  };
+}
+
+function getAllChatsByUserId({ userId }: { userId: string }) {
+  return [...store.chats.values()]
+    .filter((chat) => chat.userId === userId)
+    .map((chat) => ({
+      createdAt: chat.createdAt,
+      id: chat.id,
+      messageCount: [...store.messages.values()].filter(
+        (message) => message.chatId === chat.id
+      ).length,
+      title: chat.title,
+      visibility: chat.visibility,
+    }))
+    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+}
+
+function getAllMessagesByUserId({ userId }: { userId: string }) {
+  const chatTitleById = new Map(
+    [...store.chats.values()]
+      .filter((chat) => chat.userId === userId)
+      .map((chat) => [chat.id, chat.title])
+  );
+
+  return [...store.messages.values()]
+    .filter((message) => chatTitleById.has(message.chatId))
+    .map((message) => ({
+      chatId: message.chatId,
+      chatTitle: chatTitleById.get(message.chatId),
+      createdAt: message.createdAt,
+      id: message.id,
+      parts: message.parts,
+      role: message.role,
+    }))
+    .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+}
+
+function getChatById({ id }: { id: string }): Chat | null {
+  return store.chats.get(id) ?? null;
+}
+
+function saveMessages({ messages }: { messages: DBMessage[] }) {
+  for (const message of messages) {
+    store.messages.set(message.id, message);
+  }
+}
+
+function updateMessage({
+  id,
+  metadata,
+  parts,
+}: {
+  id: string;
+  metadata?: DBMessage["metadata"];
+  parts: DBMessage["parts"];
+}) {
+  const existing = store.messages.get(id);
+  if (!existing) {
+    return;
+  }
+  store.messages.set(id, {
+    ...existing,
+    parts,
+    ...(metadata === undefined ? {} : { metadata }),
+  });
+}
+
+function getMessagesByChatId({ id }: { id: string }): DBMessage[] {
+  return [...store.messages.values()]
+    .filter((message) => message.chatId === id)
+    .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+}
+
+function saveDocument({
+  id,
+  title,
+  kind,
+  content,
+  userId,
+}: {
+  id: string;
+  title: string;
+  kind: ArtifactKind;
+  content: string;
+  userId: string;
+}): Document[] {
+  const document: Document = {
+    content,
+    createdAt: new Date(),
+    id,
+    kind,
+    title,
+    userId,
+  };
+  store.documents.push(document);
+  return [document];
+}
+
+function updateDocumentContent({
+  id,
+  content,
+}: {
+  id: string;
+  content: string;
+}): Document[] {
+  const matching = store.documents.filter((document) => document.id === id);
+  if (matching.length === 0) {
+    throw new ChatbotError("not_found:database", "Document not found");
+  }
+
+  const latest = matching.reduce((a, b) =>
+    a.createdAt.getTime() >= b.createdAt.getTime() ? a : b
+  );
+  const index = store.documents.findIndex(
+    (document) =>
+      document.id === id &&
+      document.createdAt.getTime() === latest.createdAt.getTime()
+  );
+  const updated: Document = { ...latest, content };
+  store.documents[index] = updated;
+  return [updated];
+}
+
+function getDocumentsById({ id }: { id: string }): Document[] {
+  return store.documents
+    .filter((document) => document.id === id)
+    .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+}
+
+function getDocumentById({ id }: { id: string }): Document | undefined {
+  const matching = store.documents.filter((document) => document.id === id);
+  if (matching.length === 0) {
+    return;
+  }
+  return matching.reduce((a, b) =>
+    a.createdAt.getTime() >= b.createdAt.getTime() ? a : b
+  );
+}
+
+function deleteDocumentsByIdAfterTimestamp({
+  id,
+  timestamp,
+}: {
+  id: string;
+  timestamp: Date;
+}): Document[] {
+  for (const [suggestionId, suggestion] of store.suggestions) {
+    if (
+      suggestion.documentId === id &&
+      suggestion.documentCreatedAt.getTime() > timestamp.getTime()
+    ) {
+      store.suggestions.delete(suggestionId);
+    }
+  }
+
+  const toDelete = store.documents.filter(
+    (document) =>
+      document.id === id && document.createdAt.getTime() > timestamp.getTime()
+  );
+  for (const document of toDelete) {
+    const index = store.documents.indexOf(document);
+    if (index !== -1) {
+      store.documents.splice(index, 1);
+    }
+  }
+  return toDelete;
+}
+
+function saveSuggestions({ suggestions }: { suggestions: Suggestion[] }) {
+  for (const suggestion of suggestions) {
+    store.suggestions.set(suggestion.id, suggestion);
+  }
+}
+
+function getSuggestionsByDocumentId({
+  documentId,
+}: {
+  documentId: string;
+}): Suggestion[] {
+  return [...store.suggestions.values()].filter(
+    (suggestion) => suggestion.documentId === documentId
+  );
+}
+
+function getMessageById({ id }: { id: string }): DBMessage[] {
+  const message = store.messages.get(id);
+  return message ? [message] : [];
+}
+
+function deleteMessagesByChatIdAfterTimestamp({
+  chatId,
+  timestamp,
+}: {
+  chatId: string;
+  timestamp: Date;
+}) {
+  for (const [messageId, message] of store.messages) {
+    if (
+      message.chatId === chatId &&
+      message.createdAt.getTime() >= timestamp.getTime()
+    ) {
+      store.messages.delete(messageId);
+    }
+  }
+}
+
+function updateChatVisibilityById({
+  chatId,
+  visibility,
+}: {
+  chatId: string;
+  visibility: "private" | "public";
+}) {
+  const existing = store.chats.get(chatId);
+  if (!existing) {
+    return;
+  }
+  store.chats.set(chatId, { ...existing, visibility });
+}
+
+function updateChatTitleById({
+  chatId,
+  title,
+}: {
+  chatId: string;
+  title: string;
+}) {
+  const existing = store.chats.get(chatId);
+  if (!existing) {
+    return;
+  }
+  store.chats.set(chatId, { ...existing, title });
+}
+
+function getMessageCountByUserId({
+  id,
+  differenceInHours,
+}: {
+  id: string;
+  differenceInHours: number;
+}): number {
+  const cutoffTime = new Date(Date.now() - differenceInHours * 60 * 60 * 1000);
+
+  let count = 0;
+  for (const message of store.messages.values()) {
+    const chat = store.chats.get(message.chatId);
+    if (
+      chat &&
+      chat.userId === id &&
+      message.role === "user" &&
+      message.createdAt.getTime() >= cutoffTime.getTime()
+    ) {
+      count += 1;
+    }
+  }
+  return count;
+}
+
+function createStreamId({
+  streamId,
+  chatId,
+}: {
+  streamId: string;
+  chatId: string;
+}) {
+  const stream: Stream = {
+    chatId,
+    createdAt: new Date(),
+    id: streamId,
+  };
+  store.streams.set(streamId, stream);
+}
+
+function getStreamIdsByChatId({ chatId }: { chatId: string }): string[] {
+  return [...store.streams.values()]
+    .filter((stream) => stream.chatId === chatId)
+    .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
+    .map((stream) => stream.id);
+}
+
+function getCustomProvidersByUserId({
+  userId,
+}: {
+  userId: string;
+}): Omit<CustomProvider, "encryptedApiKey" | "iv">[] {
+  return [...store.providers.values()]
+    .filter((provider) => provider.userId === userId)
+    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+    .map((provider) => ({
+      baseURL: provider.baseURL,
+      createdAt: provider.createdAt,
+      id: provider.id,
+      name: provider.name,
+      providerKey: provider.providerKey,
+      type: provider.type,
+      updatedAt: provider.updatedAt,
+      userId: provider.userId,
+    }));
+}
+
+function getCustomProviderById({
+  id,
+}: {
+  id: string;
+}): CustomProvider | undefined {
+  return store.providers.get(id);
+}
+
+function createCustomProvider({
+  apiKey,
+  baseURL,
+  name,
+  providerKey,
+  type,
+  userId,
+}: {
+  apiKey: string;
+  baseURL: string;
+  name: string;
+  providerKey?: string | null;
+  type: "openai" | "anthropic";
+  userId: string;
+}): CustomProvider {
+  const now = new Date();
+  const provider: CustomProvider = {
+    baseURL,
+    createdAt: now,
+    encryptedApiKey: "",
+    id: generateUUID(),
+    iv: "",
+    name,
+    providerKey: providerKey ?? null,
+    type,
+    updatedAt: now,
+    userId,
+  };
+  store.providers.set(provider.id, provider);
+  store.apiKeys.set(provider.id, apiKey);
+  return provider;
+}
+
+function updateCustomProvider({
+  apiKey,
+  baseURL,
+  id,
+  name,
+  userId,
+}: {
+  apiKey?: string;
+  baseURL?: string;
+  id: string;
+  name?: string;
+  userId: string;
+}): CustomProvider {
+  const existing = store.providers.get(id);
+  if (!existing || existing.userId !== userId) {
+    throw new ChatbotError("not_found:provider");
+  }
+
+  const updated: CustomProvider = {
+    ...existing,
+    ...(name === undefined ? {} : { name }),
+    ...(baseURL === undefined ? {} : { baseURL }),
+    updatedAt: new Date(),
+  };
+  if (apiKey !== undefined) {
+    store.apiKeys.set(id, apiKey);
+  }
+  store.providers.set(id, updated);
+  return updated;
+}
+
+function deleteCustomProvider({ id, userId }: { id: string; userId: string }) {
+  const existing = store.providers.get(id);
+  if (!existing || existing.userId !== userId) {
+    throw new ChatbotError("not_found:provider");
+  }
+  for (const [modelId, model] of store.models) {
+    if (model.providerId === id) {
+      store.models.delete(modelId);
+    }
+  }
+  store.apiKeys.delete(id);
+  store.providers.delete(id);
+}
+
+function getCustomModelsByProviderId({
+  providerId,
+}: {
+  providerId: string;
+}): CustomModel[] {
+  return [...store.models.values()]
+    .filter((model) => model.providerId === providerId)
+    .sort(
+      (a, b) =>
+        a.name.localeCompare(b.name) || a.modelId.localeCompare(b.modelId)
+    );
+}
+
+function createCustomModel({
+  capabilities,
+  modelId,
+  name,
+  providerId,
+}: {
+  capabilities: ModelCapabilities;
+  modelId: string;
+  name: string;
+  providerId: string;
+}): CustomModel {
+  const model: CustomModel = {
+    capabilities,
+    createdAt: new Date(),
+    id: generateUUID(),
+    modelId,
+    name,
+    providerId,
+  };
+  store.models.set(model.id, model);
+  return model;
+}
+
+function createCustomModels({
+  models,
+  providerId,
+}: {
+  models: Array<{
+    capabilities: ModelCapabilities;
+    modelId: string;
+    name: string;
+  }>;
+  providerId: string;
+}): CustomModel[] {
+  if (models.length === 0) {
+    return [];
+  }
+
+  const created = models.map((model) => ({
+    capabilities: model.capabilities,
+    createdAt: new Date(),
+    id: generateUUID(),
+    modelId: model.modelId,
+    name: model.name,
+    providerId,
+  }));
+  for (const model of created) {
+    store.models.set(model.id, model);
+  }
+  return created;
+}
+
+function deleteCustomModel({
+  id,
+  providerId,
+}: {
+  id: string;
+  providerId: string;
+}) {
+  const existing = store.models.get(id);
+  if (!existing || existing.providerId !== providerId) {
+    throw new ChatbotError("not_found:provider");
+  }
+  store.models.delete(id);
+}
+
+function updateCustomModel({
+  capabilities,
+  id,
+  name,
+  providerId,
+}: {
+  capabilities?: ModelCapabilities;
+  id: string;
+  name?: string;
+  providerId: string;
+}): CustomModel {
+  const existing = store.models.get(id);
+  if (!existing || existing.providerId !== providerId) {
+    throw new ChatbotError("not_found:provider");
+  }
+  const updated: CustomModel = {
+    ...existing,
+    ...(capabilities === undefined ? {} : { capabilities }),
+    ...(name === undefined ? {} : { name }),
+  };
+  store.models.set(id, updated);
+  return updated;
+}
+
+function getCustomProviderByModelId({
+  customProviderId,
+}: {
+  customProviderId: string;
+}): CustomProvider | undefined {
+  return store.providers.get(customProviderId);
+}
+
+function getDecryptedApiKey({ providerId }: { providerId: string }): string {
+  const provider = store.providers.get(providerId);
+  if (!provider) {
+    throw new ChatbotError("not_found:provider");
+  }
+  const apiKey = store.apiKeys.get(providerId);
+  if (apiKey === undefined) {
+    throw new ChatbotError("not_found:provider");
+  }
+  return apiKey;
+}
+
+function getCustomModelsForUser({ userId }: { userId: string }): Array<
+  CustomModel & {
+    providerName: string;
+    providerType: string;
+  }
+> {
+  return [...store.providers.values()]
+    .filter((provider) => provider.userId === userId)
+    .flatMap((provider) =>
+      [...store.models.values()]
+        .filter((model) => model.providerId === provider.id)
+        .map((model) => ({
+          ...model,
+          providerName: provider.name,
+          providerType: provider.type,
+        }))
+    )
+    .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+}
+
+export const inMemoryQueries = {
+  createCustomModel,
+  createCustomModels,
+  createCustomProvider,
+  createStreamId,
+  createUserFromClerk,
+  deleteAllChatsByUserId,
+  deleteChatById,
+  deleteCustomModel,
+  deleteCustomProvider,
+  deleteDocumentsByIdAfterTimestamp,
+  deleteMessagesByChatIdAfterTimestamp,
+  getAllChatsByUserId,
+  getAllMessagesByUserId,
+  getChatById,
+  getChatsByUserId,
+  getCustomModelsByProviderId,
+  getCustomModelsForUser,
+  getCustomProviderById,
+  getCustomProviderByModelId,
+  getCustomProvidersByUserId,
+  getDecryptedApiKey,
+  getDocumentById,
+  getDocumentsById,
+  getMessageById,
+  getMessageCountByUserId,
+  getMessagesByChatId,
+  getOrCreateUserByEmail,
+  getStreamIdsByChatId,
+  getSuggestionsByDocumentId,
+  getUserByClerkId,
+  saveChat,
+  saveDocument,
+  saveMessages,
+  saveSuggestions,
+  updateChatTitleById,
+  updateChatVisibilityById,
+  updateCustomModel,
+  updateCustomProvider,
+  updateDocumentContent,
+  updateMessage,
+};

@@ -80,6 +80,25 @@ docker compose up
 
 Migrations run automatically on container start.
 
+## Demo Mode (no external services)
+
+Set `DEMO_MODE=1` to run the app with **zero dependencies** — no Postgres, no
+Redis, no Clerk keys, and no AI provider keys. It uses a full in-memory store
+(seeded with a mock provider/model), the mock AI provider, and auto-signs in a
+`demo@example.com` user. Use it to test the UI quickly or preview on Vercel.
+
+```bash
+pnpm dev:demo
+```
+
+On Vercel: import the repo and deploy from any branch, then set only
+`DEMO_MODE=1` and `NEXT_PUBLIC_APP_URL=https://<your-domain>` as env vars.
+Do **not** set `POSTGRES_URL`, `ENCRYPTION_KEY`, or Clerk/Redis keys.
+
+> Note: in-memory data is ephemeral — it resets on restart and is per-instance
+> on serverless deployments, so chats are not durable. This is a UI demo, not a
+> production data store.
+
 ## Model Providers
 
 Built-in providers are resolved via API keys in `.env.local`. Users can also add custom OpenAI-compatible providers at runtime through the settings UI — these are stored in Postgres and resolved dynamically.
@@ -91,6 +110,7 @@ Model capabilities (tools, vision, reasoning) are defined in the catalog at `lib
 | Command | Description |
 |---|---|
 | `pnpm dev` | Dev server with Turbopack |
+| `pnpm dev:demo` | Dev server in demo mode (in-memory DB, mock AI, auto-auth) |
 | `pnpm build` | Production build (includes type checking) |
 | `pnpm check` | Lint (Ultracite/Biome) |
 | `pnpm fix` | Auto-fix lint issues |
