@@ -1,10 +1,9 @@
 import type { UseChatHelpers } from "@ai-sdk/react";
 import { ArrowDownIcon } from "lucide-react";
-import { useCallback, useEffect, useRef } from "react";
+import { memo, useCallback, useEffect, useRef } from "react";
 import { useMessages } from "@/hooks/use-messages";
 import type { ChatMessage } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import { useDataStream } from "./data-stream-provider";
 import { Greeting } from "./greeting";
 import { PreviewMessage, ThinkingMessage } from "./message";
 
@@ -47,8 +46,6 @@ function PureMessages({
   } = useMessages({
     status,
   });
-
-  useDataStream();
 
   const prevChatIdRef = useRef(chatId);
   useEffect(() => {
@@ -124,4 +121,4 @@ function PureMessages({
   );
 }
 
-export const Messages = PureMessages;
+export const Messages = memo(PureMessages);
