@@ -53,7 +53,7 @@ const createMockModel = (): LanguageModel =>
                 type: "text-delta",
               });
               await new Promise((resolve) => {
-                setTimeout(resolve, 10);
+                setTimeout(resolve, 200);
               });
             }, Promise.resolve());
             controller.enqueue({ id: "t1", type: "text-end" });
