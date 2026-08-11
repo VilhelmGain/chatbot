@@ -43,11 +43,13 @@ test.describe("Light mode colors", () => {
     const dialogStyles = await dialog.evaluate((el) => {
       const styles = getComputedStyle(el);
       return {
+        backgroundColor: styles.backgroundColor,
         backgroundImage: styles.backgroundImage,
         borderColor: styles.borderTopColor,
       };
     });
-    expect(dialogStyles.backgroundImage).toContain("linear-gradient");
+    expect(dialogStyles.backgroundImage).toBe("none");
+    expect(dialogStyles.backgroundColor).toBe("rgb(255, 255, 255)");
     expect(dialogStyles.borderColor).not.toBe("rgba(0, 0, 0, 0)");
 
     const select = page.locator('[data-slot="select-trigger"]').first();
