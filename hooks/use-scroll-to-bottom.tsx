@@ -6,6 +6,7 @@ export function useScrollToBottom() {
   const [isAtBottom, setIsAtBottom] = useState(true);
   const isAtBottomRef = useRef(true);
   const isUserScrollingRef = useRef(false);
+  const scrollScheduledRef = useRef(false);
 
   useEffect(() => {
     isAtBottomRef.current = isAtBottom;
@@ -64,14 +65,22 @@ export function useScrollToBottom() {
     }
 
     const scrollIfNeeded = () => {
-      if (isAtBottomRef.current && !isUserScrollingRef.current) {
+      if (
+        isAtBottomRef.current &&
+        !isUserScrollingRef.current &&
+        !scrollScheduledRef.current
+      ) {
+        scrollScheduledRef.current = true;
         requestAnimationFrame(() => {
+          scrollScheduledRef.current = false;
           container.scrollTo({
             behavior: "instant",
             top: container.scrollHeight,
           });
-          setIsAtBottom(true);
-          isAtBottomRef.current = true;
+          if (!isAtBottomRef.current) {
+            isAtBottomRef.current = true;
+            setIsAtBottom(true);
+          }
         });
       }
     };

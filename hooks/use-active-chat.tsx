@@ -117,6 +117,7 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
     resumeStream,
     addToolApprovalResponse,
   } = useChat<ChatMessage>({
+    experimental_throttle: 100,
     generateId: generateUUID,
     id: chatId,
     messages: initialMessages,
