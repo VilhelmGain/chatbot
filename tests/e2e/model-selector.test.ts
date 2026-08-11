@@ -161,7 +161,12 @@ test.describe("Model Selector", () => {
     await page.getByTestId("model-selector").click();
     await page.getByRole("option", { name: /Kimi K2\.5/ }).click();
 
-    const slider = page.getByRole("slider", { name: "Reasoning effort" });
+    // The radix slider puts role="slider" on the focusable thumb (the
+    // aria-label lives on the wrapping root), so scope within the picker
+    // instead of matching by accessible name.
+    const slider = page
+      .locator("[data-testid='reasoning-effort-picker']")
+      .getByRole("slider");
     await slider.focus();
     await slider.press("End");
 

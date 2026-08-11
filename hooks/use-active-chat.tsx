@@ -86,6 +86,12 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
 
   const [input, setInput] = useState("");
 
+  const { data: modelsData } = useSWR(
+    `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/api/models`,
+    fetcher,
+    { dedupingInterval: 3_600_000 }
+  );
+
   const { data: chatData, isLoading } = useSWR(
     isNewChat
       ? null
@@ -243,6 +249,16 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
       }
     }
   }, [chatData, isNewChat]);
+
+  useEffect(() => {
+    const firstModelId = modelsData?.models?.[0]?.id;
+    if (!firstModelId || currentModelId) {
+      return;
+    }
+    setCurrentModelId(firstModelId);
+    // biome-ignore lint/suspicious/noDocumentCookie: default model persistence
+    document.cookie = `chat-model=${encodeURIComponent(firstModelId)}; path=/`;
+  }, [modelsData, currentModelId]);
 
   const setReasoningEffort = useCallback((effort: ReasoningEffort) => {
     setReasoningEffortState(effort);

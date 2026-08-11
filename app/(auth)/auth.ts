@@ -1,6 +1,6 @@
 import { auth as clerkAuth, currentUser } from "@clerk/nextjs/server";
 import { cookies } from "next/headers";
-import { isTestEnvironment } from "@/lib/constants";
+import { isDemoMode, isTestEnvironment } from "@/lib/constants";
 import {
   createUserFromClerk,
   getOrCreateUserByEmail,
@@ -22,7 +22,8 @@ export type Session = {
 export async function auth(): Promise<Session | null> {
   if (isTestEnvironment) {
     const cookieStore = await cookies();
-    const email = cookieStore.get("test-user")?.value;
+    const cookieEmail = cookieStore.get("test-user")?.value;
+    const email = cookieEmail ?? (isDemoMode ? "demo@example.com" : undefined);
     if (!email) {
       return null;
     }
