@@ -26,3 +26,6 @@ yarn-error.log*
 next-env.d.ts
 tsconfig.tsbuildinfo
 .opencode/
+
+# clerk configuration (can include secrets)
+/.clerk/
