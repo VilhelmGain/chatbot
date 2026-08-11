@@ -1,5 +1,10 @@
 This is a chatbot application built with Next.js, TypeScript, Tailwind CSS, and Drizzle ORM. It uses a Postgres database and optionally Redis for rate limiting and stream resumption. The application supports multiple AI providers and models, which can be managed through a catalog system.
 
+## Instructions from developer
+- do not run `build` after you are done with code changes. the code will be tested when commited to the repository. the build is only necessary if you are committing to the main branch. however, if you are committing to the main branch make sure it is intentional.
+- in the same way build should not be run, avoid running `test` as well.
+- just run the other verification commands such as linting and formatting.
+
 ## Package manager
 - Use `pnpm` only. `packageManager` is pinned to `pnpm@10.32.1`.
 - Do not use npm or yarn.
