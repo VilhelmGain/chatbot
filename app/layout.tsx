@@ -1,9 +1,23 @@
 import { ClerkProvider } from "@clerk/nextjs";
 import type { Metadata, Viewport } from "next";
-import { Manrope, Montserrat, Sora } from "next/font/google";
+import {
+  DM_Sans,
+  Fira_Code,
+  Geist,
+  Geist_Mono,
+  IBM_Plex_Mono,
+  Inter,
+  JetBrains_Mono,
+  Manrope,
+  Montserrat,
+  Sora,
+  Space_Grotesk,
+  Space_Mono,
+} from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { isTestEnvironment } from "@/lib/constants";
+import { FONT_ROLES } from "@/lib/fonts";
 import { getCanonicalUrl, getMetadataBase } from "@/lib/seo";
 
 import "./globals.css";
@@ -65,6 +79,78 @@ const manrope = Manrope({
   weight: ["400", "500", "600", "700"],
 });
 
+const inter = Inter({
+  display: "swap",
+  preload: false,
+  subsets: ["latin"],
+  variable: "--font-inter",
+  weight: ["400", "500", "600", "700"],
+});
+
+const geist = Geist({
+  display: "swap",
+  preload: false,
+  subsets: ["latin"],
+  variable: "--font-geist",
+  weight: ["400", "500", "600", "700"],
+});
+
+const spaceGrotesk = Space_Grotesk({
+  display: "swap",
+  preload: false,
+  subsets: ["latin"],
+  variable: "--font-space-grotesk",
+  weight: ["400", "500", "600", "700"],
+});
+
+const dmSans = DM_Sans({
+  display: "swap",
+  preload: false,
+  subsets: ["latin"],
+  variable: "--font-dm-sans",
+  weight: ["400", "500", "600", "700"],
+});
+
+const geistMono = Geist_Mono({
+  display: "swap",
+  preload: false,
+  subsets: ["latin"],
+  variable: "--font-geist-mono",
+  weight: ["400", "500", "600", "700"],
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  display: "swap",
+  preload: false,
+  subsets: ["latin"],
+  variable: "--font-jetbrains-mono",
+  weight: ["400", "500", "600", "700"],
+});
+
+const firaCode = Fira_Code({
+  display: "swap",
+  preload: false,
+  subsets: ["latin"],
+  variable: "--font-fira-code",
+  weight: ["400", "500", "600", "700"],
+});
+
+const ibmPlexMono = IBM_Plex_Mono({
+  display: "swap",
+  preload: false,
+  subsets: ["latin"],
+  variable: "--font-ibm-plex-mono",
+  weight: ["400", "500", "600", "700"],
+});
+
+const spaceMono = Space_Mono({
+  display: "swap",
+  preload: false,
+  subsets: ["latin"],
+  variable: "--font-space-mono",
+  weight: ["400", "700"],
+});
+
 const LIGHT_THEME_COLOR = "hsl(0 0% 100%)";
 const DARK_THEME_COLOR = "hsl(190deg 18% 8%)";
 const THEME_COLOR_SCRIPT = `\
@@ -85,6 +171,26 @@ const THEME_COLOR_SCRIPT = `\
   updateThemeColor();
 })();`;
 
+const FONT_SCRIPT = `\
+(function() {
+  var roles = ${JSON.stringify(FONT_ROLES).replace(/</g, "\\u003c")};
+  function readCookie(name) {
+    var match = document.cookie.match(new RegExp('(?:^|; )' + name + '=([^;]*)'));
+    return match ? decodeURIComponent(match[1]) : undefined;
+  }
+  var html = document.documentElement;
+  for (var roleKey in roles) {
+    var role = roles[roleKey];
+    var id = readCookie(role.cookieName);
+    var font = null;
+    for (var i = 0; i < role.fonts.length; i++) {
+      if (role.fonts[i].id === id) font = role.fonts[i];
+      if (!font && role.fonts[i].id === role.defaultId) font = role.fonts[i];
+    }
+    if (font) html.style.setProperty(role.cssVar, font.stack);
+  }
+})();`;
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -92,7 +198,7 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      className={`${sora.variable} ${montserrat.variable} ${manrope.variable}`}
+      className={`${sora.variable} ${montserrat.variable} ${manrope.variable} ${inter.variable} ${geist.variable} ${spaceGrotesk.variable} ${dmSans.variable} ${geistMono.variable} ${jetbrainsMono.variable} ${firaCode.variable} ${ibmPlexMono.variable} ${spaceMono.variable}`}
       lang="en"
       suppressHydrationWarning
     >
@@ -101,6 +207,12 @@ export default function RootLayout({
           // biome-ignore lint/security/noDangerouslySetInnerHtml: "Required"
           dangerouslySetInnerHTML={{
             __html: THEME_COLOR_SCRIPT,
+          }}
+        />
+        <script
+          // biome-ignore lint/security/noDangerouslySetInnerHtml: "Required"
+          dangerouslySetInnerHTML={{
+            __html: FONT_SCRIPT,
           }}
         />
       </head>
