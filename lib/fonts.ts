@@ -40,6 +40,16 @@ export const SANS_FONTS: readonly FontOption[] = [
     label: "DM Sans",
     stack: `var(--font-dm-sans), ${SANS_FALLBACK}`,
   },
+  {
+    id: "inter-tight",
+    label: "Inter Tight",
+    stack: `var(--font-inter-tight), ${SANS_FALLBACK}`,
+  },
+  {
+    id: "roboto",
+    label: "Roboto",
+    stack: `var(--font-roboto), ${SANS_FALLBACK}`,
+  },
 ];
 
 export const MONO_FONTS: readonly FontOption[] = [
@@ -67,6 +77,16 @@ export const MONO_FONTS: readonly FontOption[] = [
     id: "space-mono",
     label: "Space Mono",
     stack: `var(--font-space-mono), ${MONO_FALLBACK}`,
+  },
+  {
+    id: "roboto-mono",
+    label: "Roboto Mono",
+    stack: `var(--font-roboto-mono), ${MONO_FALLBACK}`,
+  },
+  {
+    id: "cascadia-code",
+    label: "Cascadia Code",
+    stack: `var(--font-cascadia-code), ${MONO_FALLBACK}`,
   },
   {
     id: "system",

@@ -1,15 +1,19 @@
 import { ClerkProvider } from "@clerk/nextjs";
 import type { Metadata, Viewport } from "next";
 import {
+  Cascadia_Code,
   DM_Sans,
   Fira_Code,
   Geist,
   Geist_Mono,
   IBM_Plex_Mono,
   Inter,
+  Inter_Tight,
   JetBrains_Mono,
   Manrope,
   Montserrat,
+  Roboto,
+  Roboto_Mono,
   Sora,
   Space_Grotesk,
   Space_Mono,
@@ -87,6 +91,14 @@ const inter = Inter({
   weight: ["400", "500", "600", "700"],
 });
 
+const interTight = Inter_Tight({
+  display: "swap",
+  preload: false,
+  subsets: ["latin"],
+  variable: "--font-inter-tight",
+  weight: ["400", "500", "600", "700"],
+});
+
 const geist = Geist({
   display: "swap",
   preload: false,
@@ -108,6 +120,30 @@ const dmSans = DM_Sans({
   preload: false,
   subsets: ["latin"],
   variable: "--font-dm-sans",
+  weight: ["400", "500", "600", "700"],
+});
+
+const roboto = Roboto({
+  display: "swap",
+  preload: false,
+  subsets: ["latin"],
+  variable: "--font-roboto",
+  weight: ["400", "500", "600", "700"],
+});
+
+const robotoMono = Roboto_Mono({
+  display: "swap",
+  preload: false,
+  subsets: ["latin"],
+  variable: "--font-roboto-mono",
+  weight: ["400", "500", "600", "700"],
+});
+
+const cascadiaCode = Cascadia_Code({
+  display: "swap",
+  preload: false,
+  subsets: ["latin"],
+  variable: "--font-cascadia-code",
   weight: ["400", "500", "600", "700"],
 });
 
@@ -198,7 +234,7 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      className={`${sora.variable} ${montserrat.variable} ${manrope.variable} ${inter.variable} ${geist.variable} ${spaceGrotesk.variable} ${dmSans.variable} ${geistMono.variable} ${jetbrainsMono.variable} ${firaCode.variable} ${ibmPlexMono.variable} ${spaceMono.variable}`}
+      className={`${sora.variable} ${montserrat.variable} ${manrope.variable} ${inter.variable} ${interTight.variable} ${geist.variable} ${spaceGrotesk.variable} ${dmSans.variable} ${roboto.variable} ${robotoMono.variable} ${cascadiaCode.variable} ${geistMono.variable} ${jetbrainsMono.variable} ${firaCode.variable} ${ibmPlexMono.variable} ${spaceMono.variable}`}
       lang="en"
       suppressHydrationWarning
     >
