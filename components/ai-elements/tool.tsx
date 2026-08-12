@@ -4,6 +4,7 @@ import type { DynamicToolUIPart, ToolUIPart } from "ai";
 import type { ComponentProps, ReactNode } from "react";
 import dynamic from "next/dynamic";
 
+import { useAutoCollapse } from "@/hooks/use-auto-collapse";
 import { Badge } from "@/components/ui/badge";
 import {
   Collapsible,
@@ -28,14 +29,27 @@ const CodeBlock = dynamic<CodeBlockProps>(
   { loading: () => null, ssr: false }
 );
 
-export type ToolProps = ComponentProps<typeof Collapsible>;
+export type ToolProps = ComponentProps<typeof Collapsible> & {
+  autoCollapse?: boolean;
+};
 
-export const Tool = ({ className, ...props }: ToolProps) => (
-  <Collapsible
-    className={cn("group not-prose mb-4 w-full rounded-lg border", className)}
-    {...props}
-  />
-);
+export const Tool = ({
+  autoCollapse,
+  className,
+  defaultOpen = true,
+  ...props
+}: ToolProps) => {
+  const { open, setOpen } = useAutoCollapse(autoCollapse ?? false, defaultOpen);
+
+  return (
+    <Collapsible
+      className={cn("group not-prose mb-4 w-full rounded-lg border", className)}
+      onOpenChange={setOpen}
+      open={open}
+      {...props}
+    />
+  );
+};
 
 export type ToolPart = ToolUIPart | DynamicToolUIPart;
 

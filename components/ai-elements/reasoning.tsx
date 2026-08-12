@@ -52,6 +52,7 @@ export type ReasoningProps = ComponentProps<typeof Collapsible> & {
   defaultOpen?: boolean;
   onOpenChange?: (open: boolean) => void;
   duration?: number;
+  autoCollapse?: boolean;
 };
 
 const AUTO_CLOSE_DELAY = 1000;
@@ -65,6 +66,7 @@ export const Reasoning = memo(
     defaultOpen,
     onOpenChange,
     duration: durationProp,
+    autoCollapse,
     children,
     ...props
   }: ReasoningProps) => {
@@ -84,6 +86,7 @@ export const Reasoning = memo(
 
     const hasEverStreamedRef = useRef(isStreaming);
     const [hasAutoClosed, setHasAutoClosed] = useState(false);
+    const [hasAutoCollapsed, setHasAutoCollapsed] = useState(false);
     const startTimeRef = useRef<number | null>(null);
 
     // Track when streaming starts and compute duration
@@ -101,10 +104,18 @@ export const Reasoning = memo(
 
     // Auto-open when streaming starts (unless explicitly closed)
     useEffect(() => {
-      if (isStreaming && !isOpen && !isExplicitlyClosed) {
+      if (isStreaming && !isOpen && !isExplicitlyClosed && !hasAutoCollapsed) {
         setIsOpen(true);
       }
-    }, [isStreaming, isOpen, setIsOpen, isExplicitlyClosed]);
+    }, [isStreaming, isOpen, setIsOpen, isExplicitlyClosed, hasAutoCollapsed]);
+
+    // Auto-collapse once when subsequent content generates after this block
+    useEffect(() => {
+      if (autoCollapse && !hasAutoCollapsed && isOpen) {
+        setHasAutoCollapsed(true);
+        setIsOpen(false);
+      }
+    }, [autoCollapse, hasAutoCollapsed, isOpen, setIsOpen]);
 
     // Auto-close when streaming ends (once only, and only if it ever streamed)
     useEffect(() => {

@@ -1,6 +1,7 @@
 "use client";
 import type { UseChatHelpers } from "@ai-sdk/react";
-import { memo, useCallback, useEffect, useRef, useState } from "react";
+import { memo, useCallback } from "react";
+import { useAutoCollapse } from "@/hooks/use-auto-collapse";
 import type { ChatMessage } from "@/lib/types";
 import { cn, sanitizeText } from "@/lib/utils";
 import { MessageContent } from "../ai-elements/message";
@@ -94,15 +95,7 @@ function SearchWebOutput({
   query: string;
   results: Array<{ content: string; title: string; url: string }>;
 }) {
-  const [open, setOpen] = useState(!autoCollapse);
-  const wasAutoCollapsed = useRef(false);
-
-  useEffect(() => {
-    if (autoCollapse && !wasAutoCollapsed.current) {
-      setOpen(false);
-      wasAutoCollapsed.current = true;
-    }
-  }, [autoCollapse]);
+  const { open, setOpen } = useAutoCollapse(autoCollapse, !autoCollapse);
 
   return (
     <WebSearchResults
@@ -155,6 +148,14 @@ const PurePreviewMessage = ({
   );
   const isThinking = isAssistant && isLoading && !hasAnyContent;
 
+  const hasFollowingPart = (index: number) =>
+    message.parts?.some(
+      (candidate, candidateIndex) =>
+        candidateIndex > index &&
+        ((candidate.type === "text" && candidate.text?.trim().length > 0) ||
+          candidate.type.startsWith("tool-"))
+    );
+
   const attachments = attachmentsFromMessage.length > 0 && (
     <div
       className="flex flex-row justify-end gap-2"
@@ -202,6 +203,7 @@ const PurePreviewMessage = ({
         mergedReasoning.rendered = true;
         return (
           <MessageReasoning
+            autoCollapse={hasFollowingPart(index)}
             isLoading={isLoading || mergedReasoning.isStreaming}
             key={key}
             reasoning={mergedReasoning.text}
@@ -247,7 +249,11 @@ const PurePreviewMessage = ({
       if (isDenied) {
         return (
           <div className={widthClass} key={toolCallId}>
-            <Tool className="w-full" defaultOpen={true}>
+            <Tool
+              autoCollapse={hasFollowingPart(index)}
+              className="w-full"
+              defaultOpen={true}
+            >
               <ToolHeader state="output-denied" type="tool-getWeather" />
               <ToolContent>
                 <div className="px-4 py-3 text-muted-foreground text-sm">
@@ -262,7 +268,11 @@ const PurePreviewMessage = ({
       if (state === "approval-responded") {
         return (
           <div className={widthClass} key={toolCallId}>
-            <Tool className="w-full" defaultOpen={true}>
+            <Tool
+              autoCollapse={hasFollowingPart(index)}
+              className="w-full"
+              defaultOpen={true}
+            >
               <ToolHeader state={state} type="tool-getWeather" />
               <ToolContent>
                 <ToolInput input={part.input} />
@@ -274,7 +284,11 @@ const PurePreviewMessage = ({
 
       return (
         <div className={widthClass} key={toolCallId}>
-          <Tool className="w-full" defaultOpen={true}>
+          <Tool
+            autoCollapse={hasFollowingPart(index)}
+            className="w-full"
+            defaultOpen={true}
+          >
             <ToolHeader state={state} type="tool-getWeather" />
             <ToolContent>
               {(state === "input-available" ||
@@ -346,6 +360,7 @@ const PurePreviewMessage = ({
 
       return (
         <Tool
+          autoCollapse={hasFollowingPart(index)}
           className="w-[min(100%,450px)]"
           defaultOpen={true}
           key={toolCallId}
@@ -387,12 +402,6 @@ const PurePreviewMessage = ({
       const widthClass = "w-[min(100%,450px)]";
 
       if (state === "output-available") {
-        const hasFollowingPart = message.parts.some(
-          (candidate, candidateIndex) =>
-            candidateIndex > index &&
-            (candidate.type === "text" || candidate.type.startsWith("tool-"))
-        );
-
         return (
           <div className={widthClass} key={toolCallId}>
             {"error" in part.output ? (
@@ -402,7 +411,7 @@ const PurePreviewMessage = ({
             ) : (
               <SearchWebOutput
                 answer={part.output.answer}
-                autoCollapse={hasFollowingPart}
+                autoCollapse={hasFollowingPart(index)}
                 query={part.output.query}
                 results={part.output.results}
               />
@@ -414,7 +423,11 @@ const PurePreviewMessage = ({
       if (isDenied) {
         return (
           <div className={widthClass} key={toolCallId}>
-            <Tool className="w-full" defaultOpen={true}>
+            <Tool
+              autoCollapse={hasFollowingPart(index)}
+              className="w-full"
+              defaultOpen={true}
+            >
               <ToolHeader state="output-denied" type="tool-searchWeb" />
               <ToolContent>
                 <div className="px-4 py-3 text-muted-foreground text-sm">
@@ -429,7 +442,11 @@ const PurePreviewMessage = ({
       if (state === "approval-responded") {
         return (
           <div className={widthClass} key={toolCallId}>
-            <Tool className="w-full" defaultOpen={true}>
+            <Tool
+              autoCollapse={hasFollowingPart(index)}
+              className="w-full"
+              defaultOpen={true}
+            >
               <ToolHeader state={state} type="tool-searchWeb" />
               <ToolContent>
                 <ToolInput input={part.input} />
@@ -441,7 +458,11 @@ const PurePreviewMessage = ({
 
       return (
         <div className={widthClass} key={toolCallId}>
-          <Tool className="w-full" defaultOpen={true}>
+          <Tool
+            autoCollapse={hasFollowingPart(index)}
+            className="w-full"
+            defaultOpen={true}
+          >
             <ToolHeader state={state} type="tool-searchWeb" />
             <ToolContent>
               {(state === "input-available" ||
