@@ -617,6 +617,9 @@ export const MultimodalInput = memo(
     if (prevProps.messages.length !== nextProps.messages.length) {
       return false;
     }
+    if (prevProps.reasoningEffort !== nextProps.reasoningEffort) {
+      return false;
+    }
 
     return true;
   }
@@ -808,12 +811,14 @@ function ModelSelectorOption({
 function ReasoningEffortPicker({
   efforts,
   modelName,
-  onValueChange,
+  onCommit,
+  onPreview,
   value,
 }: {
   efforts: ReasoningEffort[];
   modelName: string;
-  onValueChange: (effort: ReasoningEffort) => void;
+  onCommit: (effort: ReasoningEffort) => void;
+  onPreview: (effort: ReasoningEffort) => void;
   value: ReasoningEffort;
 }) {
   const options = useMemo<ReasoningEffort[]>(
@@ -825,10 +830,19 @@ function ReasoningEffortPicker({
     ([index]: number[]) => {
       const effort = options[index];
       if (effort) {
-        onValueChange(effort);
+        onPreview(effort);
       }
     },
-    [onValueChange, options]
+    [onPreview, options]
+  );
+  const handleSliderCommit = useCallback(
+    ([index]: number[]) => {
+      const effort = options[index];
+      if (effort) {
+        onCommit(effort);
+      }
+    },
+    [onCommit, options]
   );
   const handleOptionClick = useCallback(
     (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -836,10 +850,10 @@ function ReasoningEffortPicker({
         | ReasoningEffort
         | undefined;
       if (effort) {
-        onValueChange(effort);
+        onCommit(effort);
       }
     },
-    [onValueChange]
+    [onCommit]
   );
   const handleSliderKeyDown = useCallback(
     (event: React.KeyboardEvent) => event.stopPropagation(),
@@ -859,7 +873,7 @@ function ReasoningEffortPicker({
             Reasoning effort
           </div>
           <p className="mt-0.5 text-[10px] leading-relaxed text-muted-foreground">
-            Adjust, then click {modelName} again to confirm.
+            Select an effort to apply it.
           </p>
         </div>
         <span className="rounded-md bg-primary/10 px-2 py-0.5 text-[10px] font-semibold capitalize text-primary ring-1 ring-primary/20">
@@ -873,6 +887,7 @@ function ReasoningEffortPicker({
         min={0}
         onKeyDown={handleSliderKeyDown}
         onValueChange={handleSliderChange}
+        onValueCommit={handleSliderCommit}
         step={1}
         value={[selectedIndex]}
       />
@@ -1053,9 +1068,24 @@ function PureModelSelectorCompact({
       }
 
       setPendingModelId(model.id);
-      setDraftReasoningEffort("default");
+      setDraftReasoningEffort(reasoningEffort);
     },
-    [capabilities, commitModel, draftReasoningEffort, pendingModelId]
+    [
+      capabilities,
+      commitModel,
+      draftReasoningEffort,
+      pendingModelId,
+      reasoningEffort,
+    ]
+  );
+
+  const handleCommitEffort = useCallback(
+    (effort: ReasoningEffort) => {
+      if (pendingModelId) {
+        commitModel(pendingModelId, effort);
+      }
+    },
+    [commitModel, pendingModelId]
   );
 
   const handleOpenChange = useCallback((nextOpen: boolean) => {
@@ -1185,7 +1215,8 @@ function PureModelSelectorCompact({
                       <ReasoningEffortPicker
                         efforts={pendingReasoningEfforts}
                         modelName={model.name}
-                        onValueChange={setDraftReasoningEffort}
+                        onCommit={handleCommitEffort}
+                        onPreview={setDraftReasoningEffort}
                         value={draftReasoningEffort}
                       />
                     ) : null}

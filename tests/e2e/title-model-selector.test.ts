@@ -85,9 +85,6 @@ test.describe("Title Model Selector", () => {
       name: "Set reasoning effort to medium",
     });
     await mediumEffort.click();
-    await expect(mediumEffort).toHaveAttribute("aria-pressed", "true");
-
-    await kimiOption.click();
 
     await expect(page.getByPlaceholder("Search models...")).not.toBeVisible();
     await expect(trigger).toHaveText("Kimi K2.5 (medium)");
