@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { TOOL_IDS } from "@/lib/ai/tools/metadata";
 import { ALLOWED_MEDIA_TYPES, isValidAttachmentUrl } from "@/lib/attachments";
 
 const textPartSchema = z.object({
@@ -32,6 +33,7 @@ const toolApprovalMessageSchema = z.object({
 });
 
 export const postRequestBodySchema = z.object({
+  enabledTools: z.array(z.enum(TOOL_IDS)).optional(),
   id: z.uuid(),
   message: userMessageSchema.optional(),
   messages: z.array(toolApprovalMessageSchema).optional(),

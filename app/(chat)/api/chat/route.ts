@@ -25,6 +25,11 @@ import {
 import { createDocument } from "@/lib/ai/tools/create-document";
 import { editDocument } from "@/lib/ai/tools/edit-document";
 import { getWeather } from "@/lib/ai/tools/get-weather";
+import {
+  DOCUMENT_TOOL_IDS,
+  TOOL_IDS,
+  TOOL_IDS_SET,
+} from "@/lib/ai/tools/metadata";
 import { requestSuggestions } from "@/lib/ai/tools/request-suggestions";
 import { updateDocument } from "@/lib/ai/tools/update-document";
 import { resolveAttachmentParts } from "@/lib/attachments";
@@ -137,6 +142,7 @@ export async function POST(request: Request) {
       reasoningEffort,
       selectedChatModel,
       selectedVisibilityType,
+      enabledTools,
     } = requestBody;
 
     const session = await auth();
@@ -272,6 +278,31 @@ export async function POST(request: Request) {
     const capabilities = modelCapabilities[chatModel];
     const isReasoningModel = capabilities?.reasoning === true;
     const supportsTools = capabilities?.tools === true;
+
+    const enabledToolSet = new Set(
+      (enabledTools ?? [...TOOL_IDS]).filter((toolId) =>
+        TOOL_IDS_SET.has(toolId)
+      )
+    );
+
+    const approvalToolNames = new Set<string>();
+    if (isToolApprovalFlow && messages) {
+      for (const m of messages) {
+        for (const p of m.parts ?? []) {
+          if (typeof p.toolName === "string") {
+            approvalToolNames.add(p.toolName);
+          }
+        }
+      }
+    }
+
+    const effectiveToolNames = new Set([
+      ...enabledToolSet,
+      ...approvalToolNames,
+    ]);
+    const hasDocumentTools = DOCUMENT_TOOL_IDS.some((toolId) =>
+      effectiveToolNames.has(toolId)
+    );
     const responseStartedAt = new Date();
     const baseMessageMetadata = {
       createdAt: responseStartedAt.toISOString(),
@@ -369,15 +400,12 @@ export async function POST(request: Request) {
         const result = streamText({
           abortSignal: request.signal,
           activeTools: supportsTools
-            ? [
-                "getWeather",
-                "createDocument",
-                "editDocument",
-                "updateDocument",
-                "requestSuggestions",
-              ]
+            ? TOOL_IDS.filter((toolId) => effectiveToolNames.has(toolId))
             : [],
-          instructions: systemPrompt({ requestHints, supportsTools }),
+          instructions: systemPrompt({
+            requestHints,
+            supportsTools: supportsTools && hasDocumentTools,
+          }),
           messages: modelMessages,
           model: await getLanguageModel(chatModel),
           onAbort() {
@@ -404,23 +432,37 @@ export async function POST(request: Request) {
             isEnabled: isProductionEnvironment,
           },
           tools: {
-            createDocument: createDocument({
-              dataStream,
-              modelId: chatModel,
-              session,
-            }),
-            editDocument: editDocument({ dataStream, session }),
-            getWeather,
-            requestSuggestions: requestSuggestions({
-              dataStream,
-              modelId: chatModel,
-              session,
-            }),
-            updateDocument: updateDocument({
-              dataStream,
-              modelId: chatModel,
-              session,
-            }),
+            ...(effectiveToolNames.has("getWeather") ? { getWeather } : {}),
+            ...(effectiveToolNames.has("createDocument")
+              ? {
+                  createDocument: createDocument({
+                    dataStream,
+                    modelId: chatModel,
+                    session,
+                  }),
+                }
+              : {}),
+            ...(effectiveToolNames.has("editDocument")
+              ? { editDocument: editDocument({ dataStream, session }) }
+              : {}),
+            ...(effectiveToolNames.has("updateDocument")
+              ? {
+                  updateDocument: updateDocument({
+                    dataStream,
+                    modelId: chatModel,
+                    session,
+                  }),
+                }
+              : {}),
+            ...(effectiveToolNames.has("requestSuggestions")
+              ? {
+                  requestSuggestions: requestSuggestions({
+                    dataStream,
+                    modelId: chatModel,
+                    session,
+                  }),
+                }
+              : {}),
           },
         });
 

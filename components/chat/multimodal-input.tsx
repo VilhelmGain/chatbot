@@ -64,6 +64,7 @@ import {
   slashCommands,
 } from "./slash-commands";
 import { SuggestedActions } from "./suggested-actions";
+import { ToolsMenu } from "./tools-menu";
 
 function setCookie(name: string, value: string) {
   const maxAge = 60 * 60 * 24 * 365;
@@ -562,6 +563,7 @@ function PureMultimodalInput({
               selectedModelId={selectedModelId}
               setReasoningEffort={setReasoningEffort}
             />
+            <ToolsMenu selectedModelId={selectedModelId} />
           </PromptInputTools>
 
           {status === "submitted" || status === "streaming" ? (

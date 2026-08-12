@@ -23,6 +23,8 @@ import { getChatHistoryPaginationKey } from "@/components/chat/sidebar-history";
 import { toast } from "@/components/chat/toast";
 import { useAutoResume } from "@/hooks/use-auto-resume";
 import type { ReasoningEffort } from "@/lib/ai/models.client";
+import type { ToolId } from "@/lib/ai/tools/metadata";
+import { TOOL_IDS, TOOL_IDS_SET } from "@/lib/ai/tools/metadata";
 import { ChatbotError } from "@/lib/errors";
 import type { ChatMessage, VisibilityType } from "@/lib/types";
 import { fetcher, fetchWithErrorHandlers, generateUUID } from "@/lib/utils";
@@ -45,6 +47,8 @@ type ActiveChatContextValue = {
   isLoading: boolean;
   currentModelId: string;
   setCurrentModelId: (id: string) => void;
+  enabledTools: ToolId[];
+  setEnabledTools: (tools: ToolId[]) => void;
 };
 
 const ActiveChatContext = createContext<ActiveChatContextValue | null>(null);
@@ -83,6 +87,38 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     reasoningEffortRef.current = reasoningEffort;
   }, [reasoningEffort]);
+
+  const [enabledTools, setEnabledToolsState] = useState<ToolId[]>([
+    ...TOOL_IDS,
+  ]);
+  const enabledToolsRef = useRef(enabledTools);
+  useEffect(() => {
+    enabledToolsRef.current = enabledTools;
+  }, [enabledTools]);
+
+  useEffect(() => {
+    const cookieValue = document.cookie
+      .split("; ")
+      .find((row) => row.startsWith("chat-tools="))
+      ?.split("=")[1];
+    if (!cookieValue) {
+      return;
+    }
+    try {
+      const parsed: unknown = JSON.parse(decodeURIComponent(cookieValue));
+      if (Array.isArray(parsed)) {
+        const valid = parsed.filter(
+          (id): id is ToolId => typeof id === "string" && TOOL_IDS_SET.has(id)
+        );
+        if (valid.length > 0) {
+          const ordered = TOOL_IDS.filter((id) => valid.includes(id));
+          setEnabledToolsState(ordered);
+        }
+      }
+    } catch {
+      // malformed cookie -> keep default (all tools enabled)
+    }
+  }, []);
 
   const [input, setInput] = useState("");
 
@@ -175,6 +211,7 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
             ...(isToolApprovalContinuation
               ? { messages: request.messages }
               : { message: lastMessage }),
+            enabledTools: enabledToolsRef.current,
             reasoningEffort: reasoningEffortRef.current,
             selectedChatModel: currentModelIdRef.current,
             selectedVisibilityType: visibility,
@@ -267,6 +304,12 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
     document.cookie = `reasoning-effort=${effort}; max-age=${60 * 60 * 24 * 365}; path=/`;
   }, []);
 
+  const setEnabledTools = useCallback((tools: ToolId[]) => {
+    setEnabledToolsState(tools);
+    // biome-ignore lint/suspicious/noDocumentCookie: cookie persistence for user preference
+    document.cookie = `chat-tools=${encodeURIComponent(JSON.stringify(tools))}; max-age=${60 * 60 * 24 * 365}; path=/`;
+  }, []);
+
   const hasAppendedQueryRef = useRef(false);
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -299,6 +342,7 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
       addToolApprovalResponse,
       chatId,
       currentModelId,
+      enabledTools,
       input,
       isLoading: !isNewChat && isLoading,
       isReadonly,
@@ -307,6 +351,7 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
       regenerate,
       sendMessage,
       setCurrentModelId,
+      setEnabledTools,
       setInput,
       setMessages,
       setReasoningEffort,
@@ -331,6 +376,8 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
       isNewChat,
       isLoading,
       currentModelId,
+      enabledTools,
+      setEnabledTools,
     ]
   );
 

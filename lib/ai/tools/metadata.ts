@@ -1,0 +1,43 @@
+export const TOOL_IDS = [
+  "getWeather",
+  "createDocument",
+  "editDocument",
+  "updateDocument",
+  "requestSuggestions",
+] as const;
+
+export type ToolId = (typeof TOOL_IDS)[number];
+
+export const TOOL_IDS_SET: ReadonlySet<string> = new Set(TOOL_IDS);
+
+export const DOCUMENT_TOOL_IDS = [
+  "createDocument",
+  "editDocument",
+  "updateDocument",
+  "requestSuggestions",
+] as const;
+
+export type ToolMetadata = { label: string; description: string };
+
+export const TOOL_METADATA: Record<ToolId, ToolMetadata> = {
+  createDocument: {
+    description: "Create scripts, documents, and spreadsheets.",
+    label: "Create document",
+  },
+  editDocument: {
+    description: "Make targeted edits to an existing artifact.",
+    label: "Edit document",
+  },
+  getWeather: {
+    description: "Get current weather at a location.",
+    label: "Weather",
+  },
+  requestSuggestions: {
+    description: "Get writing suggestions for a document.",
+    label: "Request suggestions",
+  },
+  updateDocument: {
+    description: "Rewrite an entire artifact.",
+    label: "Update document",
+  },
+};
