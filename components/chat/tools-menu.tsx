@@ -76,7 +76,7 @@ function PureToolsMenu({ selectedModelId }: { selectedModelId: string }) {
     { dedupingInterval: 3_600_000, revalidateOnFocus: false }
   );
 
-  const { data: toolsData } = useSWR(
+  const { data: toolsData } = useSWR<ToolConfig[]>(
     `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/api/settings/tools`,
     (url: string) => fetch(url).then((r) => r.json()),
     { revalidateOnFocus: false }
@@ -96,7 +96,7 @@ function PureToolsMenu({ selectedModelId }: { selectedModelId: string }) {
   const enabledConfiguredToolIds = useMemo(
     () =>
       new Set(
-        ((toolsData as ToolConfig[] | undefined) ?? [])
+        (Array.isArray(toolsData) ? toolsData : [])
           .filter((config) => config.enabled)
           .map((config) => config.toolId)
       ),
