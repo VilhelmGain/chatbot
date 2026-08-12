@@ -49,6 +49,8 @@ export const {
   getOrCreateUserByEmail,
   getStreamIdsByChatId,
   getSuggestionsByDocumentId,
+  getToolConfigByUserId,
+  getToolConfigsByUserId,
   getUserByClerkId,
   saveChat,
   saveDocument,
@@ -60,4 +62,6 @@ export const {
   updateCustomProvider,
   updateDocumentContent,
   updateMessage,
+  deleteToolConfig,
+  upsertToolConfig,
 } = impl;

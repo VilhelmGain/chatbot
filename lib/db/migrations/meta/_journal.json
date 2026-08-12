@@ -22,6 +22,13 @@
       "when": 1786277529378,
       "tag": "0003_amazing_black_bolt",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1786498120867,
+      "tag": "0004_strong_hex",
+      "breakpoints": true
     }
   ]
 }

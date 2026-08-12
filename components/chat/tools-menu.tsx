@@ -1,7 +1,7 @@
 "use client";
 
 import { Check, WrenchIcon } from "lucide-react";
-import { memo, useCallback, useState } from "react";
+import { memo, useCallback, useMemo, useState } from "react";
 import useSWR from "swr";
 import {
   ModelSelector,
@@ -15,9 +15,18 @@ import {
 import { useActiveChat } from "@/hooks/use-active-chat";
 import type { ModelCapabilities } from "@/lib/ai/models.client";
 import type { ToolId } from "@/lib/ai/tools/metadata";
-import { TOOL_IDS, TOOL_METADATA } from "@/lib/ai/tools/metadata";
+import {
+  CONFIGURABLE_TOOLS,
+  TOOL_IDS,
+  TOOL_METADATA,
+} from "@/lib/ai/tools/metadata";
 import { cn } from "@/lib/utils";
 import { Button } from "../ui/button";
+
+type ToolConfig = {
+  enabled: boolean;
+  toolId: string;
+};
 
 function ToolSelectorItem({
   checked,
@@ -67,6 +76,12 @@ function PureToolsMenu({ selectedModelId }: { selectedModelId: string }) {
     { dedupingInterval: 3_600_000, revalidateOnFocus: false }
   );
 
+  const { data: toolsData } = useSWR(
+    `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/api/settings/tools`,
+    (url: string) => fetch(url).then((r) => r.json()),
+    { revalidateOnFocus: false }
+  );
+
   const toggleTool = useCallback(
     (id: ToolId) => {
       setEnabledTools(
@@ -78,9 +93,29 @@ function PureToolsMenu({ selectedModelId }: { selectedModelId: string }) {
     [enabledTools, setEnabledTools]
   );
 
+  const enabledConfiguredToolIds = useMemo(
+    () =>
+      new Set(
+        ((toolsData as ToolConfig[] | undefined) ?? [])
+          .filter((config) => config.enabled)
+          .map((config) => config.toolId)
+      ),
+    [toolsData]
+  );
+
+  const visibleTools = useMemo(
+    () =>
+      TOOL_IDS.filter(
+        (toolId) =>
+          !(CONFIGURABLE_TOOLS as readonly string[]).includes(toolId) ||
+          enabledConfiguredToolIds.has(toolId)
+      ),
+    [enabledConfiguredToolIds]
+  );
+
   const handleEnableAll = useCallback(() => {
-    setEnabledTools([...TOOL_IDS]);
-  }, [setEnabledTools]);
+    setEnabledTools([...visibleTools]);
+  }, [setEnabledTools, visibleTools]);
 
   const handleDisableAll = useCallback(() => {
     setEnabledTools([]);
@@ -94,7 +129,10 @@ function PureToolsMenu({ selectedModelId }: { selectedModelId: string }) {
   }
 
   const enabledSet = new Set(enabledTools);
-  const allEnabled = enabledTools.length === TOOL_IDS.length;
+  const enabledVisibleTools = visibleTools.filter((id) => enabledSet.has(id));
+  const allEnabled =
+    visibleTools.length > 0 &&
+    enabledVisibleTools.length === visibleTools.length;
 
   return (
     <ModelSelector onOpenChange={setOpen} open={open}>
@@ -109,14 +147,14 @@ function PureToolsMenu({ selectedModelId }: { selectedModelId: string }) {
           <ModelSelectorName>Tools</ModelSelectorName>
           {allEnabled ? null : (
             <span className="ml-auto rounded-full bg-primary/10 px-1.5 py-0.5 text-[9px] font-semibold text-primary">
-              {enabledTools.length}/{TOOL_IDS.length}
+              {enabledVisibleTools.length}/{visibleTools.length}
             </span>
           )}
         </Button>
       </ModelSelectorTrigger>
       <ModelSelectorContent className="w-[min(320px,calc(100vw-24px))] p-1">
         <ModelSelectorList>
-          {TOOL_IDS.map((id) => (
+          {visibleTools.map((id) => (
             <ToolSelectorItem
               checked={enabledSet.has(id)}
               id={id}

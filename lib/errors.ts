@@ -15,7 +15,8 @@ export type Surface =
   | "history"
   | "document"
   | "suggestions"
-  | "provider";
+  | "provider"
+  | "tools";
 
 export type ErrorCode = `${ErrorType}:${Surface}`;
 
@@ -31,6 +32,7 @@ export const visibilityBySurface: Record<Surface, ErrorVisibility> = {
   provider: "response",
   stream: "response",
   suggestions: "response",
+  tools: "response",
 };
 
 export class ChatbotError extends Error {
@@ -119,6 +121,13 @@ export function getMessageByErrorCode(errorCode: ErrorCode): string {
       return "This provider belongs to another user.";
     case "bad_request:provider":
       return "The provider configuration is invalid. Please check your settings and try again.";
+
+    case "unauthorized:tools":
+      return "You need to sign in to manage tool configuration.";
+    case "not_found:tools":
+      return "The requested tool configuration was not found.";
+    case "bad_request:tools":
+      return "The tool configuration is invalid. Please check your settings and try again.";
 
     default:
       return "Something went wrong. Please try again later.";
