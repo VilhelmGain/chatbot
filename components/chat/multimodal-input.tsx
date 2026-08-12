@@ -571,7 +571,7 @@ function PureMultimodalInput({
           ) : (
             <PromptInputSubmit
               className={cn(
-                "h-7 w-7 rounded-lg transition-all duration-200",
+                "h-7 w-7 shrink-0 rounded-lg transition-all duration-200",
                 input.trim()
                   ? "bg-foreground text-background hover:opacity-85 active:scale-95"
                   : "bg-foreground/5 text-muted-foreground/25 cursor-not-allowed"
@@ -1220,7 +1220,7 @@ function PureStopButton({
 
   return (
     <Button
-      className="h-7 w-7 rounded-md bg-primary p-1 text-primary-foreground transition-all duration-200 glow-primary hover:brightness-110 active:scale-95 disabled:bg-foreground/5 disabled:text-muted-foreground/25 disabled:cursor-not-allowed"
+      className="h-7 w-7 shrink-0 rounded-md bg-primary p-1 text-primary-foreground transition-all duration-200 glow-primary hover:brightness-110 active:scale-95 disabled:bg-foreground/5 disabled:text-muted-foreground/25 disabled:cursor-not-allowed"
       data-testid="stop-button"
       onClick={handleClick}
     >
