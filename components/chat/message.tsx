@@ -1,6 +1,6 @@
 "use client";
 import type { UseChatHelpers } from "@ai-sdk/react";
-import { memo, useCallback } from "react";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
 import type { ChatMessage } from "@/lib/types";
 import { cn, sanitizeText } from "@/lib/utils";
 import { MessageContent } from "../ai-elements/message";
@@ -80,6 +80,38 @@ function ToolApprovalActions({
         Allow
       </button>
     </div>
+  );
+}
+
+function SearchWebOutput({
+  answer,
+  autoCollapse,
+  query,
+  results,
+}: {
+  answer?: string;
+  autoCollapse: boolean;
+  query: string;
+  results: Array<{ content: string; title: string; url: string }>;
+}) {
+  const [open, setOpen] = useState(!autoCollapse);
+  const wasAutoCollapsed = useRef(false);
+
+  useEffect(() => {
+    if (autoCollapse && !wasAutoCollapsed.current) {
+      setOpen(false);
+      wasAutoCollapsed.current = true;
+    }
+  }, [autoCollapse]);
+
+  return (
+    <WebSearchResults
+      answer={answer}
+      onOpenChange={setOpen}
+      open={open}
+      query={query}
+      results={results}
+    />
   );
 }
 
@@ -355,6 +387,12 @@ const PurePreviewMessage = ({
       const widthClass = "w-[min(100%,450px)]";
 
       if (state === "output-available") {
+        const hasFollowingPart = message.parts.some(
+          (candidate, candidateIndex) =>
+            candidateIndex > index &&
+            (candidate.type === "text" || candidate.type.startsWith("tool-"))
+        );
+
         return (
           <div className={widthClass} key={toolCallId}>
             {"error" in part.output ? (
@@ -362,8 +400,9 @@ const PurePreviewMessage = ({
                 {String(part.output.error)}
               </div>
             ) : (
-              <WebSearchResults
+              <SearchWebOutput
                 answer={part.output.answer}
+                autoCollapse={hasFollowingPart}
                 query={part.output.query}
                 results={part.output.results}
               />
