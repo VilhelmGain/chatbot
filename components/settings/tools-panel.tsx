@@ -1,7 +1,13 @@
 "use client";
 
 import { Globe, Loader2, Trash2 } from "lucide-react";
-import { type ChangeEvent, useCallback, useEffect, useState } from "react";
+import {
+  type ChangeEvent,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import useSWR from "swr";
 import { toast } from "@/components/chat/toast";
 import { Badge } from "@/components/ui/badge";
@@ -17,9 +23,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
-import { CONFIGURABLE_TOOLS, SEARCH_PROVIDERS } from "@/lib/ai/tools/metadata";
+import {
+  CONFIGURABLE_TOOLS,
+  SEARCH_PROVIDERS,
+  type SearchProvider,
+} from "@/lib/ai/tools/metadata";
 
 type ToolConfig = {
+  baseURL?: string;
   createdAt: string;
   enabled: boolean;
   id: string;
@@ -65,9 +76,10 @@ export function ToolsPanel() {
         <div className="flex flex-col gap-4">
           {CONFIGURABLE_TOOLS.map((toolId) => (
             <WebSearchToolCard
-              config={configs?.find((config) => config.toolId === toolId)}
+              configs={configs ?? []}
               key={toolId}
               onChanged={mutate}
+              toolId={toolId}
             />
           ))}
         </div>
@@ -77,21 +89,52 @@ export function ToolsPanel() {
 }
 
 function WebSearchToolCard({
-  config,
+  configs,
   onChanged,
+  toolId,
 }: {
-  config?: ToolConfig;
+  configs: ToolConfig[];
   onChanged: () => void;
+  toolId: string;
 }) {
-  const configured = !!config;
-  const [provider, setProvider] = useState<string>("tavily");
+  const [provider, setProvider] = useState<SearchProvider>("tavily");
   const [apiKey, setApiKey] = useState("");
-  const [enabled, setEnabled] = useState(config?.enabled ?? false);
+  const [baseURL, setBaseURL] = useState("");
+  const [enabled, setEnabled] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const initializedProviderRef = useRef(false);
+
+  const config = configs.find(
+    (candidate) =>
+      candidate.toolId === toolId && candidate.provider === provider
+  );
+  const configured = !!config;
+
+  useEffect(() => {
+    if (initializedProviderRef.current || configs.length === 0) {
+      return;
+    }
+    initializedProviderRef.current = true;
+    const savedProvider = SEARCH_PROVIDERS.find((searchProvider) =>
+      configs.some(
+        (candidate) =>
+          candidate.toolId === toolId && candidate.provider === searchProvider
+      )
+    );
+    if (savedProvider) {
+      setProvider(savedProvider);
+    }
+  }, [configs, toolId]);
 
   useEffect(() => {
     setEnabled(config?.enabled ?? false);
-  }, [config?.enabled]);
+    setBaseURL(config?.baseURL ?? "");
+  }, [config?.enabled, config?.baseURL]);
+
+  const handleProviderChange = useCallback((value: string) => {
+    setProvider(value as SearchProvider);
+    setApiKey("");
+  }, []);
 
   const handleApiKeyChange = useCallback(
     (event: ChangeEvent<HTMLInputElement>) => {
@@ -100,19 +143,33 @@ function WebSearchToolCard({
     []
   );
 
+  const handleBaseURLChange = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) => {
+      setBaseURL(event.target.value);
+    },
+    []
+  );
+
   const handleSave = useCallback(async () => {
-    if (!configured && !apiKey) {
-      toast({ description: "Enter a Tavily API key first", type: "error" });
-      return;
+    if (!configured) {
+      if (provider === "tavily" && !apiKey) {
+        toast({ description: "Enter a Tavily API key first", type: "error" });
+        return;
+      }
+      if (provider === "searxng" && !baseURL) {
+        toast({ description: "Enter a SearXNG base URL first", type: "error" });
+        return;
+      }
     }
     setIsSaving(true);
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/api/settings/tools/searchWeb`,
+        `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/api/settings/tools/${toolId}`,
         {
           body: JSON.stringify({
             provider,
             ...(apiKey ? { apiKey } : {}),
+            ...(baseURL ? { baseURL } : {}),
             enabled,
           }),
           headers: { "Content-Type": "application/json" },
@@ -139,12 +196,12 @@ function WebSearchToolCard({
     } finally {
       setIsSaving(false);
     }
-  }, [apiKey, configured, enabled, onChanged, provider]);
+  }, [apiKey, baseURL, configured, enabled, onChanged, provider, toolId]);
 
   const handleDelete = useCallback(async () => {
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/api/settings/tools/searchWeb`,
+        `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/api/settings/tools/${toolId}?provider=${encodeURIComponent(provider)}`,
         { method: "DELETE" }
       );
 
@@ -153,6 +210,7 @@ function WebSearchToolCard({
       }
 
       setApiKey("");
+      setBaseURL("");
       setEnabled(false);
       onChanged();
       toast({
@@ -168,7 +226,7 @@ function WebSearchToolCard({
         type: "error",
       });
     }
-  }, [onChanged]);
+  }, [onChanged, provider, toolId]);
 
   return (
     <div className="flex flex-col gap-5 rounded-lg border border-border glass-surface p-5">
@@ -201,7 +259,7 @@ function WebSearchToolCard({
       <div className="grid gap-5 border-t border-border pt-5">
         <div className="flex flex-col gap-2">
           <Label htmlFor="search-provider">Provider</Label>
-          <Select onValueChange={setProvider} value={provider}>
+          <Select onValueChange={handleProviderChange} value={provider}>
             <SelectTrigger className="w-full sm:w-64" id="search-provider">
               <SelectValue />
             </SelectTrigger>
@@ -216,28 +274,70 @@ function WebSearchToolCard({
           </Select>
         </div>
 
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="search-api-key">API Key</Label>
-          <Input
-            id="search-api-key"
-            onChange={handleApiKeyChange}
-            placeholder={
-              configured ? "Leave blank to keep current key" : "tvly-..."
-            }
-            type="password"
-            value={apiKey}
-          />
-          <p className="text-xs text-muted-foreground">
-            Create a key at app.tavily.com. Keys are stored encrypted.
-          </p>
-        </div>
+        {provider === "searxng" ? (
+          <>
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="search-base-url">Search base URL</Label>
+              <Input
+                id="search-base-url"
+                onChange={handleBaseURLChange}
+                placeholder={
+                  configured
+                    ? "Leave blank to keep current URL"
+                    : "https://searxng.example.com"
+                }
+                type="text"
+                value={baseURL}
+              />
+              <p className="text-xs text-muted-foreground">
+                The URL of your self-hosted SearXNG instance, e.g.
+                https://searxng.example.com.
+              </p>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="search-api-key">API Key (optional)</Label>
+              <Input
+                id="search-api-key"
+                onChange={handleApiKeyChange}
+                placeholder={
+                  configured
+                    ? "Leave blank to keep current key"
+                    : "Optional — blank if no key"
+                }
+                type="password"
+                value={apiKey}
+              />
+              <p className="text-xs text-muted-foreground">
+                Only needed if your SearXNG instance requires one. Keys are
+                stored encrypted.
+              </p>
+            </div>
+          </>
+        ) : (
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="search-api-key">API Key</Label>
+            <Input
+              id="search-api-key"
+              onChange={handleApiKeyChange}
+              placeholder={
+                configured ? "Leave blank to keep current key" : "tvly-..."
+              }
+              type="password"
+              value={apiKey}
+            />
+            <p className="text-xs text-muted-foreground">
+              Create a key at app.tavily.com. Keys are stored encrypted.
+            </p>
+          </div>
+        )}
 
         <div className="flex items-center justify-between gap-4 rounded-lg border border-border bg-muted/70 px-3 py-2.5">
           <div className="flex flex-col gap-1">
             <Label htmlFor="search-enabled">Enabled</Label>
             <p className="text-xs text-muted-foreground">
-              Allow the model to search the web in chat. Requires a saved API
-              key.
+              Allow the model to search the web in chat. Requires a saved
+              configuration.
             </p>
           </div>
           <Checkbox
@@ -269,7 +369,7 @@ function WebSearchToolCard({
               variant="outline"
             >
               <Trash2 className="mr-1.5 size-3.5" />
-              Remove key
+              Remove configuration
             </Button>
           ) : null}
         </div>

@@ -8,8 +8,27 @@ import {
 } from "@/lib/db/queries";
 import { ChatbotError } from "@/lib/errors";
 
+const normalizeBaseURL = (value: string) => {
+  const trimmed = value.trim().replace(/\/+$/, "");
+  return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+};
+
+const baseURLField = z
+  .string()
+  .min(1)
+  .transform(normalizeBaseURL)
+  .refine((value) => {
+    try {
+      const parsed = new URL(value);
+      return parsed.protocol === "http:" || parsed.protocol === "https:";
+    } catch {
+      return false;
+    }
+  }, "Invalid search base URL");
+
 const upsertToolSchema = z.object({
   apiKey: z.string().min(1).optional(),
+  baseURL: baseURLField.optional(),
   enabled: z.boolean(),
   provider: z.enum(SEARCH_PROVIDERS),
 });
@@ -43,17 +62,25 @@ export async function PUT(
   }
 
   const existing = await getToolConfigByUserId({
+    provider: body.provider,
     toolId,
     userId: session.user.id,
   });
 
-  if (!existing && body.apiKey === undefined) {
-    return new ChatbotError("bad_request:tools").toResponse();
+  if (!existing) {
+    const missingRequired =
+      body.provider === "tavily"
+        ? body.apiKey === undefined
+        : body.baseURL === undefined;
+    if (missingRequired) {
+      return new ChatbotError("bad_request:tools").toResponse();
+    }
   }
 
   try {
     const config = await upsertToolConfig({
       apiKey: body.apiKey,
+      baseURL: body.baseURL,
       enabled: body.enabled,
       provider: body.provider,
       toolId,
@@ -61,6 +88,7 @@ export async function PUT(
     });
 
     return Response.json({
+      baseURL: config.baseURL,
       createdAt: config.createdAt,
       enabled: config.enabled,
       id: config.id,
@@ -81,7 +109,7 @@ export async function PUT(
 }
 
 export async function DELETE(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ toolId: string }> }
 ) {
   const session = await auth();
@@ -96,7 +124,18 @@ export async function DELETE(
     return new ChatbotError("bad_request:tools").toResponse();
   }
 
-  await deleteToolConfig({ toolId, userId: session.user.id });
+  const providerParam = new URL(request.url).searchParams.get("provider");
+  const parsedProvider = z.enum(SEARCH_PROVIDERS).safeParse(providerParam);
+
+  if (!parsedProvider.success) {
+    return new ChatbotError("bad_request:tools").toResponse();
+  }
+
+  await deleteToolConfig({
+    provider: parsedProvider.data,
+    toolId,
+    userId: session.user.id,
+  });
 
   return new Response(null, { status: 204 });
 }

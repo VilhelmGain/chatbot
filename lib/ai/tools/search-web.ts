@@ -4,15 +4,119 @@ import type { SearchProvider } from "./metadata";
 
 const TAVILY_SEARCH_ENDPOINT = "https://api.tavily.com/search";
 
-export function searchWeb({
+type SearchResult = {
+  content: string;
+  title: string;
+  url: string;
+};
+
+async function searchTavily({
   apiKey,
-  provider = "tavily",
+  maxResults,
+  query,
 }: {
   apiKey: string;
+  maxResults?: number;
+  query: string;
+}) {
+  const response = await fetch(TAVILY_SEARCH_ENDPOINT, {
+    body: JSON.stringify({
+      api_key: apiKey,
+      include_answer: true,
+      max_results: maxResults ?? 5,
+      query,
+      search_depth: "basic",
+    }),
+    headers: {
+      "Content-Type": "application/json",
+    },
+    method: "POST",
+  });
+
+  if (!response.ok) {
+    return {
+      error: `Web search failed (HTTP ${response.status}). Please try again later.`,
+    };
+  }
+
+  const data = await response.json();
+
+  return {
+    answer: data.answer,
+    query: data.query,
+    results: (data.results ?? []).map(
+      (result: {
+        content: string;
+        title: string;
+        url: string;
+      }): SearchResult => ({
+        content: result.content,
+        title: result.title,
+        url: result.url,
+      })
+    ),
+  };
+}
+
+async function searchSearxng({
+  apiKey,
+  baseURL,
+  maxResults,
+  query,
+}: {
+  apiKey?: string;
+  baseURL: string;
+  maxResults?: number;
+  query: string;
+}) {
+  const url = new URL(`${baseURL.replace(/\/+$/, "")}/search`);
+  url.searchParams.set("format", "json");
+  url.searchParams.set("q", query);
+
+  const response = await fetch(url, {
+    headers: apiKey ? { "X-API-Key": apiKey } : undefined,
+    method: "GET",
+  });
+
+  if (!response.ok) {
+    return {
+      error: `Web search failed (HTTP ${response.status}). Please try again later.`,
+    };
+  }
+
+  const data = await response.json();
+
+  return {
+    answer: undefined,
+    query: data.query ?? query,
+    results: (data.results ?? []).slice(0, maxResults ?? 5).map(
+      (result: {
+        content?: string;
+        title?: string;
+        url?: string;
+      }): SearchResult => ({
+        content: typeof result.content === "string" ? result.content : "",
+        title: typeof result.title === "string" ? result.title : "",
+        url: typeof result.url === "string" ? result.url : "",
+      })
+    ),
+  };
+}
+
+export function searchWeb({
+  apiKey,
+  baseURL,
+  provider = "tavily",
+}: {
+  apiKey?: string;
+  baseURL?: string;
   provider?: SearchProvider;
 }) {
-  if (provider !== "tavily") {
-    throw new Error(`Unsupported web search provider: ${provider}`);
+  if (provider === "tavily" && !apiKey) {
+    throw new Error("Web search provider 'tavily' requires an API key");
+  }
+  if (provider === "searxng" && !baseURL) {
+    throw new Error("Web search provider 'searxng' requires a base URL");
   }
 
   return tool({
@@ -20,39 +124,19 @@ export function searchWeb({
       "Search the web for current, up-to-date information. Use this when you need facts, news, or details that may be newer than your training data.",
     execute: async ({ maxResults, query }) => {
       try {
-        const response = await fetch(TAVILY_SEARCH_ENDPOINT, {
-          body: JSON.stringify({
-            api_key: apiKey,
-            include_answer: true,
-            max_results: maxResults ?? 5,
+        if (provider === "searxng") {
+          return await searchSearxng({
+            apiKey,
+            baseURL: baseURL ?? "",
+            maxResults,
             query,
-            search_depth: "basic",
-          }),
-          headers: {
-            "Content-Type": "application/json",
-          },
-          method: "POST",
-        });
-
-        if (!response.ok) {
-          return {
-            error: `Web search failed (HTTP ${response.status}). Please try again later.`,
-          };
+          });
         }
-
-        const data = await response.json();
-
-        return {
-          answer: data.answer,
-          query: data.query,
-          results: (data.results ?? []).map(
-            (result: { content: string; title: string; url: string }) => ({
-              content: result.content,
-              title: result.title,
-              url: result.url,
-            })
-          ),
-        };
+        return await searchTavily({
+          apiKey: apiKey ?? "",
+          maxResults,
+          query,
+        });
       } catch {
         return {
           error: "Web search failed. Please try again.",

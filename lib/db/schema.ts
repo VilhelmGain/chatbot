@@ -151,6 +151,7 @@ export type CustomModel = InferSelectModel<typeof customModel>;
 export const toolConfig = pgTable(
   "ToolConfig",
   {
+    baseURL: text("baseURL").notNull().default(""),
     createdAt: timestamp("createdAt").notNull().defaultNow(),
     enabled: boolean("enabled").notNull().default(false),
     encryptedApiKey: text("encryptedApiKey").notNull(),
@@ -164,7 +165,11 @@ export const toolConfig = pgTable(
       .references(() => user.id, { onDelete: "cascade" }),
   },
   (table) => [
-    uniqueIndex("ToolConfig_userId_toolId_idx").on(table.userId, table.toolId),
+    uniqueIndex("ToolConfig_userId_toolId_provider_idx").on(
+      table.userId,
+      table.toolId,
+      table.provider
+    ),
   ]
 );
 

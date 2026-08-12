@@ -51,6 +51,6 @@ export const CONFIGURABLE_TOOLS = ["searchWeb"] as const;
 
 export type ConfigurableToolId = (typeof CONFIGURABLE_TOOLS)[number];
 
-export const SEARCH_PROVIDERS = ["tavily"] as const;
+export const SEARCH_PROVIDERS = ["tavily", "searxng"] as const;
 
 export type SearchProvider = (typeof SEARCH_PROVIDERS)[number];

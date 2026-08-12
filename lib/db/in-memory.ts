@@ -754,13 +754,15 @@ function getDecryptedApiKey({ providerId }: { providerId: string }): string {
 }
 
 function getToolConfigKey({
+  provider,
   toolId,
   userId,
 }: {
+  provider: string;
   toolId: string;
   userId: string;
 }) {
-  return `${userId}:${toolId}`;
+  return `${userId}:${toolId}:${provider}`;
 }
 
 function getToolConfigsByUserId({
@@ -772,6 +774,7 @@ function getToolConfigsByUserId({
     .filter((config) => config.userId === userId)
     .map(
       ({
+        baseURL,
         createdAt,
         enabled,
         id,
@@ -780,6 +783,7 @@ function getToolConfigsByUserId({
         updatedAt,
         userId: configUserId,
       }) => ({
+        baseURL,
         createdAt,
         enabled,
         id,
@@ -792,29 +796,33 @@ function getToolConfigsByUserId({
 }
 
 function getToolConfigByUserId({
+  provider,
   toolId,
   userId,
 }: {
+  provider: string;
   toolId: string;
   userId: string;
 }): ToolConfig | undefined {
-  return store.toolConfigs.get(getToolConfigKey({ toolId, userId }));
+  return store.toolConfigs.get(getToolConfigKey({ provider, toolId, userId }));
 }
 
 function upsertToolConfig({
   apiKey,
+  baseURL,
   enabled,
   provider,
   toolId,
   userId,
 }: {
   apiKey?: string;
+  baseURL?: string;
   enabled: boolean;
   provider: string;
   toolId: string;
   userId: string;
 }): ToolConfig {
-  const key = getToolConfigKey({ toolId, userId });
+  const key = getToolConfigKey({ provider, toolId, userId });
   const existing = store.toolConfigs.get(key);
   const now = new Date();
 
@@ -825,6 +833,9 @@ function upsertToolConfig({
       provider,
       updatedAt: now,
     };
+    if (baseURL !== undefined) {
+      updated.baseURL = baseURL;
+    }
     if (apiKey !== undefined) {
       store.toolApiKeys.set(key, apiKey);
     }
@@ -832,11 +843,8 @@ function upsertToolConfig({
     return updated;
   }
 
-  if (apiKey === undefined) {
-    throw new ChatbotError("bad_request:tools");
-  }
-
   const config: ToolConfig = {
+    baseURL: baseURL ?? "",
     createdAt: now,
     enabled,
     encryptedApiKey: "",
@@ -848,18 +856,22 @@ function upsertToolConfig({
     userId,
   };
   store.toolConfigs.set(key, config);
-  store.toolApiKeys.set(key, apiKey);
+  if (apiKey !== undefined) {
+    store.toolApiKeys.set(key, apiKey);
+  }
   return config;
 }
 
 function deleteToolConfig({
+  provider,
   toolId,
   userId,
 }: {
+  provider: string;
   toolId: string;
   userId: string;
 }) {
-  const key = getToolConfigKey({ toolId, userId });
+  const key = getToolConfigKey({ provider, toolId, userId });
   if (!store.toolConfigs.has(key)) {
     throw new ChatbotError("not_found:tools");
   }
