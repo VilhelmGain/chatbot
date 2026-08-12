@@ -12,7 +12,6 @@ const updateProviderSchema = z.object({
   apiKey: z.string().min(1).optional(),
   baseURL: z.string().url().max(512).optional(),
   name: z.string().min(1).max(128).optional(),
-  type: z.enum(["openai", "anthropic"]).optional(),
 });
 
 export async function GET(
@@ -75,7 +74,6 @@ export async function PUT(
       baseURL: body.baseURL,
       id,
       name: body.name,
-      type: body.type,
       userId: session.user.id,
     });
 

@@ -1,16 +1,10 @@
 "use client";
 
-import { ArrowLeft, ChevronDown, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useCallback, useState } from "react";
 import useSWR from "swr";
 import { ModelSelectorLogo } from "@/components/ai-elements/model-selector";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
 import {
   Command,
   CommandEmpty,
@@ -28,7 +22,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { cn } from "@/lib/utils";
 
 type CatalogProvider = {
   baseURL: string;
@@ -50,8 +43,6 @@ type ProviderFormProps = {
   isEdit?: boolean;
 };
 
-type FormMode = "catalog" | "preconfigured" | "manual";
-
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 export function ProviderForm({
@@ -70,22 +61,14 @@ export function ProviderForm({
   );
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [mode, setMode] = useState<FormMode>(() =>
-    isEdit ? (initialData?.providerKey ? "preconfigured" : "manual") : "catalog"
-  );
-  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [isManualMode, setIsManualMode] = useState(isEdit || !!initialData);
 
   const { data: catalogData } = useSWR<{ providers: CatalogProvider[] }>(
-    mode === "manual"
+    isManualMode
       ? null
       : `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/api/settings/catalog`,
     fetcher
   );
-
-  const catalogProvider =
-    mode === "preconfigured" && providerKey
-      ? catalogData?.providers.find((p) => p.key === providerKey)
-      : undefined;
 
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
@@ -138,24 +121,18 @@ export function ProviderForm({
   );
 
   const handleSelectCatalogProvider = useCallback(
-    (selected: CatalogProvider) => {
-      setProviderKey(selected.key);
-      setName(selected.name);
-      setBaseURL(selected.baseURL);
-      setType(selected.type);
-      setMode("preconfigured");
-      setShowAdvanced(false);
+    (catalogProvider: CatalogProvider) => {
+      setProviderKey(catalogProvider.key);
+      setName(catalogProvider.name);
+      setBaseURL(catalogProvider.baseURL);
+      setType(catalogProvider.type);
+      setIsManualMode(true);
     },
     []
   );
 
-  const handleChangeProvider = useCallback(() => {
-    setMode("catalog");
-    setShowAdvanced(false);
-  }, []);
-
   const handleSwitchToManual = useCallback(() => {
-    setMode("manual");
+    setIsManualMode(true);
     setProviderKey(null);
     setName("");
     setBaseURL("");
@@ -186,7 +163,7 @@ export function ProviderForm({
     []
   );
 
-  if (mode === "catalog") {
+  if (!isManualMode && !isEdit) {
     return (
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-2">
@@ -217,125 +194,6 @@ export function ProviderForm({
           Custom provider
         </Button>
       </div>
-    );
-  }
-
-  if (mode === "preconfigured") {
-    return (
-      <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
-        <div className="flex flex-col gap-2">
-          <div className="flex items-center gap-3 rounded-lg border border-border bg-foreground/5 px-4 py-3">
-            {providerKey ? (
-              <ModelSelectorLogo
-                className="size-8 rounded-md"
-                provider={providerKey}
-              />
-            ) : null}
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2">
-                <span className="truncate font-medium">{name}</span>
-                <Badge variant="secondary">
-                  {type === "anthropic"
-                    ? "Anthropic Compatible"
-                    : "OpenAI Compatible"}
-                </Badge>
-              </div>
-              <p className="truncate text-xs text-muted-foreground">
-                {baseURL}
-              </p>
-            </div>
-          </div>
-          {catalogProvider ? (
-            <p className="text-xs text-muted-foreground">
-              {catalogProvider.modelCount} models from models.dev will be added
-              automatically.
-            </p>
-          ) : null}
-        </div>
-
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="apiKey">API Key</Label>
-          <Input
-            id="apiKey"
-            onChange={handleApiKeyChange}
-            placeholder={isEdit ? "Leave blank to keep current" : "sk-..."}
-            required={!isEdit}
-            type="password"
-            value={apiKey}
-          />
-          {isEdit ? (
-            <p className="text-xs text-muted-foreground">
-              Leave blank to keep the current API key
-            </p>
-          ) : null}
-        </div>
-
-        <Collapsible onOpenChange={setShowAdvanced}>
-          <CollapsibleTrigger asChild>
-            <Button
-              className="h-auto px-0 text-xs font-medium"
-              type="button"
-              variant="link"
-            >
-              <ChevronDown
-                className={cn(
-                  "mr-1 size-3.5 transition-transform",
-                  showAdvanced && "rotate-180"
-                )}
-              />
-              Advanced options
-            </Button>
-          </CollapsibleTrigger>
-          <CollapsibleContent>
-            <div className="flex flex-col gap-4 pt-3">
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="name">Provider Name</Label>
-                <Input
-                  id="name"
-                  onChange={handleNameChange}
-                  placeholder="My OpenAI Proxy"
-                  required
-                  value={name}
-                />
-              </div>
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="baseURL">Base URL</Label>
-                <Input
-                  id="baseURL"
-                  onChange={handleBaseURLChange}
-                  placeholder={
-                    type === "openai"
-                      ? "http://localhost:11434/v1"
-                      : "https://api.anthropic.com/v1"
-                  }
-                  required
-                  type="url"
-                  value={baseURL}
-                />
-              </div>
-            </div>
-          </CollapsibleContent>
-        </Collapsible>
-
-        {error ? <p className="text-sm text-destructive">{error}</p> : null}
-
-        <Button className="mt-2" disabled={isLoading} type="submit">
-          {isLoading ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
-          {isEdit ? "Update Provider" : "Add Provider"}
-        </Button>
-
-        {isEdit ? null : (
-          <Button
-            className="h-auto p-0 text-xs text-muted-foreground"
-            onClick={handleChangeProvider}
-            type="button"
-            variant="link"
-          >
-            <ArrowLeft className="mr-1 size-3.5" />
-            Change provider
-          </Button>
-        )}
-      </form>
     );
   }
 

@@ -143,44 +143,4 @@ test.describe("Provider Settings", () => {
     ]);
     expect(models.map((m) => m.name)).toEqual(["Alpha", "Mike", "Zeta"]);
   });
-
-  test("selecting a catalog provider shows only the API key field", async ({
-    page,
-  }) => {
-    await signIn(page);
-    await page.goto("/");
-
-    // Open Settings -> Providers
-    await page.getByTestId("user-nav-button").click();
-    await page.getByTestId("user-nav-item-settings").click();
-    await page.getByRole("button", { name: /Providers/i }).click();
-
-    await page.getByRole("button", { name: "Add Provider" }).click();
-
-    // Pick a known provider from the models.dev catalog.
-    await page.getByPlaceholder("Search providers...").fill("Anthropic");
-    await page
-      .getByRole("option")
-      .filter({ hasText: "Anthropic" })
-      .first()
-      .click();
-
-    // The preconfigured view should only ask for the API key: the prefilled
-    // name and base URL are hidden behind the advanced options collapsible.
-    const apiKeyInput = page.getByLabel("API Key");
-    await expect(apiKeyInput).toBeVisible();
-    await expect(page.getByLabel("Provider Name")).not.toBeVisible();
-    await expect(page.getByLabel("Base URL")).not.toBeVisible();
-
-    // Submit and confirm the provider appears in the list.
-    const addDialog = page.getByRole("dialog").last();
-    await apiKeyInput.fill("sk-test");
-    await addDialog.getByRole("button", { name: "Add Provider" }).click();
-
-    await expect(page.getByText("Provider added successfully")).toBeVisible();
-    const providerCard = page
-      .locator("div.rounded-xl.border")
-      .filter({ hasText: "Anthropic" });
-    await expect(providerCard).toBeVisible();
-  });
 });

@@ -7,13 +7,11 @@ import {
   MoreHorizontal,
   Pencil,
   Plug,
-  Server,
   Trash2,
 } from "lucide-react";
 import { useCallback, useState } from "react";
 import { ModelSelectorLogo } from "@/components/ai-elements/model-selector";
 import { toast } from "@/components/chat/toast";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -123,25 +121,16 @@ export function ProviderCard({
           )}
         </Button>
 
-        <div className="grid size-9 shrink-0 place-items-center rounded-lg bg-foreground/5">
-          {provider.providerKey ? (
-            <ModelSelectorLogo
-              className="size-5"
-              provider={provider.providerKey}
-            />
-          ) : (
-            <Server className="size-4 text-muted-foreground" />
-          )}
-        </div>
+        {provider.providerKey ? (
+          <ModelSelectorLogo provider={provider.providerKey} />
+        ) : null}
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <span className="font-medium truncate">{provider.name}</span>
-            <Badge variant="secondary">
-              {provider.type === "anthropic"
-                ? "Anthropic Compatible"
-                : "OpenAI Compatible"}
-            </Badge>
+            <span className="rounded bg-foreground/5 px-1.5 py-0.5 text-xs text-muted-foreground">
+              {provider.type}
+            </span>
           </div>
           <p className="text-xs text-muted-foreground truncate">
             {provider.baseURL}
