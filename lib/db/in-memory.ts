@@ -144,10 +144,12 @@ function saveChat({
   title: string;
   visibility: VisibilityType;
 }) {
+  const now = new Date();
   const chat: Chat = {
-    createdAt: new Date(),
+    createdAt: now,
     id,
     title,
+    updatedAt: now,
     userId,
     visibility,
   };
@@ -221,7 +223,7 @@ function getChatsByUserId({
       );
     }
     chats = chats.filter(
-      (chat) => chat.createdAt.getTime() > cursor.createdAt.getTime()
+      (chat) => chat.updatedAt.getTime() > cursor.updatedAt.getTime()
     );
   } else if (endingBefore) {
     const cursor = store.chats.get(endingBefore);
@@ -232,11 +234,11 @@ function getChatsByUserId({
       );
     }
     chats = chats.filter(
-      (chat) => chat.createdAt.getTime() < cursor.createdAt.getTime()
+      (chat) => chat.updatedAt.getTime() < cursor.updatedAt.getTime()
     );
   }
 
-  chats.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  chats.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
 
   const hasMore = chats.length > limit;
 
@@ -256,9 +258,10 @@ function getAllChatsByUserId({ userId }: { userId: string }) {
         (message) => message.chatId === chat.id
       ).length,
       title: chat.title,
+      updatedAt: chat.updatedAt,
       visibility: chat.visibility,
     }))
-    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
 }
 
 function getAllMessagesByUserId({ userId }: { userId: string }) {
@@ -286,8 +289,19 @@ function getChatById({ id }: { id: string }): Chat | null {
 }
 
 function saveMessages({ messages }: { messages: DBMessage[] }) {
+  if (messages.length === 0) {
+    return;
+  }
   for (const message of messages) {
     store.messages.set(message.id, message);
+  }
+  const touchedAt = new Date();
+  const chatIds = new Set(messages.map((message) => message.chatId));
+  for (const chatId of chatIds) {
+    const existing = store.chats.get(chatId);
+    if (existing) {
+      store.chats.set(chatId, { ...existing, updatedAt: touchedAt });
+    }
   }
 }
 
@@ -590,12 +604,14 @@ function updateCustomProvider({
   baseURL,
   id,
   name,
+  type,
   userId,
 }: {
   apiKey?: string;
   baseURL?: string;
   id: string;
   name?: string;
+  type?: "openai" | "anthropic";
   userId: string;
 }): CustomProvider {
   const existing = store.providers.get(id);
@@ -607,6 +623,7 @@ function updateCustomProvider({
     ...existing,
     ...(name === undefined ? {} : { name }),
     ...(baseURL === undefined ? {} : { baseURL }),
+    ...(type === undefined ? {} : { type }),
     updatedAt: new Date(),
   };
   if (apiKey !== undefined) {

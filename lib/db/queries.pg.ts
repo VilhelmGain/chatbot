@@ -125,10 +125,12 @@ export async function saveChat({
   visibility: VisibilityType;
 }) {
   try {
+    const now = new Date();
     return await db.insert(chat).values({
-      createdAt: new Date(),
+      createdAt: now,
       id,
       title,
+      updatedAt: now,
       userId,
       visibility,
     });
@@ -204,7 +206,7 @@ export async function getChatsByUserId({
             ? and(whereCondition, eq(chat.userId, id))
             : eq(chat.userId, id)
         )
-        .orderBy(desc(chat.createdAt))
+        .orderBy(desc(chat.updatedAt))
         .limit(extendedLimit);
 
     let filteredChats: Chat[] = [];
@@ -223,7 +225,7 @@ export async function getChatsByUserId({
         );
       }
 
-      filteredChats = await query(gt(chat.createdAt, selectedChat.createdAt));
+      filteredChats = await query(gt(chat.updatedAt, selectedChat.updatedAt));
     } else if (endingBefore) {
       const [selectedChat] = await db
         .select()
@@ -238,7 +240,7 @@ export async function getChatsByUserId({
         );
       }
 
-      filteredChats = await query(lt(chat.createdAt, selectedChat.createdAt));
+      filteredChats = await query(lt(chat.updatedAt, selectedChat.updatedAt));
     } else {
       filteredChats = await query();
     }
@@ -262,13 +264,20 @@ export async function getAllChatsByUserId({ userId }: { userId: string }) {
         id: chat.id,
         messageCount: count(message.id),
         title: chat.title,
+        updatedAt: chat.updatedAt,
         visibility: chat.visibility,
       })
       .from(chat)
       .leftJoin(message, eq(message.chatId, chat.id))
       .where(eq(chat.userId, userId))
-      .groupBy(chat.id, chat.title, chat.createdAt, chat.visibility)
-      .orderBy(desc(chat.createdAt));
+      .groupBy(
+        chat.id,
+        chat.title,
+        chat.createdAt,
+        chat.updatedAt,
+        chat.visibility
+      )
+      .orderBy(desc(chat.updatedAt));
   } catch (error) {
     throw new ChatbotError("bad_request:database", { cause: error });
   }
@@ -311,7 +320,20 @@ export async function getChatById({ id }: { id: string }) {
 
 export async function saveMessages({ messages }: { messages: DBMessage[] }) {
   try {
-    return await db.insert(message).values(messages);
+    if (messages.length === 0) {
+      return;
+    }
+
+    await db.insert(message).values(messages);
+
+    const chatIds = [...new Set(messages.map((m) => m.chatId))];
+    const touchedAt = new Date();
+    if (chatIds.length > 0) {
+      await db
+        .update(chat)
+        .set({ updatedAt: touchedAt })
+        .where(inArray(chat.id, chatIds));
+    }
   } catch (error) {
     throw new ChatbotError("bad_request:database", {
       cause: error,
@@ -719,12 +741,14 @@ export async function updateCustomProvider({
   baseURL,
   id,
   name,
+  type,
   userId,
 }: {
   apiKey?: string;
   baseURL?: string;
   id: string;
   name?: string;
+  type?: "openai" | "anthropic";
   userId: string;
 }): Promise<CustomProvider> {
   const updateData: Record<string, unknown> = { updatedAt: new Date() };
@@ -734,6 +758,9 @@ export async function updateCustomProvider({
   }
   if (baseURL !== undefined) {
     updateData.baseURL = baseURL;
+  }
+  if (type !== undefined) {
+    updateData.type = type;
   }
 
   if (apiKey !== undefined) {
