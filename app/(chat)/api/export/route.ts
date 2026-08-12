@@ -64,10 +64,11 @@ export async function POST(request: Request) {
     );
   } else {
     const allChats = await getAllChatsByUserId({ userId });
-    chats = allChats.map(({ createdAt, id, title, visibility }) => ({
+    chats = allChats.map(({ createdAt, id, title, updatedAt, visibility }) => ({
       createdAt,
       id,
       title,
+      updatedAt,
       userId,
       visibility,
     }));
