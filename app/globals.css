@@ -368,7 +368,8 @@ textarea:focus-visible {
 }
 
 @layer utilities {
-  .glass-surface {
+  .glass-surface,
+  .glass-surface-static {
     position: relative;
     background: var(--surface-container-lowest);
     isolation: isolate;
@@ -387,7 +388,16 @@ textarea:focus-visible {
     backdrop-filter: blur(30px);
   }
 
-  .glass-surface::before {
+  .dark .glass-surface-static {
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--foreground) 6%, transparent) 0%,
+      color-mix(in srgb, var(--foreground) 2%, transparent) 100%
+    );
+  }
+
+  .glass-surface::before,
+  .glass-surface-static::before {
     position: absolute;
     inset: 0;
     z-index: -1;

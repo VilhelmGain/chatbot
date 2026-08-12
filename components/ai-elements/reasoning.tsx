@@ -208,9 +208,15 @@ export const ReasoningContent = memo(
     const { isStreaming, isOpen } = useReasoning();
     const scrollRef = useRef<HTMLDivElement>(null);
     useEffect(() => {
-      if (isStreaming && scrollRef.current) {
-        scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      if (!isStreaming || !scrollRef.current) {
+        return;
       }
+      const rafId = requestAnimationFrame(() => {
+        if (scrollRef.current) {
+          scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+        }
+      });
+      return () => cancelAnimationFrame(rafId);
     }, [children, isStreaming]);
 
     if (!isOpen) return null;

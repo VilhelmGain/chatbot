@@ -37,14 +37,20 @@ export function useScrollToBottom() {
     }
 
     let scrollTimeout: ReturnType<typeof setTimeout>;
+    let rafId: number | null = null;
 
     const handleScroll = () => {
       isUserScrollingRef.current = true;
       clearTimeout(scrollTimeout);
 
-      const atBottom = checkIfAtBottom();
-      setIsAtBottom(atBottom);
-      isAtBottomRef.current = atBottom;
+      if (rafId === null) {
+        rafId = requestAnimationFrame(() => {
+          rafId = null;
+          const atBottom = checkIfAtBottom();
+          isAtBottomRef.current = atBottom;
+          setIsAtBottom(atBottom);
+        });
+      }
 
       scrollTimeout = setTimeout(() => {
         isUserScrollingRef.current = false;
@@ -55,6 +61,9 @@ export function useScrollToBottom() {
     return () => {
       container.removeEventListener("scroll", handleScroll);
       clearTimeout(scrollTimeout);
+      if (rafId !== null) {
+        cancelAnimationFrame(rafId);
+      }
     };
   }, [checkIfAtBottom]);
 
