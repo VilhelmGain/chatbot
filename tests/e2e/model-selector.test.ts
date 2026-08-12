@@ -134,7 +134,7 @@ test.describe("Model Selector", () => {
     await expect(modelButton).not.toContainText("high");
   });
 
-  test("changes reasoning effort and confirms it with the model", async ({
+  test("applies the reasoning effort immediately when selected", async ({
     page,
   }) => {
     const modelButton = page.getByTestId("model-selector");
@@ -147,18 +147,39 @@ test.describe("Model Selector", () => {
       name: "Set reasoning effort to high",
     });
     await highEffort.click();
-    await expect(highEffort).toHaveAttribute("aria-pressed", "true");
-
-    await kimiOption.click();
 
     await expect(page.getByPlaceholder("Search models...")).not.toBeVisible();
     await expect(modelButton).toHaveText("Kimi K2.5 (high)");
   });
 
+  test("updates the effort label when changing the effort of the already-selected model", async ({
+    page,
+  }) => {
+    const modelButton = page.getByTestId("model-selector");
+    await modelButton.click();
+
+    const kimiOption = page.getByRole("option", { name: /Kimi K2\.5/ });
+    await kimiOption.click();
+    await page
+      .getByRole("button", { name: "Set reasoning effort to high" })
+      .click();
+    await expect(modelButton).toHaveText("Kimi K2.5 (high)");
+
+    await modelButton.click();
+    await kimiOption.click();
+    await page
+      .getByRole("button", { name: "Set reasoning effort to medium" })
+      .click();
+
+    await expect(page.getByPlaceholder("Search models...")).not.toBeVisible();
+    await expect(modelButton).toHaveText("Kimi K2.5 (medium)");
+  });
+
   test("supports keyboard interaction on the reasoning slider", async ({
     page,
   }) => {
-    await page.getByTestId("model-selector").click();
+    const modelButton = page.getByTestId("model-selector");
+    await modelButton.click();
     await page.getByRole("option", { name: /Kimi K2\.5/ }).click();
 
     // The radix slider puts role="slider" on the focusable thumb (the
@@ -170,9 +191,7 @@ test.describe("Model Selector", () => {
     await slider.focus();
     await slider.press("End");
 
-    await expect(slider).toHaveAttribute("aria-valuenow", "4");
-    await expect(
-      page.getByRole("button", { name: "Set reasoning effort to max" })
-    ).toHaveAttribute("aria-pressed", "true");
+    await expect(page.getByPlaceholder("Search models...")).not.toBeVisible();
+    await expect(modelButton).toHaveText("Kimi K2.5 (max)");
   });
 });

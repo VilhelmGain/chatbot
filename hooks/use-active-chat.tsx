@@ -255,38 +255,35 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
   }, [chatId, isNewChat, setMessages]);
 
   useEffect(() => {
-    if (chatData && !isNewChat) {
-      const cookieModel = document.cookie
+    const validReasoningEfforts: ReasoningEffort[] = [
+      "default",
+      "none",
+      "minimal",
+      "low",
+      "medium",
+      "high",
+      "xhigh",
+      "max",
+    ];
+    const readCookie = (name: string) =>
+      document.cookie
         .split("; ")
-        .find((row) => row.startsWith("chat-model="))
+        .find((row) => row.startsWith(`${name}=`))
         ?.split("=")[1];
-      if (cookieModel) {
-        setCurrentModelId(decodeURIComponent(cookieModel));
-      }
-      const cookieEffort = document.cookie
-        .split("; ")
-        .find((row) => row.startsWith("reasoning-effort="))
-        ?.split("=")[1];
-      const validReasoningEfforts: ReasoningEffort[] = [
-        "default",
-        "none",
-        "minimal",
-        "low",
-        "medium",
-        "high",
-        "xhigh",
-        "max",
-      ];
-      if (
-        cookieEffort &&
-        validReasoningEfforts.includes(cookieEffort as ReasoningEffort)
-      ) {
-        setReasoningEffortState(
-          decodeURIComponent(cookieEffort) as ReasoningEffort
-        );
+
+    const cookieModel = readCookie("chat-model");
+    if (cookieModel) {
+      setCurrentModelId(decodeURIComponent(cookieModel));
+    }
+
+    const cookieEffort = readCookie("reasoning-effort");
+    if (cookieEffort) {
+      const decodedEffort = decodeURIComponent(cookieEffort);
+      if (validReasoningEfforts.includes(decodedEffort as ReasoningEffort)) {
+        setReasoningEffortState(decodedEffort as ReasoningEffort);
       }
     }
-  }, [chatData, isNewChat]);
+  }, []);
 
   useEffect(() => {
     const firstModelId = modelsData?.models?.[0]?.id;
@@ -301,7 +298,7 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
   const setReasoningEffort = useCallback((effort: ReasoningEffort) => {
     setReasoningEffortState(effort);
     // biome-ignore lint/suspicious/noDocumentCookie: cookie persistence for user preference
-    document.cookie = `reasoning-effort=${effort}; max-age=${60 * 60 * 24 * 365}; path=/`;
+    document.cookie = `reasoning-effort=${encodeURIComponent(effort)}; max-age=${60 * 60 * 24 * 365}; path=/`;
   }, []);
 
   const setEnabledTools = useCallback((tools: ToolId[]) => {
