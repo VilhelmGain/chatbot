@@ -741,12 +741,14 @@ export async function updateCustomProvider({
   baseURL,
   id,
   name,
+  type,
   userId,
 }: {
   apiKey?: string;
   baseURL?: string;
   id: string;
   name?: string;
+  type?: "openai" | "anthropic";
   userId: string;
 }): Promise<CustomProvider> {
   const updateData: Record<string, unknown> = { updatedAt: new Date() };
@@ -756,6 +758,9 @@ export async function updateCustomProvider({
   }
   if (baseURL !== undefined) {
     updateData.baseURL = baseURL;
+  }
+  if (type !== undefined) {
+    updateData.type = type;
   }
 
   if (apiKey !== undefined) {
