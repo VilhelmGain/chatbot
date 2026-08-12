@@ -10,11 +10,13 @@ import {
 type MessageReasoningProps = {
   isLoading: boolean;
   reasoning: string;
+  autoCollapse?: boolean;
 };
 
 export function MessageReasoning({
   isLoading,
   reasoning,
+  autoCollapse,
 }: MessageReasoningProps) {
   const [hasBeenStreaming, setHasBeenStreaming] = useState(isLoading);
 
@@ -26,6 +28,7 @@ export function MessageReasoning({
 
   return (
     <Reasoning
+      autoCollapse={autoCollapse}
       data-testid="message-reasoning"
       defaultOpen={hasBeenStreaming}
       isStreaming={isLoading}
