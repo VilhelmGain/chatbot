@@ -110,7 +110,7 @@ export function AppSidebar({
                   <Link href="/" onClick={closeMobile}>
                     <Image
                       alt="Visbyr Chat"
-                      className="size-5"
+                      className="size-5 shrink-0 transition-[width,height] duration-300 group-data-[collapsible=icon]:size-4"
                       height={20}
                       src={faviconHref}
                       unoptimized
