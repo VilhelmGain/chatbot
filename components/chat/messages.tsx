@@ -59,6 +59,8 @@ function PureMessages({
     scrollToBottom("smooth");
   }, [scrollToBottom]);
 
+  const virtualize = messages.length > 30;
+
   return (
     <div className="relative flex-1 bg-transparent">
       {messages.length === 0 && !isLoading && (
@@ -91,6 +93,7 @@ function PureMessages({
                 hasSentMessage && index === messages.length - 1
               }
               setMessages={setMessages}
+              virtualize={virtualize}
             />
           ))}
 
@@ -107,7 +110,7 @@ function PureMessages({
 
       <button
         aria-label="Scroll to bottom"
-        className={`!absolute bottom-4 left-1/2 z-10 flex -translate-x-1/2 items-center rounded-lg border border-border glass-surface px-3.5 shadow-[var(--shadow-float)] backdrop-blur-lg transition-all duration-200 h-7 text-[10px] ${
+        className={`!absolute bottom-4 left-1/2 z-10 flex -translate-x-1/2 items-center rounded-lg border border-border bg-surface-container-lowest px-3.5 shadow-[var(--shadow-float)] transition-all duration-200 h-7 text-[10px] ${
           isAtBottom
             ? "pointer-events-none scale-90 opacity-0"
             : "pointer-events-auto scale-100 opacity-100"

@@ -92,6 +92,7 @@ const PurePreviewMessage = ({
   requiresScrollPadding: _requiresScrollPadding,
   onEdit,
   onFork,
+  virtualize,
 }: {
   addToolApprovalResponse: UseChatHelpers<ChatMessage>["addToolApprovalResponse"];
   message: ChatMessage;
@@ -102,6 +103,7 @@ const PurePreviewMessage = ({
   requiresScrollPadding: boolean;
   onEdit?: (message: ChatMessage) => void;
   onFork?: (message: ChatMessage) => void;
+  virtualize: boolean;
 }) => {
   const attachmentsFromMessage = message.parts.filter(
     (part) => part.type === "file"
@@ -373,6 +375,11 @@ const PurePreviewMessage = ({
       )}
       data-role={message.role}
       data-testid={`message-${message.role}`}
+      style={
+        virtualize
+          ? { containIntrinsicSize: "auto 200px", contentVisibility: "auto" }
+          : undefined
+      }
     >
       <div
         className={cn(
