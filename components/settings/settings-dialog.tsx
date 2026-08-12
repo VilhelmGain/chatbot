@@ -2,6 +2,7 @@
 
 import {
   Download,
+  Keyboard,
   type LucideIcon,
   Palette,
   Plus,
@@ -46,6 +47,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
+import {
+  type EnterBehavior,
+  setEnterBehavior,
+  useEnterBehavior,
+} from "@/lib/enter-behavior";
 import { setStatsForNerds, useStatsForNerds } from "@/lib/stats-for-nerds";
 import { cn } from "@/lib/utils";
 
@@ -369,7 +375,54 @@ function PreferencesPanel() {
           </div>
         </div>
       </div>
+
+      <div className="flex flex-col gap-5 rounded-lg border border-border glass-surface p-5">
+        <div className="flex items-start gap-3">
+          <div className="grid size-8 shrink-0 place-items-center rounded-lg bg-foreground/5">
+            <Keyboard className="size-3.5 text-muted-foreground" />
+          </div>
+          <div>
+            <h3 className="text-sm font-medium">Composer</h3>
+            <p className="text-xs text-muted-foreground">
+              Keyboard behavior for the message input.
+            </p>
+          </div>
+        </div>
+        <div className="flex flex-col gap-2 border-t border-border pt-5">
+          <EnterBehaviorSelector />
+        </div>
+      </div>
     </>
+  );
+}
+
+function EnterBehaviorSelector() {
+  const enterBehavior = useEnterBehavior();
+
+  const handleValueChange = useCallback((value: string) => {
+    setEnterBehavior(value as EnterBehavior);
+  }, []);
+
+  return (
+    <div className="flex flex-col gap-2">
+      <Label htmlFor="enter-behavior">Enter key behavior</Label>
+      <Select onValueChange={handleValueChange} value={enterBehavior}>
+        <SelectTrigger className="w-full sm:w-64" id="enter-behavior">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="send">
+            Enter to send (Shift+Enter for new line)
+          </SelectItem>
+          <SelectItem value="newline">
+            Ctrl+Enter to send (Enter for new line)
+          </SelectItem>
+        </SelectContent>
+      </Select>
+      <p className="text-xs text-muted-foreground">
+        Choose how the Enter key behaves in the chat composer.
+      </p>
+    </div>
   );
 }
 

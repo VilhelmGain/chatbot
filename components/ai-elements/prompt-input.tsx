@@ -54,6 +54,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useEnterBehavior } from "@/lib/enter-behavior";
 import { cn } from "@/lib/utils";
 import {
   CornerDownLeftIcon,
@@ -840,6 +841,7 @@ export const PromptInputTextarea = ({
 }: PromptInputTextareaProps) => {
   const controller = useOptionalPromptInputController();
   const attachments = usePromptInputAttachments();
+  const enterBehavior = useEnterBehavior();
   const [isComposing, setIsComposing] = useState(false);
 
   const handleKeyDown: KeyboardEventHandler<HTMLTextAreaElement> = useCallback(
@@ -856,9 +858,14 @@ export const PromptInputTextarea = ({
         if (isComposing || e.nativeEvent.isComposing) {
           return;
         }
-        if (e.shiftKey) {
+
+        const ctrlOrCmd = e.ctrlKey || e.metaKey;
+        const shouldSend = enterBehavior === "send" ? !e.shiftKey : ctrlOrCmd;
+
+        if (!shouldSend) {
           return;
         }
+
         e.preventDefault();
 
         // Check if the submit button is disabled before submitting
@@ -886,7 +893,7 @@ export const PromptInputTextarea = ({
         }
       }
     },
-    [onKeyDown, isComposing, attachments]
+    [onKeyDown, isComposing, attachments, enterBehavior]
   );
 
   const handlePaste: ClipboardEventHandler<HTMLTextAreaElement> = useCallback(
