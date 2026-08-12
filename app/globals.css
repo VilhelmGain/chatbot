@@ -679,6 +679,20 @@ textarea:focus-visible {
   }
 }
 
+@keyframes popover-in {
+  from {
+    opacity: 0;
+    scale: 0.95;
+  }
+}
+
+@keyframes popover-out {
+  to {
+    opacity: 0;
+    scale: 0.95;
+  }
+}
+
 @utility fade-up {
   animation: fade-up 0.3s var(--ease-spring) both;
 }
@@ -740,6 +754,14 @@ textarea:focus-visible {
 
 @utility composer-glow {
   animation: glow-pulse 2s ease-in-out infinite;
+}
+
+@utility popover-in {
+  animation: popover-in 150ms var(--ease-smooth) both;
+}
+
+@utility popover-out {
+  animation: popover-out 100ms var(--ease-smooth) both;
 }
 
 .ProseMirror {
