@@ -128,4 +128,41 @@ test.describe("Title Model Selector", () => {
     const titleModel = cookies.find((c) => c.name === "title-model");
     expect(titleModel?.value).toBe("");
   });
+
+  test("keeps a long model list scrollable", async ({ page }) => {
+    const models = Array.from({ length: 40 }, (_, i) => ({
+      description: "Test provider",
+      id: `custom-test/model-${String(i).padStart(2, "0")}`,
+      name: `Model Number ${String(i).padStart(2, "0")}`,
+      provider: "custom-test",
+      providerKey: "openai",
+    }));
+
+    await page.route("**/api/models", (route) =>
+      route.fulfill({
+        contentType: "application/json",
+        json: {
+          capabilities: {},
+          models,
+          providerNames: { "custom-test": "Available" },
+        },
+      })
+    );
+    await page.goto("/settings");
+
+    await page.getByTestId("model-selector").click();
+
+    const list = page.locator("[data-slot='command-list']");
+    await expect(list).toBeVisible();
+
+    await expect
+      .poll(() => list.evaluate((el) => el.scrollHeight > el.clientHeight))
+      .toBe(true);
+
+    await list.hover();
+    await page.mouse.wheel(0, 600);
+    await expect
+      .poll(() => list.evaluate((el) => el.scrollTop))
+      .toBeGreaterThan(0);
+  });
 });

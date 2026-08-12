@@ -1157,7 +1157,7 @@ function PureModelSelectorCompact({
         </Button>
       </ModelSelectorTrigger>
       <ModelSelectorContent
-        className="max-h-[min(360px,calc(var(--visual-viewport-height,100dvh)-132px))] w-[min(360px,calc(100vw-24px))] overflow-hidden"
+        className="max-h-[min(360px,calc(var(--visual-viewport-height,100vh)-132px))] w-[min(360px,calc(100vw-24px))] overflow-hidden"
         collisionPadding={16}
         commandDefaultValue={
           isDefaultSelected ? "default" : (selectedModel?.id ?? "default")
