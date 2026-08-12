@@ -4,6 +4,7 @@ export const TOOL_IDS = [
   "editDocument",
   "updateDocument",
   "requestSuggestions",
+  "searchWeb",
 ] as const;
 
 export type ToolId = (typeof TOOL_IDS)[number];
@@ -36,8 +37,20 @@ export const TOOL_METADATA: Record<ToolId, ToolMetadata> = {
     description: "Get writing suggestions for a document.",
     label: "Request suggestions",
   },
+  searchWeb: {
+    description: "Search the web for up-to-date information.",
+    label: "Web search",
+  },
   updateDocument: {
     description: "Rewrite an entire artifact.",
     label: "Update document",
   },
 };
+
+export const CONFIGURABLE_TOOLS = ["searchWeb"] as const;
+
+export type ConfigurableToolId = (typeof CONFIGURABLE_TOOLS)[number];
+
+export const SEARCH_PROVIDERS = ["tavily"] as const;
+
+export type SearchProvider = (typeof SEARCH_PROVIDERS)[number];

@@ -7,6 +7,7 @@ import {
   primaryKey,
   text,
   timestamp,
+  uniqueIndex,
   uuid,
   varchar,
 } from "drizzle-orm/pg-core";
@@ -146,3 +147,25 @@ export const customModel = pgTable("CustomModel", {
 });
 
 export type CustomModel = InferSelectModel<typeof customModel>;
+
+export const toolConfig = pgTable(
+  "ToolConfig",
+  {
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+    enabled: boolean("enabled").notNull().default(false),
+    encryptedApiKey: text("encryptedApiKey").notNull(),
+    id: uuid("id").primaryKey().notNull().defaultRandom(),
+    iv: varchar("iv", { length: 32 }).notNull(),
+    provider: varchar("provider", { length: 64 }).notNull(),
+    toolId: varchar("toolId", { length: 64 }).notNull(),
+    updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+    userId: uuid("userId")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+  },
+  (table) => [
+    uniqueIndex("ToolConfig_userId_toolId_idx").on(table.userId, table.toolId),
+  ]
+);
+
+export type ToolConfig = InferSelectModel<typeof toolConfig>;
