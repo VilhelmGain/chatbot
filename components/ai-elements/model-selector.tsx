@@ -75,7 +75,7 @@ export type ModelSelectorListProps = ComponentProps<typeof CommandList>;
 export const ModelSelectorList = ({ className, ...props }: ModelSelectorListProps) => (
   <CommandList
     className={cn(
-      "max-h-[min(280px,calc(var(--visual-viewport-height,100dvh)-132px))]",
+      "max-h-[min(280px,calc(var(--visual-viewport-height,100vh)-132px))]",
       className
     )}
     {...props}
