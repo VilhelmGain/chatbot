@@ -794,6 +794,7 @@ export async function getToolConfigsByUserId({
   try {
     const configs = await db
       .select({
+        baseURL: toolConfig.baseURL,
         createdAt: toolConfig.createdAt,
         enabled: toolConfig.enabled,
         id: toolConfig.id,
@@ -812,9 +813,11 @@ export async function getToolConfigsByUserId({
 }
 
 export async function getToolConfigByUserId({
+  provider,
   toolId,
   userId,
 }: {
+  provider: string;
   toolId: string;
   userId: string;
 }): Promise<ToolConfig | undefined> {
@@ -822,7 +825,13 @@ export async function getToolConfigByUserId({
     const configs = await db
       .select()
       .from(toolConfig)
-      .where(and(eq(toolConfig.userId, userId), eq(toolConfig.toolId, toolId)))
+      .where(
+        and(
+          eq(toolConfig.userId, userId),
+          eq(toolConfig.toolId, toolId),
+          eq(toolConfig.provider, provider)
+        )
+      )
       .limit(1);
 
     return configs[0];
@@ -833,19 +842,21 @@ export async function getToolConfigByUserId({
 
 export async function upsertToolConfig({
   apiKey,
+  baseURL,
   enabled,
   provider,
   toolId,
   userId,
 }: {
   apiKey?: string;
+  baseURL?: string;
   enabled: boolean;
   provider: string;
   toolId: string;
   userId: string;
 }): Promise<ToolConfig> {
   try {
-    const existing = await getToolConfigByUserId({ toolId, userId });
+    const existing = await getToolConfigByUserId({ provider, toolId, userId });
 
     if (existing) {
       const updateData: Record<string, unknown> = {
@@ -853,6 +864,9 @@ export async function upsertToolConfig({
         provider,
         updatedAt: new Date(),
       };
+      if (baseURL !== undefined) {
+        updateData.baseURL = baseURL;
+      }
       if (apiKey !== undefined) {
         const { encrypted, iv } = encrypt(apiKey);
         updateData.encryptedApiKey = encrypted;
@@ -868,15 +882,16 @@ export async function upsertToolConfig({
       return result[0];
     }
 
-    if (apiKey === undefined) {
+    if (apiKey === undefined && baseURL === undefined) {
       throw new ChatbotError("bad_request:tools");
     }
 
-    const { encrypted, iv } = encrypt(apiKey);
+    const { encrypted, iv } = encrypt(apiKey ?? "");
 
     const result = await db
       .insert(toolConfig)
       .values({
+        baseURL: baseURL ?? "",
         createdAt: new Date(),
         enabled,
         encryptedApiKey: encrypted,
@@ -899,16 +914,24 @@ export async function upsertToolConfig({
 }
 
 export async function deleteToolConfig({
+  provider,
   toolId,
   userId,
 }: {
+  provider: string;
   toolId: string;
   userId: string;
 }): Promise<void> {
   try {
     const result = await db
       .delete(toolConfig)
-      .where(and(eq(toolConfig.userId, userId), eq(toolConfig.toolId, toolId)))
+      .where(
+        and(
+          eq(toolConfig.userId, userId),
+          eq(toolConfig.toolId, toolId),
+          eq(toolConfig.provider, provider)
+        )
+      )
       .returning();
 
     if (result.length === 0) {

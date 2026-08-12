@@ -28,6 +28,8 @@ import { editDocument } from "@/lib/ai/tools/edit-document";
 import { getWeather } from "@/lib/ai/tools/get-weather";
 import {
   DOCUMENT_TOOL_IDS,
+  SEARCH_PROVIDERS,
+  type SearchProvider,
   TOOL_IDS,
   TOOL_IDS_SET,
 } from "@/lib/ai/tools/metadata";
@@ -304,14 +306,34 @@ export async function POST(request: Request) {
       ...approvalToolNames,
     ]);
 
-    let searchWebApiKey: string | undefined;
+    let searchWebConfig:
+      | { apiKey: string; baseURL?: string; provider: SearchProvider }
+      | undefined;
     if (supportsTools && effectiveToolNames.has("searchWeb")) {
-      const toolConfig = await getToolConfigByUserId({
-        toolId: "searchWeb",
-        userId: session.user.id,
-      });
-      if (toolConfig?.enabled === true && toolConfig.provider === "tavily") {
-        searchWebApiKey = decrypt(toolConfig.encryptedApiKey, toolConfig.iv);
+      // Providers are checked in SEARCH_PROVIDERS order; the first enabled
+      // config wins (Tavily takes precedence when both are enabled).
+      const searchConfigs = await Promise.all(
+        SEARCH_PROVIDERS.map(async (searchProvider) => ({
+          provider: searchProvider,
+          toolConfig: await getToolConfigByUserId({
+            provider: searchProvider,
+            toolId: "searchWeb",
+            userId: session.user.id,
+          }),
+        }))
+      );
+      const enabledSearchConfig = searchConfigs.find(
+        ({ toolConfig }) => toolConfig?.enabled === true
+      );
+      if (enabledSearchConfig) {
+        const { provider: configProvider, toolConfig } = enabledSearchConfig;
+        searchWebConfig = {
+          apiKey: toolConfig?.encryptedApiKey
+            ? decrypt(toolConfig.encryptedApiKey, toolConfig.iv)
+            : "",
+          baseURL: toolConfig?.baseURL || undefined,
+          provider: configProvider,
+        };
       }
     }
 
@@ -418,7 +440,7 @@ export async function POST(request: Request) {
             ? TOOL_IDS.filter(
                 (toolId) =>
                   effectiveToolNames.has(toolId) &&
-                  (toolId !== "searchWeb" || searchWebApiKey !== undefined)
+                  (toolId !== "searchWeb" || searchWebConfig !== undefined)
               )
             : [],
           instructions: systemPrompt({
@@ -482,9 +504,15 @@ export async function POST(request: Request) {
                   }),
                 }
               : {}),
-            ...(searchWebApiKey === undefined
+            ...(searchWebConfig === undefined
               ? {}
-              : { searchWeb: searchWeb({ apiKey: searchWebApiKey }) }),
+              : {
+                  searchWeb: searchWeb({
+                    apiKey: searchWebConfig.apiKey,
+                    baseURL: searchWebConfig.baseURL,
+                    provider: searchWebConfig.provider,
+                  }),
+                }),
           },
         });
 
