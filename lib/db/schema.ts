@@ -29,6 +29,7 @@ export const chat = pgTable("Chat", {
   createdAt: timestamp("createdAt").notNull(),
   id: uuid("id").primaryKey().notNull().defaultRandom(),
   title: text("title").notNull(),
+  updatedAt: timestamp("updatedAt").notNull().defaultNow(),
   userId: uuid("userId")
     .notNull()
     .references(() => user.id),
