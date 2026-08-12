@@ -590,12 +590,14 @@ function updateCustomProvider({
   baseURL,
   id,
   name,
+  type,
   userId,
 }: {
   apiKey?: string;
   baseURL?: string;
   id: string;
   name?: string;
+  type?: "openai" | "anthropic";
   userId: string;
 }): CustomProvider {
   const existing = store.providers.get(id);
@@ -607,6 +609,7 @@ function updateCustomProvider({
     ...existing,
     ...(name === undefined ? {} : { name }),
     ...(baseURL === undefined ? {} : { baseURL }),
+    ...(type === undefined ? {} : { type }),
     updatedAt: new Date(),
   };
   if (apiKey !== undefined) {
