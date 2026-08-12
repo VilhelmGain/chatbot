@@ -33,6 +33,8 @@ import {
   type Suggestion,
   stream,
   suggestion,
+  type ToolConfig,
+  toolConfig,
   type User,
   user,
 } from "./schema";
@@ -775,6 +777,142 @@ export async function deleteCustomProvider({
 
     if (result.length === 0) {
       throw new ChatbotError("not_found:provider");
+    }
+  } catch (error) {
+    if (error instanceof ChatbotError) {
+      throw error;
+    }
+    throw new ChatbotError("bad_request:database", { cause: error });
+  }
+}
+
+export async function getToolConfigsByUserId({
+  userId,
+}: {
+  userId: string;
+}): Promise<Omit<ToolConfig, "encryptedApiKey" | "iv">[]> {
+  try {
+    const configs = await db
+      .select({
+        createdAt: toolConfig.createdAt,
+        enabled: toolConfig.enabled,
+        id: toolConfig.id,
+        provider: toolConfig.provider,
+        toolId: toolConfig.toolId,
+        updatedAt: toolConfig.updatedAt,
+        userId: toolConfig.userId,
+      })
+      .from(toolConfig)
+      .where(eq(toolConfig.userId, userId));
+
+    return configs;
+  } catch (error) {
+    throw new ChatbotError("bad_request:database", { cause: error });
+  }
+}
+
+export async function getToolConfigByUserId({
+  toolId,
+  userId,
+}: {
+  toolId: string;
+  userId: string;
+}): Promise<ToolConfig | undefined> {
+  try {
+    const configs = await db
+      .select()
+      .from(toolConfig)
+      .where(and(eq(toolConfig.userId, userId), eq(toolConfig.toolId, toolId)))
+      .limit(1);
+
+    return configs[0];
+  } catch (error) {
+    throw new ChatbotError("bad_request:database", { cause: error });
+  }
+}
+
+export async function upsertToolConfig({
+  apiKey,
+  enabled,
+  provider,
+  toolId,
+  userId,
+}: {
+  apiKey?: string;
+  enabled: boolean;
+  provider: string;
+  toolId: string;
+  userId: string;
+}): Promise<ToolConfig> {
+  try {
+    const existing = await getToolConfigByUserId({ toolId, userId });
+
+    if (existing) {
+      const updateData: Record<string, unknown> = {
+        enabled,
+        provider,
+        updatedAt: new Date(),
+      };
+      if (apiKey !== undefined) {
+        const { encrypted, iv } = encrypt(apiKey);
+        updateData.encryptedApiKey = encrypted;
+        updateData.iv = iv;
+      }
+
+      const result = await db
+        .update(toolConfig)
+        .set(updateData)
+        .where(eq(toolConfig.id, existing.id))
+        .returning();
+
+      return result[0];
+    }
+
+    if (apiKey === undefined) {
+      throw new ChatbotError("bad_request:tools");
+    }
+
+    const { encrypted, iv } = encrypt(apiKey);
+
+    const result = await db
+      .insert(toolConfig)
+      .values({
+        createdAt: new Date(),
+        enabled,
+        encryptedApiKey: encrypted,
+        id: generateUUID(),
+        iv,
+        provider,
+        toolId,
+        updatedAt: new Date(),
+        userId,
+      })
+      .returning();
+
+    return result[0];
+  } catch (error) {
+    if (error instanceof ChatbotError) {
+      throw error;
+    }
+    throw new ChatbotError("bad_request:database", { cause: error });
+  }
+}
+
+export async function deleteToolConfig({
+  toolId,
+  userId,
+}: {
+  toolId: string;
+  userId: string;
+}): Promise<void> {
+  try {
+    const result = await db
+      .delete(toolConfig)
+      .where(and(eq(toolConfig.userId, userId), eq(toolConfig.toolId, toolId)))
+      .returning();
+
+    if (result.length === 0) {
+      throw new ChatbotError("not_found:tools");
     }
   } catch (error) {
     if (error instanceof ChatbotError) {

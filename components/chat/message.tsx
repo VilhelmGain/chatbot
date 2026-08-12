@@ -22,6 +22,7 @@ import { MessageMeta } from "./message-meta";
 import { MessageReasoning } from "./message-reasoning";
 import { PreviewAttachment } from "./preview-attachment";
 import { Weather } from "./weather";
+import { WebSearchResults } from "./web-search";
 
 function WaitingText() {
   const { waitingStatus } = useDataStream();
@@ -340,6 +341,83 @@ const PurePreviewMessage = ({
             )}
           </ToolContent>
         </Tool>
+      );
+    }
+
+    if (type === "tool-searchWeb") {
+      const { toolCallId, state } = part;
+      const approvalId = (part as { approval?: { id: string } }).approval?.id;
+      const isDenied =
+        state === "output-denied" ||
+        (state === "approval-responded" &&
+          (part as { approval?: { approved?: boolean } }).approval?.approved ===
+            false);
+      const widthClass = "w-[min(100%,450px)]";
+
+      if (state === "output-available") {
+        return (
+          <div className={widthClass} key={toolCallId}>
+            {"error" in part.output ? (
+              <div className="rounded-lg border border-error/20 bg-error/10 p-4 text-error">
+                {String(part.output.error)}
+              </div>
+            ) : (
+              <WebSearchResults
+                answer={part.output.answer}
+                query={part.output.query}
+                results={part.output.results}
+              />
+            )}
+          </div>
+        );
+      }
+
+      if (isDenied) {
+        return (
+          <div className={widthClass} key={toolCallId}>
+            <Tool className="w-full" defaultOpen={true}>
+              <ToolHeader state="output-denied" type="tool-searchWeb" />
+              <ToolContent>
+                <div className="px-4 py-3 text-muted-foreground text-sm">
+                  Web search was denied.
+                </div>
+              </ToolContent>
+            </Tool>
+          </div>
+        );
+      }
+
+      if (state === "approval-responded") {
+        return (
+          <div className={widthClass} key={toolCallId}>
+            <Tool className="w-full" defaultOpen={true}>
+              <ToolHeader state={state} type="tool-searchWeb" />
+              <ToolContent>
+                <ToolInput input={part.input} />
+              </ToolContent>
+            </Tool>
+          </div>
+        );
+      }
+
+      return (
+        <div className={widthClass} key={toolCallId}>
+          <Tool className="w-full" defaultOpen={true}>
+            <ToolHeader state={state} type="tool-searchWeb" />
+            <ToolContent>
+              {(state === "input-available" ||
+                state === "approval-requested") && (
+                <ToolInput input={part.input} />
+              )}
+              {state === "approval-requested" && approvalId && (
+                <ToolApprovalActions
+                  addToolApprovalResponse={addToolApprovalResponse}
+                  approvalId={approvalId}
+                />
+              )}
+            </ToolContent>
+          </Tool>
+        </div>
       );
     }
 

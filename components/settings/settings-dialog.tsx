@@ -10,6 +10,7 @@ import {
   Settings2,
   SlidersHorizontal,
   Type,
+  Wrench,
   X,
 } from "lucide-react";
 import { useTheme } from "next-themes";
@@ -25,6 +26,7 @@ import { ModelManager } from "@/components/settings/model-manager";
 import { ProviderCard } from "@/components/settings/provider-card";
 import { ProviderForm } from "@/components/settings/provider-form";
 import { TitleModelSelector } from "@/components/settings/title-model-selector";
+import { ToolsPanel } from "@/components/settings/tools-panel";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -58,7 +60,7 @@ type CustomProvider = {
   userId: string;
 };
 
-type SettingsSection = "preferences" | "data" | "providers" | "legal";
+type SettingsSection = "preferences" | "data" | "providers" | "tools" | "legal";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
@@ -83,6 +85,13 @@ const NAV_ITEMS = [
     id: "providers",
     label: "Providers",
     title: "Providers & models",
+  },
+  {
+    description: "Configure tools that require setup",
+    icon: Wrench,
+    id: "tools",
+    label: "Tools",
+    title: "Tools",
   },
   {
     description: "Privacy policy and terms of service",
@@ -190,6 +199,7 @@ export function SettingsDialog({
                 {activeSection === "preferences" ? <PreferencesPanel /> : null}
                 {activeSection === "data" ? <DataPanel /> : null}
                 {activeSection === "providers" ? <ProvidersPanel /> : null}
+                {activeSection === "tools" ? <ToolsPanel /> : null}
                 {activeSection === "legal" ? <LegalPanel /> : null}
               </div>
             </div>

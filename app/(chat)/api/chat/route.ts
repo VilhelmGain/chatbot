@@ -11,6 +11,7 @@ import { after } from "next/server";
 import { createResumableStreamContext } from "resumable-stream";
 import { z } from "zod";
 import { auth } from "@/app/(auth)/auth";
+import { decrypt } from "@/lib/ai/encryption";
 import { getEntitlements } from "@/lib/ai/entitlements";
 import {
   getCustomCapabilitiesForUser,
@@ -31,6 +32,7 @@ import {
   TOOL_IDS_SET,
 } from "@/lib/ai/tools/metadata";
 import { requestSuggestions } from "@/lib/ai/tools/request-suggestions";
+import { searchWeb } from "@/lib/ai/tools/search-web";
 import { updateDocument } from "@/lib/ai/tools/update-document";
 import { resolveAttachmentParts } from "@/lib/attachments";
 import { isProductionEnvironment } from "@/lib/constants";
@@ -42,6 +44,7 @@ import {
   getCustomProviderById,
   getMessageCountByUserId,
   getMessagesByChatId,
+  getToolConfigByUserId,
   saveChat,
   saveMessages,
   updateChatTitleById,
@@ -300,6 +303,18 @@ export async function POST(request: Request) {
       ...enabledToolSet,
       ...approvalToolNames,
     ]);
+
+    let searchWebApiKey: string | undefined;
+    if (supportsTools && effectiveToolNames.has("searchWeb")) {
+      const toolConfig = await getToolConfigByUserId({
+        toolId: "searchWeb",
+        userId: session.user.id,
+      });
+      if (toolConfig?.enabled === true && toolConfig.provider === "tavily") {
+        searchWebApiKey = decrypt(toolConfig.encryptedApiKey, toolConfig.iv);
+      }
+    }
+
     const hasDocumentTools = DOCUMENT_TOOL_IDS.some((toolId) =>
       effectiveToolNames.has(toolId)
     );
@@ -400,7 +415,11 @@ export async function POST(request: Request) {
         const result = streamText({
           abortSignal: request.signal,
           activeTools: supportsTools
-            ? TOOL_IDS.filter((toolId) => effectiveToolNames.has(toolId))
+            ? TOOL_IDS.filter(
+                (toolId) =>
+                  effectiveToolNames.has(toolId) &&
+                  (toolId !== "searchWeb" || searchWebApiKey !== undefined)
+              )
             : [],
           instructions: systemPrompt({
             requestHints,
@@ -463,6 +482,9 @@ export async function POST(request: Request) {
                   }),
                 }
               : {}),
+            ...(searchWebApiKey === undefined
+              ? {}
+              : { searchWeb: searchWeb({ apiKey: searchWebApiKey }) }),
           },
         });
 

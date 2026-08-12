@@ -13,6 +13,7 @@ import type {
   Document,
   Stream,
   Suggestion,
+  ToolConfig,
   User,
 } from "./schema";
 
@@ -28,6 +29,8 @@ type Store = {
   providers: Map<string, CustomProvider>;
   models: Map<string, CustomModel>;
   apiKeys: Map<string, string>;
+  toolConfigs: Map<string, ToolConfig>;
+  toolApiKeys: Map<string, string>;
 };
 
 function getOrCreateStore(): Store {
@@ -45,6 +48,8 @@ function getOrCreateStore(): Store {
       providers: new Map(),
       streams: new Map(),
       suggestions: new Map(),
+      toolApiKeys: new Map(),
+      toolConfigs: new Map(),
       users: new Map(),
     };
   }
@@ -748,6 +753,120 @@ function getDecryptedApiKey({ providerId }: { providerId: string }): string {
   return apiKey;
 }
 
+function getToolConfigKey({
+  toolId,
+  userId,
+}: {
+  toolId: string;
+  userId: string;
+}) {
+  return `${userId}:${toolId}`;
+}
+
+function getToolConfigsByUserId({
+  userId,
+}: {
+  userId: string;
+}): Omit<ToolConfig, "encryptedApiKey" | "iv">[] {
+  return [...store.toolConfigs.values()]
+    .filter((config) => config.userId === userId)
+    .map(
+      ({
+        createdAt,
+        enabled,
+        id,
+        provider,
+        toolId,
+        updatedAt,
+        userId: configUserId,
+      }) => ({
+        createdAt,
+        enabled,
+        id,
+        provider,
+        toolId,
+        updatedAt,
+        userId: configUserId,
+      })
+    );
+}
+
+function getToolConfigByUserId({
+  toolId,
+  userId,
+}: {
+  toolId: string;
+  userId: string;
+}): ToolConfig | undefined {
+  return store.toolConfigs.get(getToolConfigKey({ toolId, userId }));
+}
+
+function upsertToolConfig({
+  apiKey,
+  enabled,
+  provider,
+  toolId,
+  userId,
+}: {
+  apiKey?: string;
+  enabled: boolean;
+  provider: string;
+  toolId: string;
+  userId: string;
+}): ToolConfig {
+  const key = getToolConfigKey({ toolId, userId });
+  const existing = store.toolConfigs.get(key);
+  const now = new Date();
+
+  if (existing) {
+    const updated: ToolConfig = {
+      ...existing,
+      enabled,
+      provider,
+      updatedAt: now,
+    };
+    if (apiKey !== undefined) {
+      store.toolApiKeys.set(key, apiKey);
+    }
+    store.toolConfigs.set(key, updated);
+    return updated;
+  }
+
+  if (apiKey === undefined) {
+    throw new ChatbotError("bad_request:tools");
+  }
+
+  const config: ToolConfig = {
+    createdAt: now,
+    enabled,
+    encryptedApiKey: "",
+    id: generateUUID(),
+    iv: "",
+    provider,
+    toolId,
+    updatedAt: now,
+    userId,
+  };
+  store.toolConfigs.set(key, config);
+  store.toolApiKeys.set(key, apiKey);
+  return config;
+}
+
+function deleteToolConfig({
+  toolId,
+  userId,
+}: {
+  toolId: string;
+  userId: string;
+}) {
+  const key = getToolConfigKey({ toolId, userId });
+  if (!store.toolConfigs.has(key)) {
+    throw new ChatbotError("not_found:tools");
+  }
+  store.toolConfigs.delete(key);
+  store.toolApiKeys.delete(key);
+}
+
 function getCustomModelsForUser({ userId }: { userId: string }): Array<
   CustomModel & {
     providerName: string;
@@ -780,6 +899,7 @@ export const inMemoryQueries = {
   deleteCustomProvider,
   deleteDocumentsByIdAfterTimestamp,
   deleteMessagesByChatIdAfterTimestamp,
+  deleteToolConfig,
   getAllChatsByUserId,
   getAllMessagesByUserId,
   getChatById,
@@ -798,6 +918,8 @@ export const inMemoryQueries = {
   getOrCreateUserByEmail,
   getStreamIdsByChatId,
   getSuggestionsByDocumentId,
+  getToolConfigByUserId,
+  getToolConfigsByUserId,
   getUserByClerkId,
   saveChat,
   saveDocument,
@@ -809,4 +931,5 @@ export const inMemoryQueries = {
   updateCustomProvider,
   updateDocumentContent,
   updateMessage,
+  upsertToolConfig,
 };
