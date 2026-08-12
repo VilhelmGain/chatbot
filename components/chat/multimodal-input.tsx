@@ -763,7 +763,6 @@ function ModelSelectorOption({
       aria-current={model.id === selectedModelId ? "true" : undefined}
       className={cn(
         "flex w-full py-2.5 transition-[background-color,color,box-shadow]",
-        "data-[selected=true]:bg-accent data-[selected=true]:text-foreground",
         isPending &&
           "bg-primary/8 text-foreground ring-1 ring-inset ring-primary/20 data-[selected=true]:bg-primary/10"
       )}
@@ -1144,8 +1143,7 @@ function PureModelSelectorCompact({
             <ModelSelectorItem
               aria-current={isDefaultSelected ? "true" : undefined}
               className={cn(
-                "flex w-full py-2.5 transition-[background-color,color,box-shadow]",
-                "data-[selected=true]:bg-accent data-[selected=true]:text-foreground"
+                "flex w-full py-2.5 transition-[background-color,color,box-shadow]"
               )}
               onSelect={handleDefaultSelect}
               value="default"
