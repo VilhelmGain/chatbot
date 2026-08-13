@@ -35,6 +35,7 @@ import {
   TOOL_IDS_SET,
 } from "@/lib/ai/tools/metadata";
 import { requestSuggestions } from "@/lib/ai/tools/request-suggestions";
+import { runPythonTool } from "@/lib/ai/tools/run-python";
 import { searchWeb } from "@/lib/ai/tools/search-web";
 import { updateDocument } from "@/lib/ai/tools/update-document";
 import { resolveAttachmentParts } from "@/lib/attachments";
@@ -515,6 +516,9 @@ export async function POST(request: Request) {
                     provider: searchWebConfig.provider,
                   }),
                 }),
+            ...(effectiveToolNames.has("runPython")
+              ? { runPython: runPythonTool }
+              : {}),
           },
         });
 

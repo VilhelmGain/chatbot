@@ -5,6 +5,7 @@ import type { createDocument } from "./ai/tools/create-document";
 import type { fetchUrl } from "./ai/tools/fetch-url";
 import type { getWeather } from "./ai/tools/get-weather";
 import type { requestSuggestions } from "./ai/tools/request-suggestions";
+import type { runPythonTool } from "./ai/tools/run-python";
 import type { searchWeb } from "./ai/tools/search-web";
 import type { updateDocument } from "./ai/tools/update-document";
 import type { Suggestion } from "./db/schema";
@@ -42,6 +43,7 @@ type requestSuggestionsTool = InferUITool<
 >;
 type searchWebTool = InferUITool<ReturnType<typeof searchWeb>>;
 type fetchUrlTool = InferUITool<typeof fetchUrl>;
+type runPythonToolType = InferUITool<typeof runPythonTool>;
 
 export type ChatTools = {
   getWeather: weatherTool;
@@ -50,6 +52,7 @@ export type ChatTools = {
   requestSuggestions: requestSuggestionsTool;
   searchWeb: searchWebTool;
   fetchUrl: fetchUrlTool;
+  runPython: runPythonToolType;
 };
 
 export type WaitingStatusData = {

@@ -6,6 +6,7 @@ export const TOOL_IDS = [
   "requestSuggestions",
   "searchWeb",
   "fetchUrl",
+  "runPython",
 ] as const;
 
 export type ToolId = (typeof TOOL_IDS)[number];
@@ -41,6 +42,10 @@ export const TOOL_METADATA: Record<ToolId, ToolMetadata> = {
   requestSuggestions: {
     description: "Get writing suggestions for a document.",
     label: "Request suggestions",
+  },
+  runPython: {
+    description: "Run Python code to solve math, logic, and data problems.",
+    label: "Python",
   },
   searchWeb: {
     description: "Search the web for up-to-date information.",

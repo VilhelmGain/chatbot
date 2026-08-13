@@ -52,8 +52,12 @@ const nextConfig: NextConfig = {
     incomingRequests: false,
   },
   output: "standalone",
+  outputFileTracingIncludes: {
+    "**/*": ["./node_modules/pyodide/**/*"],
+  },
   poweredByHeader: false,
   reactCompiler: true,
+  serverExternalPackages: ["pyodide"],
 };
 
 export default nextConfig;
