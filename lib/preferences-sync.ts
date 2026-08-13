@@ -1,4 +1,3 @@
-import { useSyncExternalStore } from "react";
 import {
   normalizeToolIds,
   PREFERENCE_LOCAL_SOURCES,
@@ -192,17 +191,15 @@ export function notifyPreferencesApplied() {
   }
 }
 
-export function usePreferencesAppliedVersion(): number {
-  return useSyncExternalStore(
-    (callback) => {
-      appliedListeners.add(callback);
-      return () => {
-        appliedListeners.delete(callback);
-      };
-    },
-    () => appliedVersion,
-    () => 0
-  );
+export function subscribePreferencesApplied(listener: () => void): () => void {
+  appliedListeners.add(listener);
+  return () => {
+    appliedListeners.delete(listener);
+  };
+}
+
+export function getPreferencesAppliedVersion(): number {
+  return appliedVersion;
 }
 
 if (typeof window !== "undefined") {

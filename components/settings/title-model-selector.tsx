@@ -4,10 +4,8 @@ import { useCallback, useEffect, useState } from "react";
 import { ModelSelectorCompact } from "@/components/chat/multimodal-input";
 import { Label } from "@/components/ui/label";
 import type { ReasoningEffort } from "@/lib/ai/models.client";
-import {
-  syncPreference,
-  usePreferencesAppliedVersion,
-} from "@/lib/preferences-sync";
+import { usePreferencesAppliedVersion } from "@/lib/preferences-hooks";
+import { syncPreference } from "@/lib/preferences-sync";
 
 const COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 365;
 
