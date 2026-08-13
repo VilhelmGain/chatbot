@@ -141,6 +141,7 @@ const robotoMono = Roboto_Mono({
 
 const cascadiaCode = Cascadia_Code({
   display: "swap",
+  fallback: ["ui-monospace", "monospace"],
   preload: false,
   subsets: ["latin"],
   variable: "--font-cascadia-code",
