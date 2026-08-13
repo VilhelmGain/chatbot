@@ -166,7 +166,8 @@ test.describe("Model Selector", () => {
     await expect(modelButton).toHaveText("Kimi K2.5 (high)");
 
     await modelButton.click();
-    await kimiOption.click();
+    await page.getByPlaceholder("Search models...").focus();
+    await page.keyboard.press("Enter");
     await page
       .getByRole("button", { name: "Set reasoning effort to medium" })
       .click();
