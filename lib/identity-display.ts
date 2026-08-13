@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from "react";
+import { syncPreference } from "@/lib/preferences-sync";
 
 export type IdentityDisplayMode = "name" | "email" | "name-email";
 
@@ -44,6 +45,7 @@ function getIdentityDisplayMode(): IdentityDisplayMode {
 export function setIdentityDisplayMode(mode: IdentityDisplayMode) {
   if (typeof document !== "undefined") {
     writeCookie(COOKIE_NAME, mode);
+    syncPreference("identityDisplayMode");
   }
   notifyIdentityDisplayListeners();
 }

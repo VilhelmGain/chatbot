@@ -175,3 +175,32 @@ export const toolConfig = pgTable(
 );
 
 export type ToolConfig = InferSelectModel<typeof toolConfig>;
+
+export const userSettings = pgTable(
+  "UserSettings",
+  {
+    chatModelId: varchar("chatModelId", { length: 512 }),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+    enabledTools: json("enabledTools"),
+    enterBehavior: varchar("enterBehavior", { length: 32 }),
+    fontBody: varchar("fontBody", { length: 64 }),
+    fontHeading: varchar("fontHeading", { length: 64 }),
+    fontLabel: varchar("fontLabel", { length: 64 }),
+    fontMono: varchar("fontMono", { length: 64 }),
+    id: uuid("id").primaryKey().notNull().defaultRandom(),
+    identityDisplayMode: varchar("identityDisplayMode", { length: 32 }),
+    reasoningEffort: varchar("reasoningEffort", { length: 32 }),
+    sidebarCollapsed: boolean("sidebarCollapsed"),
+    statsForNerds: boolean("statsForNerds"),
+    theme: varchar("theme", { length: 16 }),
+    titleModelId: varchar("titleModelId", { length: 512 }),
+    titleReasoningEffort: varchar("titleReasoningEffort", { length: 32 }),
+    updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+    userId: uuid("userId")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+  },
+  (table) => [uniqueIndex("UserSettings_userId_idx").on(table.userId)]
+);
+
+export type UserSettings = InferSelectModel<typeof userSettings>;

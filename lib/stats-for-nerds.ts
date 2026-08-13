@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from "react";
+import { syncPreference } from "@/lib/preferences-sync";
 
 const COOKIE_NAME = "stats-for-nerds";
 const COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 365;
@@ -23,6 +24,7 @@ function getStatsForNerds(): boolean {
 export function setStatsForNerds(enabled: boolean) {
   if (typeof document !== "undefined") {
     writeCookie(COOKIE_NAME, String(enabled));
+    syncPreference("statsForNerds");
   }
   notifyStatsForNerdsListeners();
 }

@@ -36,7 +36,9 @@ import {
   type ToolConfig,
   toolConfig,
   type User,
+  type UserSettings,
   user,
+  userSettings,
 } from "./schema";
 
 const client = postgres(process.env.POSTGRES_URL ?? "");
@@ -964,6 +966,84 @@ export async function deleteToolConfig({
     if (result.length === 0) {
       throw new ChatbotError("not_found:tools");
     }
+  } catch (error) {
+    if (error instanceof ChatbotError) {
+      throw error;
+    }
+    throw new ChatbotError("bad_request:database", { cause: error });
+  }
+}
+
+type UserSettingsUpdate = Partial<
+  Pick<
+    UserSettings,
+    | "chatModelId"
+    | "enabledTools"
+    | "enterBehavior"
+    | "fontBody"
+    | "fontHeading"
+    | "fontLabel"
+    | "fontMono"
+    | "identityDisplayMode"
+    | "reasoningEffort"
+    | "sidebarCollapsed"
+    | "statsForNerds"
+    | "theme"
+    | "titleModelId"
+    | "titleReasoningEffort"
+  >
+>;
+
+export async function getUserSettings({
+  userId,
+}: {
+  userId: string;
+}): Promise<UserSettings | undefined> {
+  try {
+    const settings = await db
+      .select()
+      .from(userSettings)
+      .where(eq(userSettings.userId, userId))
+      .limit(1);
+
+    return settings[0];
+  } catch (error) {
+    throw new ChatbotError("bad_request:database", { cause: error });
+  }
+}
+
+export async function upsertUserSettings({
+  prefs,
+  userId,
+}: {
+  prefs: UserSettingsUpdate;
+  userId: string;
+}): Promise<UserSettings> {
+  try {
+    const existing = await getUserSettings({ userId });
+
+    if (existing) {
+      const result = await db
+        .update(userSettings)
+        .set({ ...prefs, updatedAt: new Date() })
+        .where(eq(userSettings.id, existing.id))
+        .returning();
+
+      return result[0];
+    }
+
+    const result = await db
+      .insert(userSettings)
+      .values({
+        ...prefs,
+        createdAt: new Date(),
+        id: generateUUID(),
+        updatedAt: new Date(),
+        userId,
+      })
+      .returning();
+
+    return result[0];
   } catch (error) {
     if (error instanceof ChatbotError) {
       throw error;

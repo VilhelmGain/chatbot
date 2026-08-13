@@ -15,6 +15,7 @@ import type {
   Suggestion,
   ToolConfig,
   User,
+  UserSettings,
 } from "./schema";
 
 const GLOBAL_STORE_KEY = "__chatbotInMemoryStore";
@@ -31,6 +32,7 @@ type Store = {
   apiKeys: Map<string, string>;
   toolConfigs: Map<string, ToolConfig>;
   toolApiKeys: Map<string, string>;
+  userSettings: Map<string, UserSettings>;
 };
 
 function getOrCreateStore(): Store {
@@ -50,6 +52,7 @@ function getOrCreateStore(): Store {
       suggestions: new Map(),
       toolApiKeys: new Map(),
       toolConfigs: new Map(),
+      userSettings: new Map(),
       users: new Map(),
     };
   }
@@ -916,6 +919,77 @@ function getCustomModelsForUser({ userId }: { userId: string }): Array<
     .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
 }
 
+type UserSettingsUpdate = Partial<
+  Pick<
+    UserSettings,
+    | "chatModelId"
+    | "enabledTools"
+    | "enterBehavior"
+    | "fontBody"
+    | "fontHeading"
+    | "fontLabel"
+    | "fontMono"
+    | "identityDisplayMode"
+    | "reasoningEffort"
+    | "sidebarCollapsed"
+    | "statsForNerds"
+    | "theme"
+    | "titleModelId"
+    | "titleReasoningEffort"
+  >
+>;
+
+function getUserSettings({
+  userId,
+}: {
+  userId: string;
+}): UserSettings | undefined {
+  return store.userSettings.get(userId);
+}
+
+function upsertUserSettings({
+  prefs,
+  userId,
+}: {
+  prefs: UserSettingsUpdate;
+  userId: string;
+}): UserSettings {
+  const existing = store.userSettings.get(userId);
+  const now = new Date();
+
+  const updates: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(prefs)) {
+    if (value !== undefined) {
+      updates[key] = value;
+    }
+  }
+
+  const settings: UserSettings = {
+    chatModelId: null,
+    createdAt: existing?.createdAt ?? now,
+    enabledTools: null,
+    enterBehavior: null,
+    fontBody: null,
+    fontHeading: null,
+    fontLabel: null,
+    fontMono: null,
+    id: existing?.id ?? generateUUID(),
+    identityDisplayMode: null,
+    reasoningEffort: null,
+    sidebarCollapsed: null,
+    statsForNerds: null,
+    theme: null,
+    titleModelId: null,
+    titleReasoningEffort: null,
+    updatedAt: now,
+    userId,
+    ...existing,
+    ...updates,
+  };
+  store.userSettings.set(userId, settings);
+  return settings;
+}
+
 export const inMemoryQueries = {
   createCustomModel,
   createCustomModels,
@@ -950,6 +1024,7 @@ export const inMemoryQueries = {
   getToolConfigByUserId,
   getToolConfigsByUserId,
   getUserByClerkId,
+  getUserSettings,
   saveChat,
   saveDocument,
   saveMessages,
@@ -961,4 +1036,5 @@ export const inMemoryQueries = {
   updateDocumentContent,
   updateMessage,
   upsertToolConfig,
+  upsertUserSettings,
 };
