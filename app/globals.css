@@ -901,3 +901,21 @@ textarea:focus-visible {
 [data-testid="artifact"] {
   isolation: isolate;
 }
+
+.katex {
+  font-family:
+    var(--math-font, "KaTeX_Main"), "KaTeX_Math", "Times New Roman", serif !important;
+}
+
+.katex .mathnormal,
+.katex .mathit {
+  font-family:
+    var(--math-font-italic, "KaTeX_Math"), "KaTeX_Main", "Times New Roman",
+    serif !important;
+}
+
+.katex .mainrm,
+.katex .textrm {
+  font-family:
+    var(--math-font, "KaTeX_Main"), "KaTeX_Math", "Times New Roman", serif !important;
+}

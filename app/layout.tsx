@@ -12,12 +12,14 @@ import {
   JetBrains_Mono,
   Manrope,
   Montserrat,
+  Noto_Sans_Math,
   Roboto,
   Roboto_Mono,
   Sora,
   Space_Grotesk,
   Space_Mono,
 } from "next/font/google";
+import localFont from "next/font/local";
 import { ThemeProvider } from "@/components/theme-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { isTestEnvironment } from "@/lib/constants";
@@ -81,6 +83,23 @@ const manrope = Manrope({
   subsets: ["latin"],
   variable: "--font-manrope",
   weight: ["400", "500", "600", "700"],
+});
+
+const notoSansMath = Noto_Sans_Math({
+  display: "swap",
+  preload: false,
+  subsets: ["cyrillic", "latin", "math"],
+  variable: "--font-noto-sans-math",
+  weight: "400",
+});
+
+const stixTwoMath = localFont({
+  display: "swap",
+  preload: false,
+  src: "./fonts/stix-two-math-regular.woff2",
+  style: "normal",
+  variable: "--font-stix-two-math",
+  weight: "400",
 });
 
 const inter = Inter({
@@ -223,7 +242,12 @@ const FONT_SCRIPT = `\
       if (role.fonts[i].id === id) font = role.fonts[i];
       if (!font && role.fonts[i].id === role.defaultId) font = role.fonts[i];
     }
-    if (font) html.style.setProperty(role.cssVar, font.stack);
+    if (font) {
+      html.style.setProperty(role.cssVar, font.stack);
+      if (role.cssVarItalic) {
+        html.style.setProperty(role.cssVarItalic, font.italicStack || font.stack);
+      }
+    }
   }
 })();`;
 
@@ -234,7 +258,7 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      className={`${sora.variable} ${montserrat.variable} ${manrope.variable} ${inter.variable} ${interTight.variable} ${geist.variable} ${spaceGrotesk.variable} ${dmSans.variable} ${roboto.variable} ${robotoMono.variable} ${cascadiaCode.variable} ${geistMono.variable} ${jetbrainsMono.variable} ${firaCode.variable} ${ibmPlexMono.variable} ${spaceMono.variable}`}
+      className={`${sora.variable} ${montserrat.variable} ${manrope.variable} ${inter.variable} ${interTight.variable} ${geist.variable} ${spaceGrotesk.variable} ${dmSans.variable} ${roboto.variable} ${robotoMono.variable} ${cascadiaCode.variable} ${geistMono.variable} ${jetbrainsMono.variable} ${firaCode.variable} ${ibmPlexMono.variable} ${spaceMono.variable} ${notoSansMath.variable} ${stixTwoMath.variable}`}
       lang="en"
       suppressHydrationWarning
     >

@@ -56,6 +56,7 @@ export function FontSelectors() {
       <FontSelect fontRole="heading" />
       <FontSelect fontRole="label" />
       <FontSelect fontRole="code" />
+      <FontSelect fontRole="math" />
     </div>
   );
 }

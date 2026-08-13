@@ -186,6 +186,7 @@ export const userSettings = pgTable(
     fontBody: varchar("fontBody", { length: 64 }),
     fontHeading: varchar("fontHeading", { length: 64 }),
     fontLabel: varchar("fontLabel", { length: 64 }),
+    fontMath: varchar("fontMath", { length: 64 }),
     fontMono: varchar("fontMono", { length: 64 }),
     id: uuid("id").primaryKey().notNull().defaultRandom(),
     identityDisplayMode: varchar("identityDisplayMode", { length: 32 }),

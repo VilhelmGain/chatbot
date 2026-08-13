@@ -20,6 +20,7 @@ export type UserPreferences = {
   fontHeading: string | null;
   fontLabel: string | null;
   fontMono: string | null;
+  fontMath: string | null;
   theme: string | null;
   sidebarCollapsed: boolean | null;
 };
@@ -31,6 +32,7 @@ export const FONT_ROLE_PREFERENCE_KEYS = {
   code: "fontMono",
   heading: "fontHeading",
   label: "fontLabel",
+  math: "fontMath",
 } as const satisfies Record<string, PreferenceKey>;
 
 export const PREFERENCE_KEYS: readonly PreferenceKey[] = [
@@ -46,6 +48,7 @@ export const PREFERENCE_KEYS: readonly PreferenceKey[] = [
   "fontHeading",
   "fontLabel",
   "fontMono",
+  "fontMath",
   "theme",
   "sidebarCollapsed",
 ];
@@ -132,6 +135,7 @@ export const PREFERENCE_LOCAL_SOURCES: Record<
   fontBody: { boolean: false, cookieName: "font-body", inverse: false },
   fontHeading: { boolean: false, cookieName: "font-heading", inverse: false },
   fontLabel: { boolean: false, cookieName: "font-label", inverse: false },
+  fontMath: { boolean: false, cookieName: "font-math", inverse: false },
   fontMono: { boolean: false, cookieName: "font-mono", inverse: false },
   identityDisplayMode: {
     boolean: false,

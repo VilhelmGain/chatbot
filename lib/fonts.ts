@@ -1,11 +1,17 @@
 import { FONT_ROLE_PREFERENCE_KEYS } from "@/lib/preferences";
 import { syncPreference } from "@/lib/preferences-sync";
 
-export type FontOption = { id: string; label: string; stack: string };
+export type FontOption = {
+  id: string;
+  label: string;
+  stack: string;
+  italicStack?: string;
+};
 
 const SANS_FALLBACK = "ui-sans-serif, system-ui, sans-serif";
 const MONO_FALLBACK =
   'ui-monospace, "SF Mono", "Cascadia Code", "Fira Code", "JetBrains Mono", monospace';
+const MATH_SERIF_FALLBACK = '"Times New Roman", Times, serif';
 
 export const SANS_FONTS: readonly FontOption[] = [
   {
@@ -98,13 +104,35 @@ export const MONO_FONTS: readonly FontOption[] = [
   },
 ];
 
-export type FontRole = "body" | "heading" | "label" | "code";
+export const MATH_FONTS: readonly FontOption[] = [
+  {
+    id: "default",
+    italicStack: `"KaTeX_Math", "KaTeX_Main", ${MATH_SERIF_FALLBACK}`,
+    label: "Default (Computer Modern)",
+    stack: `"KaTeX_Main", "KaTeX_Math", ${MATH_SERIF_FALLBACK}`,
+  },
+  {
+    id: "stix-two-math",
+    italicStack: `var(--font-stix-two-math), "KaTeX_Math", ${MATH_SERIF_FALLBACK}`,
+    label: "STIX Two Math",
+    stack: `var(--font-stix-two-math), "KaTeX_Main", ${MATH_SERIF_FALLBACK}`,
+  },
+  {
+    id: "noto-sans-math",
+    italicStack: `var(--font-noto-sans-math), "KaTeX_SansSerif", "KaTeX_Math", ${MATH_SERIF_FALLBACK}`,
+    label: "Noto Sans Math",
+    stack: `var(--font-noto-sans-math), "KaTeX_SansSerif", "KaTeX_Main", ${MATH_SERIF_FALLBACK}`,
+  },
+];
+
+export type FontRole = "body" | "heading" | "label" | "code" | "math";
 
 export type FontRoleConfig = {
   label: string;
   description: string;
   cookieName: string;
   cssVar: string;
+  cssVarItalic?: string;
   defaultId: string;
   fonts: readonly FontOption[];
 };
@@ -142,6 +170,15 @@ export const FONT_ROLES: Record<FontRole, FontRoleConfig> = {
     fonts: SANS_FONTS,
     label: "Label font",
   },
+  math: {
+    cookieName: "font-math",
+    cssVar: "--math-font",
+    cssVarItalic: "--math-font-italic",
+    defaultId: "default",
+    description: "Font used to render LaTeX math in chat messages.",
+    fonts: MATH_FONTS,
+    label: "Math font",
+  },
 };
 
 const COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 365;
@@ -174,6 +211,14 @@ export function getFontId(role: FontRole): string {
   return parseFontId(role, readCookie(FONT_ROLES[role].cookieName));
 }
 
+export function getFontOption(
+  role: FontRole,
+  id: string
+): FontOption | undefined {
+  const config = FONT_ROLES[role];
+  return (config.fonts as readonly FontOption[]).find((font) => font.id === id);
+}
+
 export function getFontStack(role: FontRole, id: string): string {
   const config = FONT_ROLES[role];
   return (
@@ -188,10 +233,14 @@ export function setFontId(role: FontRole, id: string) {
   const fontId = parseFontId(role, id);
   if (typeof document !== "undefined") {
     writeCookie(config.cookieName, fontId);
-    document.documentElement.style.setProperty(
-      config.cssVar,
-      getFontStack(role, fontId)
-    );
+    const stack = getFontStack(role, fontId);
+    document.documentElement.style.setProperty(config.cssVar, stack);
+    if (config.cssVarItalic) {
+      document.documentElement.style.setProperty(
+        config.cssVarItalic,
+        getFontOption(role, fontId)?.italicStack ?? stack
+      );
+    }
     syncPreference(FONT_ROLE_PREFERENCE_KEYS[role]);
   }
   notifyFontListeners();

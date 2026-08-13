@@ -983,6 +983,7 @@ type UserSettingsUpdate = Partial<
     | "fontBody"
     | "fontHeading"
     | "fontLabel"
+    | "fontMath"
     | "fontMono"
     | "identityDisplayMode"
     | "reasoningEffort"
