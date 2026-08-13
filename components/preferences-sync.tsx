@@ -33,6 +33,7 @@ const FONT_PREFERENCE_KEYS = {
   code: "fontMono",
   heading: "fontHeading",
   label: "fontLabel",
+  math: "fontMath",
 } as const satisfies Record<FontRole, PreferenceKey>;
 
 const fetcher = async (url: string) => {

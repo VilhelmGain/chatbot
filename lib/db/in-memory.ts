@@ -928,6 +928,7 @@ type UserSettingsUpdate = Partial<
     | "fontBody"
     | "fontHeading"
     | "fontLabel"
+    | "fontMath"
     | "fontMono"
     | "identityDisplayMode"
     | "reasoningEffort"
@@ -972,6 +973,7 @@ function upsertUserSettings({
     fontBody: null,
     fontHeading: null,
     fontLabel: null,
+    fontMath: null,
     fontMono: null,
     id: existing?.id ?? generateUUID(),
     identityDisplayMode: null,

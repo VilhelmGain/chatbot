@@ -19,6 +19,7 @@ const preferenceSchema = z
     fontBody: z.string().max(64).nullable().optional(),
     fontHeading: z.string().max(64).nullable().optional(),
     fontLabel: z.string().max(64).nullable().optional(),
+    fontMath: z.string().max(64).nullable().optional(),
     fontMono: z.string().max(64).nullable().optional(),
     identityDisplayMode: z.enum(IDENTITY_DISPLAY_MODES).nullable().optional(),
     reasoningEffort: z.enum(REASONING_EFFORTS).nullable().optional(),
