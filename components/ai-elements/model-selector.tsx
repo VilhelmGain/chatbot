@@ -48,6 +48,7 @@ export const ModelSelectorContent = ({
       "w-[280px] p-0 rounded-lg overflow-hidden border border-border glass-surface backdrop-blur-xl shadow-[var(--shadow-float)]",
       className
     )}
+    onWheel={(event) => event.stopPropagation()}
     side="top"
     sideOffset={8}
     {...props}
