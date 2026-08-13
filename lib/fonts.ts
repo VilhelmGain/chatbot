@@ -1,3 +1,6 @@
+import { FONT_ROLE_PREFERENCE_KEYS } from "@/lib/preferences";
+import { syncPreference } from "@/lib/preferences-sync";
+
 export type FontOption = { id: string; label: string; stack: string };
 
 const SANS_FALLBACK = "ui-sans-serif, system-ui, sans-serif";
@@ -189,6 +192,7 @@ export function setFontId(role: FontRole, id: string) {
       config.cssVar,
       getFontStack(role, fontId)
     );
+    syncPreference(FONT_ROLE_PREFERENCE_KEYS[role]);
   }
   notifyFontListeners();
 }

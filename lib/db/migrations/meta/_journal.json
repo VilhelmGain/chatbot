@@ -43,6 +43,13 @@
       "when": 1786558711262,
       "tag": "0006_dark_nemesis",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1786602046931,
+      "tag": "0007_nice_stellaris",
+      "breakpoints": true
     }
   ]
 }

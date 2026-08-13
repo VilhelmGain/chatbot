@@ -52,6 +52,7 @@ export const {
   getToolConfigByUserId,
   getToolConfigsByUserId,
   getUserByClerkId,
+  getUserSettings,
   saveChat,
   saveDocument,
   saveMessages,
@@ -64,4 +65,5 @@ export const {
   updateMessage,
   deleteToolConfig,
   upsertToolConfig,
+  upsertUserSettings,
 } = impl;

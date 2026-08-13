@@ -43,6 +43,7 @@ import type {
   ModelCapabilities,
   ReasoningEffort,
 } from "@/lib/ai/models.client";
+import { syncPreference } from "@/lib/preferences-sync";
 import type { Attachment, ChatMessage, VisibilityType } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import {
@@ -1046,6 +1047,9 @@ function PureModelSelectorCompact({
       onModelChange?.(modelId);
       setReasoningEffort(effort);
       setCookie(modelCookieName, modelId);
+      syncPreference(
+        modelCookieName === "title-model" ? "titleModelId" : "chatModelId"
+      );
       setOpen(false);
       setPendingModelId(null);
       setDraftReasoningEffort("default");

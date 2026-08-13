@@ -26,6 +26,7 @@ import type { ReasoningEffort } from "@/lib/ai/models.client";
 import type { ToolId } from "@/lib/ai/tools/metadata";
 import { TOOL_IDS, TOOL_IDS_SET } from "@/lib/ai/tools/metadata";
 import { ChatbotError } from "@/lib/errors";
+import { syncPreference } from "@/lib/preferences-sync";
 import type { ChatMessage, VisibilityType } from "@/lib/types";
 import { fetcher, fetchWithErrorHandlers, generateUUID } from "@/lib/utils";
 
@@ -299,12 +300,14 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
     setReasoningEffortState(effort);
     // biome-ignore lint/suspicious/noDocumentCookie: cookie persistence for user preference
     document.cookie = `reasoning-effort=${encodeURIComponent(effort)}; max-age=${60 * 60 * 24 * 365}; path=/`;
+    syncPreference("reasoningEffort");
   }, []);
 
   const setEnabledTools = useCallback((tools: ToolId[]) => {
     setEnabledToolsState(tools);
     // biome-ignore lint/suspicious/noDocumentCookie: cookie persistence for user preference
     document.cookie = `chat-tools=${encodeURIComponent(JSON.stringify(tools))}; max-age=${60 * 60 * 24 * 365}; path=/`;
+    syncPreference("enabledTools");
   }, []);
 
   const hasAppendedQueryRef = useRef(false);

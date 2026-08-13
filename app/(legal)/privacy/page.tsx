@@ -53,9 +53,10 @@ export default function PrivacyPolicyPage() {
       <h3>Technical data and cookies</h3>
       <p>
         We use cookies and local storage for Clerk authentication and for
-        preferences such as theme, sidebar state, chat model, and reasoning
-        effort. When Redis is enabled, we may keep short-lived records for rate
-        limiting and stream resumption.
+        preferences such as theme, sidebar state, chat model, reasoning effort,
+        and enabled tools. Your preferences are also stored on your account so
+        they stay in sync across your devices. When Redis is enabled, we may
+        keep short-lived records for rate limiting and stream resumption.
       </p>
 
       <h3>AI request data</h3>
@@ -100,9 +101,9 @@ export default function PrivacyPolicyPage() {
       <p>
         We keep account information while your account is active. Chats,
         documents, and attachments remain available until you delete them.
-        Custom provider configurations and keys remain stored until you remove
-        them. Usage and rate-limit records are kept only as long as needed for
-        the purposes described in this policy.
+        Custom provider configurations and keys, and your synced preferences,
+        remain stored until you remove them. Usage and rate-limit records are
+        kept only as long as needed for the purposes described in this policy.
       </p>
 
       <h2>7. Security</h2>

@@ -4,6 +4,8 @@ import { useCallback, useEffect, useState } from "react";
 import { ModelSelectorCompact } from "@/components/chat/multimodal-input";
 import { Label } from "@/components/ui/label";
 import type { ReasoningEffort } from "@/lib/ai/models.client";
+import { usePreferencesAppliedVersion } from "@/lib/preferences-hooks";
+import { syncPreference } from "@/lib/preferences-sync";
 
 const COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 365;
 
@@ -31,10 +33,12 @@ function readCookie(name: string): string | undefined {
 export function TitleModelSelector() {
   const [titleModelId, setTitleModelId] = useState("");
   const [titleEffort, setTitleEffort] = useState<ReasoningEffort>("default");
+  const appliedVersion = usePreferencesAppliedVersion();
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: appliedVersion only triggers a re-read of the title-model cookies after remote preferences are applied.
   useEffect(() => {
     // document is unavailable during SSR; read the cookies once the client
-    // has hydrated.
+    // has hydrated. Re-reads when server preferences are applied remotely.
     const cookieModel = readCookie("title-model");
     if (cookieModel) {
       setTitleModelId(cookieModel);
@@ -46,7 +50,7 @@ export function TitleModelSelector() {
     ) {
       setTitleEffort(cookieEffort as ReasoningEffort);
     }
-  }, []);
+  }, [appliedVersion]);
 
   const handleModelChange = useCallback((modelId: string) => {
     setTitleModelId(modelId);
@@ -55,6 +59,7 @@ export function TitleModelSelector() {
   const handleEffortChange = useCallback((effort: ReasoningEffort) => {
     setTitleEffort(effort);
     writeCookie("title-reasoning-effort", effort);
+    syncPreference("titleReasoningEffort");
   }, []);
 
   return (

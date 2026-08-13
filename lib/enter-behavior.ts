@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from "react";
+import { syncPreference } from "@/lib/preferences-sync";
 
 const COOKIE_NAME = "enter-behavior";
 const COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 365;
@@ -25,6 +26,7 @@ function getEnterBehavior(): EnterBehavior {
 export function setEnterBehavior(behavior: EnterBehavior) {
   if (typeof document !== "undefined") {
     writeCookie(COOKIE_NAME, behavior);
+    syncPreference("enterBehavior");
   }
   notifyEnterBehaviorListeners();
 }
