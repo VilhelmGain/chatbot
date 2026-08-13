@@ -23,6 +23,7 @@ import { MessageMeta } from "./message-meta";
 import { MessageReasoning } from "./message-reasoning";
 import { PreviewAttachment } from "./preview-attachment";
 import { Weather } from "./weather";
+import { WebFetchResults } from "./web-fetch";
 import { WebSearchResults } from "./web-search";
 
 function WaitingText() {
@@ -106,6 +107,23 @@ function SearchWebOutput({
       results={results}
     />
   );
+}
+
+function FetchUrlOutput({
+  autoCollapse,
+  result,
+}: {
+  autoCollapse: boolean;
+  result: {
+    content: string;
+    contentType?: string;
+    title?: string;
+    url: string;
+  };
+}) {
+  const { open, setOpen } = useAutoCollapse(autoCollapse, !autoCollapse);
+
+  return <WebFetchResults onOpenChange={setOpen} open={open} result={result} />;
 }
 
 const PurePreviewMessage = ({
@@ -464,6 +482,77 @@ const PurePreviewMessage = ({
             defaultOpen={true}
           >
             <ToolHeader state={state} type="tool-searchWeb" />
+            <ToolContent>
+              {(state === "input-available" ||
+                state === "approval-requested") && (
+                <ToolInput input={part.input} />
+              )}
+              {state === "approval-requested" && approvalId && (
+                <ToolApprovalActions
+                  addToolApprovalResponse={addToolApprovalResponse}
+                  approvalId={approvalId}
+                />
+              )}
+            </ToolContent>
+          </Tool>
+        </div>
+      );
+    }
+
+    if (type === "tool-fetchUrl") {
+      const { toolCallId, state } = part;
+      const approvalId = (part as { approval?: { id: string } }).approval?.id;
+      const isDenied =
+        state === "output-denied" ||
+        (state === "approval-responded" &&
+          (part as { approval?: { approved?: boolean } }).approval?.approved ===
+            false);
+      const widthClass = "w-[min(100%,450px)]";
+
+      if (state === "output-available") {
+        return (
+          <div className={widthClass} key={toolCallId}>
+            {"error" in part.output ? (
+              <div className="rounded-lg border border-error/20 bg-error/10 p-4 text-error">
+                {String(part.output.error)}
+              </div>
+            ) : (
+              <FetchUrlOutput
+                autoCollapse={hasFollowingPart(index)}
+                result={part.output}
+              />
+            )}
+          </div>
+        );
+      }
+
+      if (isDenied) {
+        return (
+          <div className={widthClass} key={toolCallId}>
+            <Tool
+              autoCollapse={hasFollowingPart(index)}
+              className="w-full"
+              defaultOpen={true}
+            >
+              <ToolHeader state="output-denied" type="tool-fetchUrl" />
+              <ToolContent>
+                <div className="px-4 py-3 text-muted-foreground text-sm">
+                  Fetching the URL was denied.
+                </div>
+              </ToolContent>
+            </Tool>
+          </div>
+        );
+      }
+
+      return (
+        <div className={widthClass} key={toolCallId}>
+          <Tool
+            autoCollapse={hasFollowingPart(index)}
+            className="w-full"
+            defaultOpen={true}
+          >
+            <ToolHeader state={state} type="tool-fetchUrl" />
             <ToolContent>
               {(state === "input-available" ||
                 state === "approval-requested") && (
