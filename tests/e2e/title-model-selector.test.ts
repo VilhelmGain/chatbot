@@ -159,6 +159,19 @@ test.describe("Title Model Selector", () => {
       .poll(() => list.evaluate((el) => el.scrollHeight > el.clientHeight))
       .toBe(true);
 
+    // Deterministic: verify the list can actually scroll (not just overflow).
+    await list.evaluate((el) => {
+      el.scrollTop = 0;
+      el.scrollTop = 100;
+    });
+    await expect
+      .poll(() => list.evaluate((el) => el.scrollTop))
+      .toBeGreaterThan(0);
+
+    // Smoke: wheel over the list still scrolls it (no scroll-lock cancellation).
+    await list.evaluate((el) => {
+      el.scrollTop = 0;
+    });
     await list.hover();
     await page.mouse.wheel(0, 600);
     await expect
