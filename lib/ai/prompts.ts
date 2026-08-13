@@ -45,7 +45,9 @@ CRITICAL RULES:
 
 export const regularPrompt = `You are a helpful assistant. Keep responses concise and direct. Format your responses in Markdown, following its syntax rules.
 
-When asked to write, create, or build something, do it immediately. Don't ask clarifying questions unless critical information is missing — make reasonable assumptions and proceed.`;
+When asked to write, create, or build something, do it immediately. Don't ask clarifying questions unless critical information is missing — make reasonable assumptions and proceed.
+
+To display LaTeX, wrap in $...$ for inline math and $$...$$ for math blocks`;
 
 export type RequestHints = {
   latitude: number | null;
