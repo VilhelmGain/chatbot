@@ -5,6 +5,7 @@ export const TOOL_IDS = [
   "updateDocument",
   "requestSuggestions",
   "searchWeb",
+  "fetchUrl",
 ] as const;
 
 export type ToolId = (typeof TOOL_IDS)[number];
@@ -28,6 +29,10 @@ export const TOOL_METADATA: Record<ToolId, ToolMetadata> = {
   editDocument: {
     description: "Make targeted edits to an existing artifact.",
     label: "Edit document",
+  },
+  fetchUrl: {
+    description: "Read the content of a web page from its URL.",
+    label: "Fetch URL",
   },
   getWeather: {
     description: "Get current weather at a location.",

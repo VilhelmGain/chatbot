@@ -25,6 +25,7 @@ import {
 } from "@/lib/ai/providers";
 import { createDocument } from "@/lib/ai/tools/create-document";
 import { editDocument } from "@/lib/ai/tools/edit-document";
+import { fetchUrl } from "@/lib/ai/tools/fetch-url";
 import { getWeather } from "@/lib/ai/tools/get-weather";
 import {
   DOCUMENT_TOOL_IDS,
@@ -474,6 +475,7 @@ export async function POST(request: Request) {
           },
           tools: {
             ...(effectiveToolNames.has("getWeather") ? { getWeather } : {}),
+            ...(effectiveToolNames.has("fetchUrl") ? { fetchUrl } : {}),
             ...(effectiveToolNames.has("createDocument")
               ? {
                   createDocument: createDocument({

@@ -95,6 +95,25 @@ function renderDocumentToolPart(
   return `**${action} ${kind}: ${title}**`;
 }
 
+function renderFetchUrlPart(part: ExportPart): string {
+  const { output } = part;
+  if (!output || "error" in output) {
+    return "*Failed to fetch URL.*";
+  }
+
+  const url = typeof output.url === "string" ? output.url : "";
+  const title = typeof output.title === "string" ? output.title : "";
+  const content = typeof output.content === "string" ? output.content : "";
+
+  const heading = `**Fetched${title ? `: ${title}` : ""}**`;
+  const link = url ? `Source: ${url}` : "";
+  const excerpt = content
+    ? `\n\n${content.slice(0, 2000)}${content.length > 2000 ? "…" : ""}`
+    : "";
+
+  return [heading, link, excerpt].filter(Boolean).join("\n");
+}
+
 function renderToolPart(part: ExportPart): string {
   switch (part.type) {
     case "tool-getWeather":
@@ -103,6 +122,8 @@ function renderToolPart(part: ExportPart): string {
       return renderDocumentToolPart(part, "Created");
     case "tool-updateDocument":
       return renderDocumentToolPart(part, "Updated");
+    case "tool-fetchUrl":
+      return renderFetchUrlPart(part);
     default:
       // Suggestions and any other tool parts are not useful in a plain
       // markdown export.

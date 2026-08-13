@@ -2,6 +2,7 @@ import type { InferUITool, UIMessage } from "ai";
 import { z } from "zod";
 import type { ArtifactKind } from "@/components/chat/artifact";
 import type { createDocument } from "./ai/tools/create-document";
+import type { fetchUrl } from "./ai/tools/fetch-url";
 import type { getWeather } from "./ai/tools/get-weather";
 import type { requestSuggestions } from "./ai/tools/request-suggestions";
 import type { searchWeb } from "./ai/tools/search-web";
@@ -40,6 +41,7 @@ type requestSuggestionsTool = InferUITool<
   ReturnType<typeof requestSuggestions>
 >;
 type searchWebTool = InferUITool<ReturnType<typeof searchWeb>>;
+type fetchUrlTool = InferUITool<typeof fetchUrl>;
 
 export type ChatTools = {
   getWeather: weatherTool;
@@ -47,6 +49,7 @@ export type ChatTools = {
   updateDocument: updateDocumentTool;
   requestSuggestions: requestSuggestionsTool;
   searchWeb: searchWebTool;
+  fetchUrl: fetchUrlTool;
 };
 
 export type WaitingStatusData = {
