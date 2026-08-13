@@ -570,6 +570,67 @@ const PurePreviewMessage = ({
       );
     }
 
+    if (type === "tool-runPython") {
+      const { toolCallId, state } = part;
+      const widthClass = "w-[min(100%,450px)]";
+
+      if (state === "output-available") {
+        const { output } = part;
+        return (
+          <div className={widthClass} key={toolCallId}>
+            <Tool
+              autoCollapse={hasFollowingPart(index)}
+              className="w-full"
+              defaultOpen={Boolean(output.error)}
+            >
+              <ToolHeader state={state} type="tool-runPython" />
+              <ToolContent>
+                <ToolInput input={part.input} />
+                {output.stdout ? (
+                  <pre className="max-h-72 overflow-y-auto whitespace-pre-wrap break-words rounded-lg bg-foreground/5 px-3 py-2 font-mono text-xs leading-relaxed">
+                    {sanitizeText(output.stdout)}
+                  </pre>
+                ) : null}
+                {output.stderr ? (
+                  <pre className="max-h-72 overflow-y-auto whitespace-pre-wrap break-words rounded-lg bg-foreground/5 px-3 py-2 font-mono text-xs leading-relaxed text-muted-foreground">
+                    {sanitizeText(output.stderr)}
+                  </pre>
+                ) : null}
+                {output.result === undefined ? null : (
+                  <div className="rounded-lg bg-foreground/5 px-3 py-2 font-mono text-xs leading-relaxed">
+                    {String(output.result)}
+                  </div>
+                )}
+                {output.error ? (
+                  <div className="rounded-lg bg-destructive/10 px-3 py-2 font-mono text-xs leading-relaxed text-destructive">
+                    {sanitizeText(output.error)}
+                  </div>
+                ) : null}
+              </ToolContent>
+            </Tool>
+          </div>
+        );
+      }
+
+      return (
+        <div className={widthClass} key={toolCallId}>
+          <Tool
+            autoCollapse={hasFollowingPart(index)}
+            className="w-full"
+            defaultOpen={true}
+          >
+            <ToolHeader state={state} type="tool-runPython" />
+            <ToolContent>
+              {(state === "input-available" ||
+                state === "approval-requested") && (
+                <ToolInput input={part.input} />
+              )}
+            </ToolContent>
+          </Tool>
+        </div>
+      );
+    }
+
     return null;
   });
 
