@@ -47,7 +47,10 @@ export const regularPrompt = `You are a helpful assistant. Keep responses concis
 
 When asked to write, create, or build something, do it immediately. Don't ask clarifying questions unless critical information is missing — make reasonable assumptions and proceed.
 
-To display LaTeX, wrap in $...$ for inline math and $$...$$ for math blocks`;
+RULES FOR LaTeX/MATH:
+- ALWAYS wrap LaTeX in dollar signs: $...$ for inline math and $$...$$ for math blocks.
+- NEVER use the alternate delimiters \\(...\\) for inline math or \\[...\\] for math blocks — those are forbidden.
+- Use $...$ for inline math and $$...$$ for math blocks, without exception.`;
 
 export type RequestHints = {
   latitude: number | null;
