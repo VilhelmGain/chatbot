@@ -166,8 +166,8 @@ test.describe("Model Selector", () => {
     await expect(modelButton).toHaveText("Kimi K2.5 (high)");
 
     await modelButton.click();
-    // The already-selected reasoning model shows its effort picker directly,
-    // so changing the effort is a single click.
+    // Reopening the picker for an already-selected reasoning model shows its
+    // effort picker directly, so changing the effort is a single click.
     await expect(page.getByTestId("reasoning-effort-picker")).toBeVisible();
     await page
       .getByRole("button", { name: "Set reasoning effort to medium" })

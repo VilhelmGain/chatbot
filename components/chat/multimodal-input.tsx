@@ -986,14 +986,21 @@ function PureModelSelectorCompact({
     : [];
 
   const prevOpenRef = useRef(false);
+  const hasOpenedRef = useRef(false);
 
-  // When the picker opens for an already-selected reasoning model, show its
-  // effort picker right away so changing the effort is a direct action
-  // instead of having to re-select the model first.
+  // Reopening the picker for an already-selected reasoning model should show
+  // its effort picker right away, so changing the effort is a direct action
+  // instead of having to re-select the model first. The first open is left
+  // alone so the user can browse and pick a model.
   useEffect(() => {
     const isOpening = open && !prevOpenRef.current;
     prevOpenRef.current = open;
     if (!isOpening) {
+      return;
+    }
+    const isReopen = hasOpenedRef.current;
+    hasOpenedRef.current = true;
+    if (!isReopen) {
       return;
     }
     const efforts = selectedModel
