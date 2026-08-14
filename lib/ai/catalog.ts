@@ -1,5 +1,7 @@
-import type { Model, Provider } from "@opencode-ai/models";
+import type { Model, Provider, ProviderMap } from "@opencode-ai/models";
+import { Models } from "@opencode-ai/models";
 import { generatedAt, providers } from "@opencode-ai/models/snapshot";
+import { isTestEnvironment } from "../constants";
 
 export type CatalogProvider = {
   key: string;
@@ -21,15 +23,58 @@ export type CatalogModel = {
   };
 };
 
-export function getCatalogProviders(): CatalogProvider[] {
-  return Object.values(providers).map((p) => ({
+const LIVE_CATALOG_TTL_MS = 5 * 60 * 1000;
+
+let liveCache: { fetchedAt: number; providers: ProviderMap | null } | null =
+  null;
+
+async function getLiveProviders(force = false): Promise<ProviderMap | null> {
+  if (isTestEnvironment) {
+    return null;
+  }
+
+  const cached = liveCache;
+  if (!force && cached && Date.now() - cached.fetchedAt < LIVE_CATALOG_TTL_MS) {
+    return cached.providers;
+  }
+
+  try {
+    const client = Models.make();
+    const liveProviders = await client.providers();
+    liveCache = { fetchedAt: Date.now(), providers: liveProviders };
+    return liveProviders;
+  } catch (error) {
+    console.error(
+      "[catalog] Failed to fetch live catalog from models.dev:",
+      error
+    );
+    if (cached) {
+      return cached.providers;
+    }
+    liveCache = { fetchedAt: Date.now(), providers: null };
+    return null;
+  }
+}
+
+function providerToCatalogProvider(p: Provider): CatalogProvider {
+  return {
     baseURL: p.api ?? getDefaultBaseURL(p),
     key: p.id,
     modelCount: Object.keys(p.models).length,
     name: p.name,
     npm: p.npm,
     type: resolveProviderType(p),
-  }));
+  };
+}
+
+function providerToCatalogModels(p: Provider): CatalogModel[] {
+  return Object.values(p.models)
+    .filter((m) => m.status !== "deprecated")
+    .map((m) => ({
+      capabilities: mapModelCapabilities(m),
+      modelId: m.id,
+      name: m.name,
+    }));
 }
 
 export function getCatalogProvider(key: string): Provider | undefined {
@@ -42,13 +87,31 @@ export function getCatalogModelsForProvider(key: string): CatalogModel[] {
     return [];
   }
 
-  return Object.values(provider.models)
-    .filter((m) => m.status !== "deprecated")
-    .map((m) => ({
-      capabilities: mapModelCapabilities(m),
-      modelId: m.id,
-      name: m.name,
-    }));
+  return providerToCatalogModels(provider);
+}
+
+export async function getLiveCatalogProviders(
+  force = false
+): Promise<{ generatedAt: string; providers: CatalogProvider[] }> {
+  const live = await getLiveProviders(force);
+  const source = live ?? providers;
+  return {
+    generatedAt: live ? new Date().toISOString() : generatedAt,
+    providers: Object.values(source).map(providerToCatalogProvider),
+  };
+}
+
+export async function getLiveCatalogModelsForProvider(
+  key: string,
+  force = false
+): Promise<CatalogModel[]> {
+  const live = await getLiveProviders(force);
+  const provider = live?.[key] ?? providers[key];
+  if (!provider) {
+    return [];
+  }
+
+  return providerToCatalogModels(provider);
 }
 
 export function mapModelCapabilities(model: Model): {
@@ -102,8 +165,4 @@ function getDefaultBaseURL(provider: Provider): string {
     return "https://generativelanguage.googleapis.com";
   }
   return "";
-}
-
-export function getCatalogGeneratedAt(): string {
-  return generatedAt;
 }

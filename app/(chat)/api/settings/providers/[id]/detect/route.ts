@@ -1,5 +1,5 @@
 import { auth } from "@/app/(auth)/auth";
-import { getCatalogModelsForProvider } from "@/lib/ai/catalog";
+import { getLiveCatalogModelsForProvider } from "@/lib/ai/catalog";
 import {
   createCustomModels,
   getCustomProviderById,
@@ -58,7 +58,7 @@ export async function POST(
     const models = data.data ?? [];
 
     const catalogModels = provider.providerKey
-      ? getCatalogModelsForProvider(provider.providerKey)
+      ? await getLiveCatalogModelsForProvider(provider.providerKey)
       : [];
     const catalogMap = new Map(catalogModels.map((m) => [m.modelId, m]));
 

@@ -1,5 +1,5 @@
 import { auth } from "@/app/(auth)/auth";
-import { getCatalogModelsForProvider } from "@/lib/ai/catalog";
+import { getLiveCatalogModelsForProvider } from "@/lib/ai/catalog";
 import {
   createCustomModels,
   getCustomModelsByProviderId,
@@ -31,7 +31,10 @@ export async function POST(
     );
   }
 
-  const catalogModels = getCatalogModelsForProvider(provider.providerKey);
+  const catalogModels = await getLiveCatalogModelsForProvider(
+    provider.providerKey,
+    true
+  );
   if (catalogModels.length === 0) {
     return Response.json(
       { error: "No models found in catalog for this provider." },
