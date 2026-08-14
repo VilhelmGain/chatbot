@@ -1276,7 +1276,7 @@ function MobileSidebarToggle() {
   return (
     <Button
       aria-label="Toggle Sidebar"
-      className="h-7 w-7 rounded-md border border-input bg-foreground/5 p-1 text-foreground transition-all hover:border-primary/30 hover:bg-primary/10 hover:text-primary md:hidden"
+      className="h-7 w-7 rounded-md border border-input bg-foreground/5 p-1 text-foreground transition-all hover:border-primary/30 hover:bg-primary/10 hover:text-primary active:scale-90 md:hidden"
       onClick={handleToggle}
       type="button"
       variant="ghost"

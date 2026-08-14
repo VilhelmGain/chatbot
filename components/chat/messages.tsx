@@ -1,4 +1,5 @@
 import type { UseChatHelpers } from "@ai-sdk/react";
+import { motion } from "framer-motion";
 import { ArrowDownIcon } from "lucide-react";
 import { memo, useCallback, useEffect, useRef } from "react";
 import { useMessages } from "@/hooks/use-messages";
@@ -108,18 +109,25 @@ function PureMessages({
         </div>
       </div>
 
-      <button
+      <motion.button
+        animate={{
+          opacity: isAtBottom ? 0 : 1,
+          scale: isAtBottom ? 0.8 : 1,
+          x: "-50%",
+          y: isAtBottom ? 8 : 0,
+        }}
         aria-label="Scroll to bottom"
-        className={`!absolute bottom-4 left-1/2 z-10 flex -translate-x-1/2 items-center rounded-lg border border-border bg-surface-container-lowest px-3.5 shadow-[var(--shadow-float)] transition-all duration-200 h-7 text-[10px] ${
-          isAtBottom
-            ? "pointer-events-none scale-90 opacity-0"
-            : "pointer-events-auto scale-100 opacity-100"
+        className={`!absolute bottom-4 left-1/2 z-10 flex items-center rounded-lg border border-border bg-surface-container-lowest px-3.5 shadow-[var(--shadow-float)] h-7 text-[10px] ${
+          isAtBottom ? "pointer-events-none" : "pointer-events-auto"
         }`}
+        initial={false}
         onClick={handleScrollToBottom}
+        style={{ x: "-50%" }}
+        transition={{ damping: 28, stiffness: 420, type: "spring" }}
         type="button"
       >
         <ArrowDownIcon className="size-3 text-muted-foreground" />
-      </button>
+      </motion.button>
     </div>
   );
 }

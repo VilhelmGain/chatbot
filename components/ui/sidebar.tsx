@@ -23,6 +23,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { PanelLeftIcon } from "lucide-react"
+import { motion } from "framer-motion"
 
 const SIDEBAR_COOKIE_NAME = "sidebar_state"
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7
@@ -187,8 +188,24 @@ function Sidebar({
             <SheetTitle>Sidebar</SheetTitle>
             <SheetDescription>Displays the mobile sidebar.</SheetDescription>
           </SheetHeader>
-          <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-sidebar-foreground/20" />
-          <div className="flex h-full w-full flex-col overflow-y-auto pt-2">{children}</div>
+          <motion.div
+            animate={{ opacity: 1, y: 0 }}
+            className="flex h-full min-h-0 w-full flex-col"
+            initial={{ opacity: 0, y: 24 }}
+            transition={{
+              delay: 0.08,
+              duration: 0.35,
+              ease: [0.22, 1, 0.36, 1],
+            }}
+          >
+            <motion.div
+              animate={{ scaleX: 1 }}
+              className="mx-auto mt-2 h-1 w-10 rounded-full bg-sidebar-foreground/20"
+              initial={{ scaleX: 0.4 }}
+              transition={{ delay: 0.12, duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+            />
+            <div className="flex h-full min-h-0 w-full flex-col overflow-y-auto pt-2">{children}</div>
+          </motion.div>
         </SheetContent>
       </Sheet>
     )
