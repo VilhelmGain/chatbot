@@ -28,11 +28,13 @@ import {
 
 const PureChatItem = ({
   chat,
+  enterDelay,
   isActive,
   onDelete,
   setOpenMobile,
 }: {
   chat: Chat;
+  enterDelay?: number;
   isActive: boolean;
   onDelete: (chatId: string) => void;
   setOpenMobile: (open: boolean) => void;
@@ -154,7 +156,10 @@ const PureChatItem = ({
   }, [regenerateTitle]);
 
   return (
-    <SidebarMenuItem>
+    <SidebarMenuItem
+      className="fade-up"
+      style={enterDelay ? { animationDelay: `${enterDelay}ms` } : undefined}
+    >
       {isEditing ? (
         <SidebarInput
           autoFocus

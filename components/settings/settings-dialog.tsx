@@ -1,5 +1,6 @@
 "use client";
 
+import { AnimatePresence, motion } from "framer-motion";
 import {
   Download,
   Keyboard,
@@ -15,7 +16,7 @@ import {
   X,
 } from "lucide-react";
 import { useTheme } from "next-themes";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import useSWR from "swr";
 import { toast } from "@/components/chat/toast";
 import { ExportAttachments } from "@/components/settings/export-attachments";
@@ -125,6 +126,12 @@ export function SettingsDialog({
     useState<SettingsSection>("preferences");
   const activeItem =
     NAV_ITEMS.find((item) => item.id === activeSection) ?? NAV_ITEMS[0];
+  const contentScrollRef = useRef<HTMLDivElement>(null);
+
+  const handleSelectSection = useCallback((section: SettingsSection) => {
+    setActiveSection(section);
+    contentScrollRef.current?.scrollTo({ top: 0 });
+  }, []);
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
@@ -148,14 +155,15 @@ export function SettingsDialog({
             </div>
 
             <nav aria-label="Settings" className="flex flex-col gap-1 px-3">
-              {NAV_ITEMS.map((item) => (
+              {NAV_ITEMS.map((item, index) => (
                 <SettingsNavButton
                   active={item.id === activeSection}
+                  enterDelay={index * 35}
                   icon={item.icon}
                   id={item.id}
                   key={item.id}
                   label={item.label}
-                  onSelect={setActiveSection}
+                  onSelect={handleSelectSection}
                 />
               ))}
             </nav>
@@ -164,15 +172,20 @@ export function SettingsDialog({
           <main className="flex min-h-0 flex-col overflow-hidden bg-transparent">
             <header className="flex shrink-0 items-start justify-between gap-4 border-b border-border bg-transparent/95 px-5 py-4 backdrop-blur-xl md:px-8 md:py-5">
               <div className="flex min-w-0 flex-col gap-1">
-                <p className="text-[11px] font-medium tracking-[0.18em] text-muted-foreground uppercase">
-                  {activeItem.label}
-                </p>
-                <DialogTitle className="text-xl font-semibold tracking-tight">
-                  {activeItem.title}
-                </DialogTitle>
-                <p className="text-sm text-muted-foreground">
-                  {activeItem.description}
-                </p>
+                <div
+                  className="fade-up flex min-w-0 flex-col gap-1"
+                  key={activeSection}
+                >
+                  <p className="text-[11px] font-medium tracking-[0.18em] text-muted-foreground uppercase">
+                    {activeItem.label}
+                  </p>
+                  <DialogTitle className="text-xl font-semibold tracking-tight">
+                    {activeItem.title}
+                  </DialogTitle>
+                  <p className="text-sm text-muted-foreground">
+                    {activeItem.description}
+                  </p>
+                </div>
               </div>
               <DialogClose asChild>
                 <Button
@@ -188,25 +201,45 @@ export function SettingsDialog({
             </header>
 
             <div className="flex shrink-0 gap-1 overflow-x-auto border-b border-border glass-surface px-3 py-2 no-scrollbar md:hidden">
-              {NAV_ITEMS.map((item) => (
+              {NAV_ITEMS.map((item, index) => (
                 <MobileSettingsNavButton
                   active={item.id === activeSection}
+                  enterDelay={index * 30}
                   icon={item.icon}
                   id={item.id}
                   key={item.id}
                   label={item.label}
-                  onSelect={setActiveSection}
+                  onSelect={handleSelectSection}
                 />
               ))}
             </div>
 
-            <div className="min-h-0 flex-1 overflow-y-auto overscroll-behavior-contain">
-              <div className="mx-auto flex w-full max-w-3xl flex-col gap-8 px-5 py-6 md:px-8 md:py-8">
-                {activeSection === "preferences" ? <PreferencesPanel /> : null}
-                {activeSection === "data" ? <DataPanel /> : null}
-                {activeSection === "providers" ? <ProvidersPanel /> : null}
-                {activeSection === "tools" ? <ToolsPanel /> : null}
-                {activeSection === "legal" ? <LegalPanel /> : null}
+            <div
+              className="min-h-0 flex-1 overflow-y-auto overscroll-behavior-contain"
+              ref={contentScrollRef}
+            >
+              <div className="mx-auto w-full max-w-3xl px-5 py-6 md:px-8 md:py-8">
+                <AnimatePresence initial={false} mode="wait">
+                  <motion.div
+                    animate={{ opacity: 1, y: 0 }}
+                    className="flex flex-col gap-8"
+                    exit={{ opacity: 0, y: -10 }}
+                    initial={{ opacity: 0, y: 14 }}
+                    key={activeSection}
+                    transition={{
+                      duration: 0.24,
+                      ease: [0.22, 1, 0.36, 1],
+                    }}
+                  >
+                    {activeSection === "preferences" ? (
+                      <PreferencesPanel />
+                    ) : null}
+                    {activeSection === "data" ? <DataPanel /> : null}
+                    {activeSection === "providers" ? <ProvidersPanel /> : null}
+                    {activeSection === "tools" ? <ToolsPanel /> : null}
+                    {activeSection === "legal" ? <LegalPanel /> : null}
+                  </motion.div>
+                </AnimatePresence>
               </div>
             </div>
           </main>
@@ -218,12 +251,14 @@ export function SettingsDialog({
 
 function SettingsNavButton({
   active,
+  enterDelay,
   icon: Icon,
   id,
   label,
   onSelect,
 }: {
   active: boolean;
+  enterDelay: number;
   icon: LucideIcon;
   id: SettingsSection;
   label: string;
@@ -237,18 +272,26 @@ function SettingsNavButton({
     <button
       aria-current={active ? "page" : undefined}
       className={cn(
-        "flex items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm transition-colors duration-150",
+        "fade-up relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm transition-colors duration-150",
         active
-          ? "bg-sidebar-accent text-sidebar-accent-foreground"
-          : "text-sidebar-foreground/60 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground"
+          ? "text-sidebar-accent-foreground"
+          : "text-sidebar-foreground/60 hover:bg-sidebar-accent/40 hover:text-sidebar-foreground"
       )}
       onClick={handleSelect}
+      style={{ animationDelay: `${enterDelay}ms` }}
       type="button"
     >
-      <Icon className="size-4 shrink-0" />
-      <span className="min-w-0 flex-1">
-        <span className="block font-medium">{label}</span>
-        <span className="block truncate text-xs text-sidebar-foreground/60">
+      {active ? (
+        <motion.span
+          className="absolute inset-0 rounded-lg bg-sidebar-accent"
+          layoutId="settings-nav-active"
+          transition={{ damping: 34, stiffness: 420, type: "spring" }}
+        />
+      ) : null}
+      <Icon className="relative size-4 shrink-0" />
+      <span className="relative min-w-0 flex-1">
+        <span className="relative block font-medium">{label}</span>
+        <span className="relative block truncate text-xs text-sidebar-foreground/60">
           {NAV_ITEMS.find((item) => item.id === id)?.description}
         </span>
       </span>
@@ -258,12 +301,14 @@ function SettingsNavButton({
 
 function MobileSettingsNavButton({
   active,
+  enterDelay,
   icon: Icon,
   id,
   label,
   onSelect,
 }: {
   active: boolean;
+  enterDelay: number;
   icon: LucideIcon;
   id: SettingsSection;
   label: string;
@@ -277,16 +322,24 @@ function MobileSettingsNavButton({
     <button
       aria-current={active ? "page" : undefined}
       className={cn(
-        "flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-[13px] font-medium transition-colors duration-150",
+        "fade-up relative flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-[13px] font-medium transition-colors duration-150",
         active
-          ? "bg-foreground text-background"
+          ? "text-background"
           : "bg-foreground/5 text-muted-foreground hover:bg-foreground/5 hover:text-foreground"
       )}
       onClick={handleSelect}
+      style={{ animationDelay: `${enterDelay}ms` }}
       type="button"
     >
-      <Icon className="size-3.5" />
-      {label}
+      {active ? (
+        <motion.span
+          className="absolute inset-0 rounded-lg bg-foreground"
+          layoutId="settings-nav-active-mobile"
+          transition={{ damping: 34, stiffness: 420, type: "spring" }}
+        />
+      ) : null}
+      <Icon className="relative size-3.5" />
+      <span className="relative">{label}</span>
     </button>
   );
 }

@@ -774,6 +774,64 @@ textarea:focus-visible {
   animation: popover-out 100ms var(--ease-smooth) both;
 }
 
+@keyframes menu-item-in {
+  from {
+    opacity: 0;
+    transform: translateY(3px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+[data-slot="dropdown-menu-content"] > [data-slot="dropdown-menu-item"],
+[data-slot="dropdown-menu-content"] > [data-slot="dropdown-menu-sub-trigger"] {
+  animation: menu-item-in 220ms var(--ease-spring) both;
+}
+
+[data-slot="dropdown-menu-content"]
+  > [data-slot="dropdown-menu-item"]:nth-child(1),
+[data-slot="dropdown-menu-content"]
+  > [data-slot="dropdown-menu-sub-trigger"]:nth-child(1) {
+  animation-delay: 20ms;
+}
+
+[data-slot="dropdown-menu-content"]
+  > [data-slot="dropdown-menu-item"]:nth-child(2),
+[data-slot="dropdown-menu-content"]
+  > [data-slot="dropdown-menu-sub-trigger"]:nth-child(2) {
+  animation-delay: 50ms;
+}
+
+[data-slot="dropdown-menu-content"]
+  > [data-slot="dropdown-menu-item"]:nth-child(3),
+[data-slot="dropdown-menu-content"]
+  > [data-slot="dropdown-menu-sub-trigger"]:nth-child(3) {
+  animation-delay: 80ms;
+}
+
+[data-slot="dropdown-menu-content"]
+  > [data-slot="dropdown-menu-item"]:nth-child(4),
+[data-slot="dropdown-menu-content"]
+  > [data-slot="dropdown-menu-sub-trigger"]:nth-child(4) {
+  animation-delay: 110ms;
+}
+
+[data-slot="dropdown-menu-content"]
+  > [data-slot="dropdown-menu-item"]:nth-child(5),
+[data-slot="dropdown-menu-content"]
+  > [data-slot="dropdown-menu-sub-trigger"]:nth-child(5) {
+  animation-delay: 140ms;
+}
+
+[data-slot="dropdown-menu-content"]
+  > [data-slot="dropdown-menu-item"]:nth-child(n + 6),
+[data-slot="dropdown-menu-content"]
+  > [data-slot="dropdown-menu-sub-trigger"]:nth-child(n + 6) {
+  animation-delay: 170ms;
+}
+
 .ProseMirror {
   outline: none;
 }

@@ -68,7 +68,7 @@ export function AccountDialog({
 function TestAccountPanel({ user }: { user: User }) {
   return (
     <div
-      className="flex h-full w-[24rem] max-w-full flex-col items-center justify-center gap-4 p-6 text-center"
+      className="fade-up flex h-full w-[24rem] max-w-full flex-col items-center justify-center gap-4 p-6 text-center"
       data-testid="account-dialog-fallback"
     >
       <UserAvatar

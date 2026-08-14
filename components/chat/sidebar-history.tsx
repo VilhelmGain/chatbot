@@ -244,9 +244,10 @@ export function SidebarHistory({ user }: { user: User | undefined }) {
                           <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-sidebar-primary">
                             Today
                           </div>
-                          {groupedChats.today.map((chat) => (
+                          {groupedChats.today.map((chat, index) => (
                             <ChatItem
                               chat={chat}
+                              enterDelay={Math.min(index, 8) * 25}
                               isActive={chat.id === id}
                               key={chat.id}
                               onDelete={handleShowDeleteDialog}
@@ -261,9 +262,10 @@ export function SidebarHistory({ user }: { user: User | undefined }) {
                           <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-sidebar-primary">
                             Yesterday
                           </div>
-                          {groupedChats.yesterday.map((chat) => (
+                          {groupedChats.yesterday.map((chat, index) => (
                             <ChatItem
                               chat={chat}
+                              enterDelay={Math.min(index, 8) * 25}
                               isActive={chat.id === id}
                               key={chat.id}
                               onDelete={handleShowDeleteDialog}
@@ -278,9 +280,10 @@ export function SidebarHistory({ user }: { user: User | undefined }) {
                           <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-sidebar-primary">
                             Last 7 days
                           </div>
-                          {groupedChats.lastWeek.map((chat) => (
+                          {groupedChats.lastWeek.map((chat, index) => (
                             <ChatItem
                               chat={chat}
+                              enterDelay={Math.min(index, 8) * 25}
                               isActive={chat.id === id}
                               key={chat.id}
                               onDelete={handleShowDeleteDialog}
@@ -295,9 +298,10 @@ export function SidebarHistory({ user }: { user: User | undefined }) {
                           <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-sidebar-primary">
                             Last 30 days
                           </div>
-                          {groupedChats.lastMonth.map((chat) => (
+                          {groupedChats.lastMonth.map((chat, index) => (
                             <ChatItem
                               chat={chat}
+                              enterDelay={Math.min(index, 8) * 25}
                               isActive={chat.id === id}
                               key={chat.id}
                               onDelete={handleShowDeleteDialog}
@@ -312,9 +316,10 @@ export function SidebarHistory({ user }: { user: User | undefined }) {
                           <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-sidebar-primary">
                             Older
                           </div>
-                          {groupedChats.older.map((chat) => (
+                          {groupedChats.older.map((chat, index) => (
                             <ChatItem
                               chat={chat}
+                              enterDelay={Math.min(index, 8) * 25}
                               isActive={chat.id === id}
                               key={chat.id}
                               onDelete={handleShowDeleteDialog}
