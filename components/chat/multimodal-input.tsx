@@ -985,6 +985,26 @@ function PureModelSelectorCompact({
     ? getReasoningEfforts(capabilities, pendingModel.id)
     : [];
 
+  const prevOpenRef = useRef(false);
+
+  // When the picker opens for an already-selected reasoning model, show its
+  // effort picker right away so changing the effort is a direct action
+  // instead of having to re-select the model first.
+  useEffect(() => {
+    const isOpening = open && !prevOpenRef.current;
+    prevOpenRef.current = open;
+    if (!isOpening) {
+      return;
+    }
+    const efforts = selectedModel
+      ? getReasoningEfforts(capabilities, selectedModel.id)
+      : [];
+    if (efforts.length > 1 && selectedModel) {
+      setPendingModelId(selectedModel.id);
+      setDraftReasoningEffort(reasoningEffort);
+    }
+  }, [open, capabilities, selectedModel, reasoningEffort]);
+
   const focusChatInput = useCallback(() => {
     setTimeout(() => {
       document

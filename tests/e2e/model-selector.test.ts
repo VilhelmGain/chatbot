@@ -166,8 +166,9 @@ test.describe("Model Selector", () => {
     await expect(modelButton).toHaveText("Kimi K2.5 (high)");
 
     await modelButton.click();
-    await page.getByPlaceholder("Search models...").focus();
-    await page.keyboard.press("Enter");
+    // The already-selected reasoning model shows its effort picker directly,
+    // so changing the effort is a single click.
+    await expect(page.getByTestId("reasoning-effort-picker")).toBeVisible();
     await page
       .getByRole("button", { name: "Set reasoning effort to medium" })
       .click();
