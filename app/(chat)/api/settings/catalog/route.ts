@@ -1,5 +1,5 @@
 import { auth } from "@/app/(auth)/auth";
-import { getCatalogGeneratedAt, getCatalogProviders } from "@/lib/ai/catalog";
+import { getLiveCatalogProviders } from "@/lib/ai/catalog";
 import { ChatbotError } from "@/lib/errors";
 
 export async function GET() {
@@ -9,8 +9,7 @@ export async function GET() {
     return new ChatbotError("unauthorized:provider").toResponse();
   }
 
-  const providers = getCatalogProviders();
-  const generatedAt = getCatalogGeneratedAt();
+  const { generatedAt, providers } = await getLiveCatalogProviders();
 
   return Response.json(
     { generatedAt, providers },

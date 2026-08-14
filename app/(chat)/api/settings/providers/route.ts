@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { auth } from "@/app/(auth)/auth";
-import { getCatalogModelsForProvider } from "@/lib/ai/catalog";
+import { getLiveCatalogModelsForProvider } from "@/lib/ai/catalog";
 import {
   createCustomModels,
   createCustomProvider,
@@ -57,7 +57,9 @@ export async function POST(request: Request) {
     });
 
     if (body.providerKey) {
-      const catalogModels = getCatalogModelsForProvider(body.providerKey);
+      const catalogModels = await getLiveCatalogModelsForProvider(
+        body.providerKey
+      );
       if (catalogModels.length > 0) {
         await createCustomModels({
           models: catalogModels,
