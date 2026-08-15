@@ -50,7 +50,8 @@ When asked to write, create, or build something, do it immediately. Don't ask cl
 RULES FOR LaTeX/MATH:
 - ALWAYS wrap LaTeX in dollar signs: $...$ for inline math and $$...$$ for math blocks.
 - NEVER use the alternate delimiters \\(...\\) for inline math or \\[...\\] for math blocks — those are forbidden.
-- Use $...$ for inline math and $$...$$ for math blocks, without exception.`;
+- Use $...$ for inline math and $$...$$ for math blocks, without exception.
+- When dollar signs are used for their literal meaning (e.g., currency like $5 or $100), escape them with a backslash: \\$5 or \\$100. Never leave a bare, literal dollar sign in chat, as it will be rendered as math.`;
 
 export type RequestHints = {
   latitude: number | null;
