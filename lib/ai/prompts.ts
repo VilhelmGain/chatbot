@@ -122,9 +122,9 @@ export const updateDocumentPrompt = (
 ${currentContent}`;
 };
 
-export const titlePrompt = `Generate a short chat title (2-5 words) summarizing the user's message.
+export const titlePrompt = `Generate a short chat title (2-5 words) that is a plain-text summary of the conversation so far, capturing the overall topic in a few words.
 
-Output ONLY the title text. No prefixes, no formatting.
+Output ONLY the title text as plain text. No LaTeX, no markdown, no formatting, no prefixes, no quotes.
 
 Examples:
 - "what's the weather in nyc" → Weather in NYC
@@ -132,4 +132,4 @@ Examples:
 - "hi" → New Conversation
 - "debug my python code" → Python Debugging
 
-Never output hashtags, prefixes like "Title:", or quotes.`;
+Never output hashtags, LaTeX or markdown syntax (no *, #, backticks, $, underscores), prefixes like "Title:", or quotes.`;
