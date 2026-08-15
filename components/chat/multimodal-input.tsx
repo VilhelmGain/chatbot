@@ -55,10 +55,10 @@ import {
 } from "../ai-elements/prompt-input";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
-import { useSidebar } from "../ui/sidebar";
 import { Slider } from "../ui/slider";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
-import { PaperclipIcon, SidebarLeftIcon, StopIcon } from "./icons";
+import { PaperclipIcon, StopIcon } from "./icons";
+import { PlusMenu } from "./plus-menu";
 import { PreviewAttachment } from "./preview-attachment";
 import {
   type SlashCommand,
@@ -552,12 +552,19 @@ function PureMultimodalInput({
         />
         <PromptInputFooter className="px-3 pb-3">
           <PromptInputTools>
-            <MobileSidebarToggle />
-            <AttachmentsButton
+            <PlusMenu
               fileInputRef={fileInputRef}
               selectedModelId={selectedModelId}
               status={status}
             />
+            <div className="hidden min-w-0 items-center gap-1 md:flex">
+              <AttachmentsButton
+                fileInputRef={fileInputRef}
+                selectedModelId={selectedModelId}
+                status={status}
+              />
+              <ToolsMenu selectedModelId={selectedModelId} />
+            </div>
             <ModelSelectorCompact
               onModelChange={onModelChange}
               preserveComposerFocus
@@ -565,7 +572,6 @@ function PureMultimodalInput({
               selectedModelId={selectedModelId}
               setReasoningEffort={setReasoningEffort}
             />
-            <ToolsMenu selectedModelId={selectedModelId} />
           </PromptInputTools>
 
           {status === "submitted" || status === "streaming" ? (
@@ -1297,23 +1303,3 @@ function PureStopButton({
 }
 
 const StopButton = memo(PureStopButton);
-
-function MobileSidebarToggle() {
-  const { openMobile, setOpenMobile } = useSidebar();
-
-  const handleToggle = useCallback(() => {
-    setOpenMobile(!openMobile);
-  }, [openMobile, setOpenMobile]);
-
-  return (
-    <Button
-      aria-label="Toggle Sidebar"
-      className="h-7 w-7 rounded-md border border-input bg-foreground/5 p-1 text-foreground transition-all hover:border-primary/30 hover:bg-primary/10 hover:text-primary active:scale-90 md:hidden"
-      onClick={handleToggle}
-      type="button"
-      variant="ghost"
-    >
-      <SidebarLeftIcon size={14} />
-    </Button>
-  );
-}

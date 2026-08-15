@@ -67,72 +67,21 @@ function ToolSelectorItem({
 }
 
 function PureToolsMenu({ selectedModelId }: { selectedModelId: string }) {
-  const { enabledTools, setEnabledTools } = useActiveChat();
   const [open, setOpen] = useState(false);
+  const {
+    allEnabled,
+    enabledSet,
+    enabledVisibleTools,
+    handleDisableAll,
+    handleEnableAll,
+    supportsTools,
+    toggleTool,
+    visibleTools,
+  } = useToolsConfig(selectedModelId);
 
-  const { data: modelsData } = useSWR(
-    `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/api/models`,
-    (url: string) => fetch(url).then((r) => r.json()),
-    { dedupingInterval: 3_600_000, revalidateOnFocus: false }
-  );
-
-  const { data: toolsData } = useSWR<ToolConfig[]>(
-    `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/api/settings/tools`,
-    (url: string) => fetch(url).then((r) => r.json()),
-    { revalidateOnFocus: false }
-  );
-
-  const toggleTool = useCallback(
-    (id: ToolId) => {
-      setEnabledTools(
-        enabledTools.includes(id)
-          ? enabledTools.filter((toolId) => toolId !== id)
-          : [...enabledTools, id]
-      );
-    },
-    [enabledTools, setEnabledTools]
-  );
-
-  const enabledConfiguredToolIds = useMemo(
-    () =>
-      new Set(
-        (Array.isArray(toolsData) ? toolsData : [])
-          .filter((config) => config.enabled)
-          .map((config) => config.toolId)
-      ),
-    [toolsData]
-  );
-
-  const visibleTools = useMemo(
-    () =>
-      TOOL_IDS.filter(
-        (toolId) =>
-          !(CONFIGURABLE_TOOLS as readonly string[]).includes(toolId) ||
-          enabledConfiguredToolIds.has(toolId)
-      ),
-    [enabledConfiguredToolIds]
-  );
-
-  const handleEnableAll = useCallback(() => {
-    setEnabledTools([...visibleTools]);
-  }, [setEnabledTools, visibleTools]);
-
-  const handleDisableAll = useCallback(() => {
-    setEnabledTools([]);
-  }, [setEnabledTools]);
-
-  const capabilities: Record<string, ModelCapabilities> | undefined =
-    modelsData?.capabilities ?? modelsData;
-
-  if (capabilities?.[selectedModelId]?.tools !== true) {
+  if (!supportsTools) {
     return null;
   }
-
-  const enabledSet = new Set(enabledTools);
-  const enabledVisibleTools = visibleTools.filter((id) => enabledSet.has(id));
-  const allEnabled =
-    visibleTools.length > 0 &&
-    enabledVisibleTools.length === visibleTools.length;
 
   return (
     <ModelSelector onOpenChange={setOpen} open={open}>
@@ -188,5 +137,83 @@ function PureToolsMenu({ selectedModelId }: { selectedModelId: string }) {
     </ModelSelector>
   );
 }
+
+function useToolsConfig(selectedModelId: string) {
+  const { enabledTools, setEnabledTools } = useActiveChat();
+
+  const { data: modelsData } = useSWR(
+    `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/api/models`,
+    (url: string) => fetch(url).then((r) => r.json()),
+    { dedupingInterval: 3_600_000, revalidateOnFocus: false }
+  );
+
+  const { data: toolsData } = useSWR<ToolConfig[]>(
+    `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/api/settings/tools`,
+    (url: string) => fetch(url).then((r) => r.json()),
+    { revalidateOnFocus: false }
+  );
+
+  const toggleTool = useCallback(
+    (id: ToolId) => {
+      setEnabledTools(
+        enabledTools.includes(id)
+          ? enabledTools.filter((toolId) => toolId !== id)
+          : [...enabledTools, id]
+      );
+    },
+    [enabledTools, setEnabledTools]
+  );
+
+  const enabledConfiguredToolIds = useMemo(
+    () =>
+      new Set(
+        (Array.isArray(toolsData) ? toolsData : [])
+          .filter((config) => config.enabled)
+          .map((config) => config.toolId)
+      ),
+    [toolsData]
+  );
+
+  const visibleTools = useMemo(
+    () =>
+      TOOL_IDS.filter(
+        (toolId) =>
+          !(CONFIGURABLE_TOOLS as readonly string[]).includes(toolId) ||
+          enabledConfiguredToolIds.has(toolId)
+      ),
+    [enabledConfiguredToolIds]
+  );
+
+  const handleEnableAll = useCallback(() => {
+    setEnabledTools([...visibleTools]);
+  }, [setEnabledTools, visibleTools]);
+
+  const handleDisableAll = useCallback(() => {
+    setEnabledTools([]);
+  }, [setEnabledTools]);
+
+  const capabilities: Record<string, ModelCapabilities> | undefined =
+    modelsData?.capabilities ?? modelsData;
+  const supportsTools = capabilities?.[selectedModelId]?.tools === true;
+
+  const enabledSet = new Set(enabledTools);
+  const enabledVisibleTools = visibleTools.filter((id) => enabledSet.has(id));
+  const allEnabled =
+    visibleTools.length > 0 &&
+    enabledVisibleTools.length === visibleTools.length;
+
+  return {
+    allEnabled,
+    enabledSet,
+    enabledVisibleTools,
+    handleDisableAll,
+    handleEnableAll,
+    supportsTools,
+    toggleTool,
+    visibleTools,
+  };
+}
+
+export { useToolsConfig };
 
 export const ToolsMenu = memo(PureToolsMenu);
