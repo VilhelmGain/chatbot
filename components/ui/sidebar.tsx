@@ -243,6 +243,7 @@ function MobileSidebarSheet({
         transition={{ duration: 0.25 }}
       />
       <motion.div
+        animate={{ opacity: 1 }}
         aria-label="Chat threads"
         aria-modal="true"
         className={cn(
@@ -254,6 +255,7 @@ function MobileSidebarSheet({
         initial={{ opacity: 0 }}
         role="dialog"
         style={{ height: sheetHeight }}
+        transition={{ opacity: { duration: 0.25 } }}
       >
         <motion.div
           animate={{ opacity: 1 }}
@@ -315,7 +317,7 @@ function MobileSidebarSheet({
         </motion.div>
         <motion.div
           animate={{ opacity: 1, y: 0 }}
-          className="flex h-full min-h-0 w-full flex-col overflow-y-auto pt-1 pb-2"
+          className="flex min-h-0 flex-1 w-full flex-col overflow-y-auto pt-1 pb-2"
           initial={{ opacity: 0, y: 16 }}
           transition={{ delay: 0.05, duration: 0.3 }}
         >
