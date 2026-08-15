@@ -247,7 +247,7 @@ function MobileSidebarSheet({
         aria-label="Chat threads"
         aria-modal="true"
         className={cn(
-          "absolute inset-x-0 bottom-0 flex flex-col overflow-hidden text-sidebar-foreground glass-floating",
+          "!absolute inset-x-0 bottom-0 flex flex-col overflow-hidden text-sidebar-foreground glass-floating",
           expanded ? "rounded-t-none" : "rounded-t-xl border-t border-border"
         )}
         data-mobile="true"
