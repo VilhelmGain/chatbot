@@ -149,7 +149,8 @@ test.describe("Model Selector", () => {
     await highEffort.click();
 
     await expect(page.getByPlaceholder("Search models...")).not.toBeVisible();
-    await expect(modelButton).toHaveText("Kimi K2.5 (high)");
+    await expect(modelButton).toContainText("Kimi K2.5");
+    await expect(modelButton).toContainText("High");
   });
 
   test("updates the effort label when changing the effort of the already-selected model", async ({
@@ -163,7 +164,8 @@ test.describe("Model Selector", () => {
     await page
       .getByRole("button", { name: "Set reasoning effort to high" })
       .click();
-    await expect(modelButton).toHaveText("Kimi K2.5 (high)");
+    await expect(modelButton).toContainText("Kimi K2.5");
+    await expect(modelButton).toContainText("High");
 
     await modelButton.click();
     // Reopening the picker for an already-selected reasoning model shows its
@@ -174,7 +176,8 @@ test.describe("Model Selector", () => {
       .click();
 
     await expect(page.getByPlaceholder("Search models...")).not.toBeVisible();
-    await expect(modelButton).toHaveText("Kimi K2.5 (medium)");
+    await expect(modelButton).toContainText("Kimi K2.5");
+    await expect(modelButton).toContainText("Medium");
   });
 
   test("supports keyboard interaction on the reasoning slider", async ({
@@ -194,6 +197,7 @@ test.describe("Model Selector", () => {
     await slider.press("End");
 
     await expect(page.getByPlaceholder("Search models...")).not.toBeVisible();
-    await expect(modelButton).toHaveText("Kimi K2.5 (max)");
+    await expect(modelButton).toContainText("Kimi K2.5");
+    await expect(modelButton).toContainText("Max");
   });
 });
