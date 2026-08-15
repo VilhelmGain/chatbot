@@ -302,7 +302,7 @@ function SidebarRail({ className, ...props }: React.ComponentProps<"button">) {
         {...props}
       />
       <div className={cn(
-        "pointer-events-none absolute bottom-0 left-0 w-[100vw] rounded-tl-lg border-t border-l border-border opacity-0 transition-opacity duration-150 group-hover/rail:opacity-100",
+        "pointer-events-none absolute bottom-0 left-0 w-0 border-l border-border opacity-0 transition-opacity duration-150 group-hover/rail:opacity-100",
         "top-0"
       )} />
     </div>
