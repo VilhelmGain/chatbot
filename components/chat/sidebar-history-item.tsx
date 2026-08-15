@@ -187,10 +187,9 @@ const PureChatItem = ({
           >
             {isRegenerating ? (
               <span className="flex min-w-0 items-center gap-1.5">
-                <LoaderIcon
-                  className="shrink-0 animate-spin text-sidebar-primary"
-                  size={12}
-                />
+                <span className="shrink-0 animate-spin text-sidebar-primary">
+                  <LoaderIcon size={12} />
+                </span>
                 <span className="truncate bg-clip-text text-transparent [animation:shimmer_1.5s_linear_infinite] [background-image:linear-gradient(90deg,transparent,color-mix(in_srgb,var(--foreground)_45%,transparent),transparent)] [background-size:200%_100%]">
                   {title}
                 </span>
