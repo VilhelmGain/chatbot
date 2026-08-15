@@ -17,6 +17,7 @@ import { Artifact } from "./artifact";
 import { DataStreamHandler } from "./data-stream-handler";
 import { submitEditedMessage } from "./message-editor";
 import { Messages } from "./messages";
+import { MobileSidebarToggle } from "./mobile-sidebar-toggle";
 import { MultimodalInput } from "./multimodal-input";
 
 export function ChatShell() {
@@ -150,6 +151,8 @@ export function ChatShell() {
               setMessages={setMessages}
               status={status}
             />
+
+            <MobileSidebarToggle className="absolute left-3 top-3 z-20" />
 
             <div className="sticky bottom-0 z-10 mx-auto flex w-full max-w-4xl gap-2 px-2 pb-3 md:px-4 md:pb-4">
               {!isReadonly && (
