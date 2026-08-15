@@ -53,6 +53,7 @@ import {
   PromptInputTextarea,
   PromptInputTools,
 } from "../ai-elements/prompt-input";
+import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { useSidebar } from "../ui/sidebar";
 import { Slider } from "../ui/slider";
@@ -1158,11 +1159,7 @@ function PureModelSelectorCompact({
     );
   }
 
-  const selectedModelName = selectedModel
-    ? reasoningEffort === "default"
-      ? selectedModel.name
-      : `${selectedModel.name} (${reasoningEffort})`
-    : null;
+  const selectedModelName = selectedModel?.name ?? null;
 
   return (
     <ModelSelector onOpenChange={handleOpenChange} open={open}>
@@ -1183,6 +1180,14 @@ function PureModelSelectorCompact({
             <>
               {provider ? <ModelSelectorLogo provider={provider} /> : null}
               <ModelSelectorName>{selectedModelName}</ModelSelectorName>
+              {reasoningEffort === "default" ? null : (
+                <Badge
+                  className="h-4 rounded px-1.5 text-[10px] font-medium capitalize"
+                  variant="outline"
+                >
+                  {reasoningEffort}
+                </Badge>
+              )}
             </>
           )}
         </Button>
