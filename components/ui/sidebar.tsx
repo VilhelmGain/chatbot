@@ -9,13 +9,6 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
   Tooltip,
@@ -23,7 +16,8 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { PanelLeftIcon } from "lucide-react"
-import { motion } from "framer-motion"
+import { animate, motion, useMotionValue } from "framer-motion"
+import { createPortal } from "react-dom"
 
 const SIDEBAR_COOKIE_NAME = "sidebar_state"
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7
@@ -142,13 +136,203 @@ function SidebarProvider({
   )
 }
 
+const MOBILE_SIDEBAR_PARTIAL_RATIO = 0.7
+
+function MobileSidebarSheet({
+  open,
+  onDismiss,
+  children,
+}: {
+  open: boolean
+  onDismiss: () => void
+  children: React.ReactNode
+}) {
+  const [expanded, setExpanded] = React.useState(false)
+  const expandedRef = React.useRef(false)
+  const [mounted, setMounted] = React.useState(false)
+  const sheetHeight = useMotionValue(0)
+  const viewportHeight = React.useRef(0)
+  const dragStartHeight = React.useRef(0)
+
+  React.useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  React.useEffect(() => {
+    if (!open) {
+      sheetHeight.set(0)
+      return
+    }
+
+    expandedRef.current = false
+    setExpanded(false)
+    viewportHeight.current =
+      window.visualViewport?.height ?? window.innerHeight
+    animate(
+      sheetHeight,
+      Math.round(viewportHeight.current * MOBILE_SIDEBAR_PARTIAL_RATIO),
+      { type: "spring", stiffness: 340, damping: 42 }
+    )
+
+    document.body.style.overflow = "hidden"
+    return () => {
+      document.body.style.overflow = ""
+    }
+  }, [open, sheetHeight])
+
+  const snapTo = React.useCallback(
+    (target: number) => {
+      animate(sheetHeight, target, {
+        type: "spring",
+        stiffness: 360,
+        damping: 44,
+      })
+    },
+    [sheetHeight]
+  )
+
+  const requestDismiss = React.useCallback(() => {
+    animate(sheetHeight, 0, {
+      duration: 0.18,
+      ease: "easeIn",
+      onComplete: onDismiss,
+    })
+  }, [onDismiss, sheetHeight])
+
+  React.useEffect(() => {
+    if (!open) {
+      return
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") {
+        return
+      }
+
+      const otherDialogOpen = document.querySelector(
+        '[data-slot="dialog-content"][data-state="open"], [data-slot="alert-dialog-content"][data-state="open"]'
+      )
+      if (otherDialogOpen) {
+        return
+      }
+
+      event.stopPropagation()
+      requestDismiss()
+    }
+
+    document.addEventListener("keydown", handleKeyDown, true)
+    return () => document.removeEventListener("keydown", handleKeyDown, true)
+  }, [open, requestDismiss])
+
+  if (!mounted || !open) {
+    return null
+  }
+
+  const viewportHeightPx = viewportHeight.current
+  const partialHeight = Math.round(
+    viewportHeightPx * MOBILE_SIDEBAR_PARTIAL_RATIO
+  )
+
+  return createPortal(
+    <div className="fixed inset-0 z-50">
+      <motion.div
+        animate={{ opacity: 1 }}
+        className="absolute inset-0 bg-black/50 supports-backdrop-filter:backdrop-blur-sm"
+        initial={{ opacity: 0 }}
+        onClick={requestDismiss}
+        transition={{ duration: 0.25 }}
+      />
+      <motion.div
+        aria-label="Chat threads"
+        aria-modal="true"
+        className={cn(
+          "absolute inset-x-0 bottom-0 flex flex-col overflow-hidden text-sidebar-foreground glass-floating",
+          expanded ? "rounded-t-none" : "rounded-t-xl border-t border-border"
+        )}
+        data-mobile="true"
+        data-sidebar="sidebar"
+        initial={{ opacity: 0 }}
+        role="dialog"
+        style={{ height: sheetHeight }}
+      >
+        <motion.div
+          animate={{ opacity: 1 }}
+          className="flex shrink-0 touch-none cursor-grab items-center justify-center py-2.5 active:cursor-grabbing"
+          initial={{ opacity: 0 }}
+          onPanStart={() => {
+            dragStartHeight.current = sheetHeight.get()
+          }}
+          onPan={(_, info) => {
+            const next = Math.min(
+              Math.max(dragStartHeight.current - info.offset.y, 0),
+              viewportHeightPx
+            )
+            sheetHeight.set(next)
+          }}
+          onPanEnd={(_, info) => {
+            const delta = sheetHeight.get() - dragStartHeight.current
+            const velocity = info.velocity.y
+
+            if (expandedRef.current) {
+              if (delta < -viewportHeightPx * 0.3 || velocity > 900) {
+                requestDismiss()
+              } else if (delta < -viewportHeightPx * 0.12 || velocity > 550) {
+                expandedRef.current = false
+                setExpanded(false)
+                snapTo(partialHeight)
+              } else {
+                snapTo(viewportHeightPx)
+              }
+            } else if (delta > viewportHeightPx * 0.2 || velocity < -700) {
+              expandedRef.current = true
+              setExpanded(true)
+              snapTo(viewportHeightPx)
+            } else if (delta < -viewportHeightPx * 0.2 || velocity > 700) {
+              requestDismiss()
+            } else {
+              snapTo(partialHeight)
+            }
+          }}
+          onTap={() => {
+            if (expandedRef.current) {
+              expandedRef.current = false
+              setExpanded(false)
+              snapTo(partialHeight)
+            } else {
+              expandedRef.current = true
+              setExpanded(true)
+              snapTo(viewportHeightPx)
+            }
+          }}
+          transition={{ duration: 0.2 }}
+        >
+          <motion.div
+            animate={{ scaleX: 1 }}
+            className="h-1.5 w-12 rounded-full bg-sidebar-foreground/20"
+            initial={{ scaleX: 0.5 }}
+            transition={{ delay: 0.08, duration: 0.25 }}
+          />
+        </motion.div>
+        <motion.div
+          animate={{ opacity: 1, y: 0 }}
+          className="flex h-full min-h-0 w-full flex-col overflow-y-auto pt-1 pb-2"
+          initial={{ opacity: 0, y: 16 }}
+          transition={{ delay: 0.05, duration: 0.3 }}
+        >
+          {children}
+        </motion.div>
+      </motion.div>
+    </div>,
+    document.body
+  )
+}
+
 function Sidebar({
   side = "left",
   variant = "sidebar",
   collapsible = "offcanvas",
   className,
   children,
-  dir,
   ...props
 }: React.ComponentProps<"div"> & {
   side?: "left" | "right"
@@ -174,40 +358,12 @@ function Sidebar({
 
   if (isMobile) {
     return (
-      <Sheet open={openMobile} onOpenChange={setOpenMobile} {...props}>
-        <SheetContent
-          dir={dir}
-          data-sidebar="sidebar"
-          data-slot="sidebar"
-          data-mobile="true"
-          className="inset-x-0 bottom-0 top-auto h-[70dvh]! w-full rounded-t-xl border-t border-border glass-floating p-0 text-sidebar-foreground [&>button]:hidden"
-          showCloseButton={false}
-          side="bottom"
-        >
-          <SheetHeader className="sr-only">
-            <SheetTitle>Sidebar</SheetTitle>
-            <SheetDescription>Displays the mobile sidebar.</SheetDescription>
-          </SheetHeader>
-          <motion.div
-            animate={{ opacity: 1, y: 0 }}
-            className="flex h-full min-h-0 w-full flex-col"
-            initial={{ opacity: 0, y: 24 }}
-            transition={{
-              delay: 0.08,
-              duration: 0.35,
-              ease: [0.22, 1, 0.36, 1],
-            }}
-          >
-            <motion.div
-              animate={{ scaleX: 1 }}
-              className="mx-auto mt-2 h-1 w-10 rounded-full bg-sidebar-foreground/20"
-              initial={{ scaleX: 0.4 }}
-              transition={{ delay: 0.12, duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-            />
-            <div className="flex h-full min-h-0 w-full flex-col overflow-y-auto pt-2">{children}</div>
-          </motion.div>
-        </SheetContent>
-      </Sheet>
+      <MobileSidebarSheet
+        onDismiss={() => setOpenMobile(false)}
+        open={openMobile}
+      >
+        {children}
+      </MobileSidebarSheet>
     )
   }
 
