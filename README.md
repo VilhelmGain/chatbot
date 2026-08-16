@@ -1,6 +1,22 @@
-# Chatbot
+# Visbyr Chat
 
 A multi-provider AI chatbot built with Next.js, the AI SDK, and Drizzle ORM. Supports OpenAI, Anthropic, Google, xAI, and user-configured custom providers.
+
+## Features
+
+- **Multi-provider AI chat** — Add providers (OpenAI, Anthropic, or any OpenAI-compatible endpoint) with encrypted API keys
+- **Model catalog** — Automatic model discovery with capability detection (tools, vision, reasoning)
+- **Streaming with resumption** — Resumable streams across reconnects via Redis
+- **Tool system** — Web search, URL fetch, weather, document create/edit/update, writing suggestions, and Python execution
+- **Artifacts** — In-app code, text, spreadsheet, and image artifacts with live editing and versioning
+- **Rich text editor** — ProseMirror-based document editing
+- **Reasoning effort control** — Per-model reasoning levels (none through max)
+- **User settings** — Customizable themes, fonts, default model, tool enable/disable, enter behavior
+- **Demo mode** — Zero-dependency mode with in-memory DB, mock AI, and auto-auth for quick previews
+- **Rate limiting** — IP-based (Redis) and per-user configurable rate limits
+- **Export** — Chat and attachment export to markdown
+- **Mobile support** — Mobile-specific keyboard layouts, message actions, and sidebar toggle
+- **Legal pages** — Privacy policy and terms of service
 
 ## Tech Stack
 
@@ -10,7 +26,8 @@ A multi-provider AI chatbot built with Next.js, the AI SDK, and Drizzle ORM. Sup
 - **Database:** Postgres via [Drizzle ORM](https://orm.drizzle.team)
 - **Cache:** Redis (optional — rate limiting and stream resumption)
 - **Auth:** [Clerk](https://clerk.com) (hosted sign-in; chat requires a signed-in account)
-- **Artifacts:** In-app code, spreadsheet, image, and text artifacts
+- **Python:** Pyodide (in-browser Python execution)
+- **Editor:** ProseMirror (rich text), CodeMirror (code artifacts)
 
 ## Prerequisites
 
@@ -51,6 +68,7 @@ Optional:
 |---|---|
 | `REDIS_URL` | Enables rate limiting and stream resumption |
 | `MAX_MESSAGES_PER_HOUR` | Rate limit for logged-in users (0 or unset = unlimited) |
+| `DEMO_MODE` | Set to `1` for zero-dependency demo mode (no Postgres, Redis, Clerk, or API keys needed) |
 
 ### 3. Run database migrations
 
@@ -116,8 +134,11 @@ Model capabilities (tools, vision, reasoning) are defined in the catalog at `lib
 | `pnpm fix` | Auto-fix lint issues |
 | `pnpm test` | Playwright e2e tests (sets `PLAYWRIGHT=True` for mock AI) |
 | `pnpm db:migrate` | Run Drizzle migrations |
-| `pnpm db:studio` | Open Drizzle Studio |
 | `pnpm db:generate` | Generate migration files |
+| `pnpm db:studio` | Open Drizzle Studio |
+| `pnpm db:push` | Push schema to database |
+| `pnpm db:pull` | Pull schema from database |
+| `pnpm db:check` | Check schema drift |
 
 ## Testing
 
@@ -130,14 +151,21 @@ pnpm test
 ## Project Structure
 
 ```
-app/(chat)/         # Chat UI and API routes
-app/(auth)/auth.ts  # Session helper (Clerk-backed, mocked under Playwright)
-lib/ai/             # Model catalog, providers, prompts, tools
-lib/db/             # Drizzle schema, migrations, queries
-lib/artifacts/      # Artifact rendering (code, sheet, image, text)
-components/         # React components
-artifacts/          # Server actions for artifact generation
-tests/e2e/          # Playwright tests
+app/(chat)/                # Chat UI, API routes, and settings
+app/(auth)/auth.ts         # Session helper (Clerk-backed, mocked under Playwright)
+app/(legal)/               # Privacy policy and terms of service
+artifacts/                 # Server actions and rendering for code, text, sheet, image artifacts
+components/
+  ai-elements/             # AI response rendering (markdown, code, reasoning, tools)
+  chat/                    # Chat UI (sidebar, messages, input, toolbar, slash commands)
+  settings/                # Settings UI (providers, models, tools, preferences)
+  ui/                      # shadcn/ui primitives
+hooks/                     # React hooks (chat state, scroll, mobile, viewport)
+lib/ai/                    # Model catalog, providers, prompts, tools
+lib/db/                    # Drizzle schema, migrations, queries, in-memory store
+lib/editor/                # ProseMirror-based rich text editor
+lib/export/                # Chat and attachment export
+tests/e2e/                 # Playwright tests
 ```
 
 ## License
