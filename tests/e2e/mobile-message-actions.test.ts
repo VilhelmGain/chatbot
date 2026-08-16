@@ -163,9 +163,17 @@ test("mobile message menus expose edit, copy, fork, and nerd stats", async ({
   await expect(menu).toBeVisible();
 
   const statsItem = menu.getByTestId("message-stats-menu-item");
-  await expect(statsItem).toContainText("tps");
-  await expect(statsItem).toContainText("Tokens");
-  await expect(statsItem).toContainText("Time-to-first-token:");
+  await expect(statsItem).toContainText("Stats for nerds");
+  await statsItem.click();
+  const statsContent = page.getByTestId("message-stats-content");
+  await expect(statsContent).toBeVisible();
+  await expect(statsContent).toContainText("Tokens / second");
+  await expect(statsContent).toContainText("Time to first token");
+  await expect(statsContent).toContainText("Input tokens");
+  await expect(statsContent).toContainText("Cache hit input tokens");
+  await expect(statsContent).toContainText("Cache miss input tokens");
+  await expect(statsContent).toContainText("Output tokens");
+  await expect(statsContent).toContainText("Reasoning tokens");
 });
 
 test("mobile attachment preview exposes remove without hover", async ({

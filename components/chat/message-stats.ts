@@ -2,16 +2,28 @@ import type { ChatMessage } from "@/lib/types";
 
 export type MessageNerdStats = {
   timeToFirstToken: string;
-  tokens: number;
   tokensPerSecond: string;
+  inputTokens: number;
+  cacheHitInputTokens: number;
+  cacheMissInputTokens: number;
+  outputTokens: number;
+  reasoningTokens: number;
 };
 
 export function getMessageNerdStats(
   message: ChatMessage,
   statsForNerdsEnabled: boolean
 ): MessageNerdStats | null {
-  const { modelName, outputTokens, timeToFirstToken, tokensPerSecond } =
-    message.metadata ?? {};
+  const {
+    modelName,
+    outputTokens,
+    timeToFirstToken,
+    tokensPerSecond,
+    inputTokens,
+    cacheHitInputTokens,
+    cacheMissInputTokens,
+    reasoningTokens,
+  } = message.metadata ?? {};
 
   if (
     message.role !== "assistant" ||
@@ -25,8 +37,12 @@ export function getMessageNerdStats(
   }
 
   return {
+    cacheHitInputTokens: Math.round(cacheHitInputTokens ?? 0),
+    cacheMissInputTokens: Math.round(cacheMissInputTokens ?? 0),
+    inputTokens: Math.round(inputTokens ?? 0),
+    outputTokens: Math.round(outputTokens),
+    reasoningTokens: Math.round(reasoningTokens ?? 0),
     timeToFirstToken: (timeToFirstToken / 1000).toFixed(1),
-    tokens: Math.round(outputTokens),
     tokensPerSecond: tokensPerSecond.toFixed(2),
   };
 }
