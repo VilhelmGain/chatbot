@@ -11,6 +11,7 @@ import type {
   CustomProvider,
   DBMessage,
   Document,
+  ProviderDefaultConfig,
   Stream,
   Suggestion,
   ToolConfig,
@@ -67,6 +68,7 @@ function seedProviderAndModel(userId: string) {
   const provider: CustomProvider = {
     baseURL: "http://localhost:9999/v1",
     createdAt: now,
+    defaultConfig: null,
     encryptedApiKey: "",
     id: providerId,
     iv: "",
@@ -80,10 +82,12 @@ function seedProviderAndModel(userId: string) {
 
   const model: CustomModel = {
     capabilities: { reasoning: false, tools: true, vision: false },
+    capabilitiesIsCustom: false,
     createdAt: now,
     id: generateUUID(),
     modelId: "chat-model",
     name: "Mock Chat Model",
+    nameIsCustom: false,
     providerId,
   };
   store.models.set(model.id, model);
@@ -552,6 +556,7 @@ function getCustomProvidersByUserId({
     .map((provider) => ({
       baseURL: provider.baseURL,
       createdAt: provider.createdAt,
+      defaultConfig: provider.defaultConfig,
       id: provider.id,
       name: provider.name,
       providerKey: provider.providerKey,
@@ -588,6 +593,7 @@ function createCustomProvider({
   const provider: CustomProvider = {
     baseURL,
     createdAt: now,
+    defaultConfig: null,
     encryptedApiKey: "",
     id: generateUUID(),
     iv: "",
@@ -605,6 +611,7 @@ function createCustomProvider({
 function updateCustomProvider({
   apiKey,
   baseURL,
+  defaultConfig,
   id,
   name,
   type,
@@ -612,6 +619,7 @@ function updateCustomProvider({
 }: {
   apiKey?: string;
   baseURL?: string;
+  defaultConfig?: ProviderDefaultConfig | null;
   id: string;
   name?: string;
   type?: "openai" | "anthropic";
@@ -627,6 +635,7 @@ function updateCustomProvider({
     ...(name === undefined ? {} : { name }),
     ...(baseURL === undefined ? {} : { baseURL }),
     ...(type === undefined ? {} : { type }),
+    ...(defaultConfig === undefined ? {} : { defaultConfig }),
     updatedAt: new Date(),
   };
   if (apiKey !== undefined) {
@@ -665,21 +674,27 @@ function getCustomModelsByProviderId({
 
 function createCustomModel({
   capabilities,
+  capabilitiesIsCustom,
   modelId,
   name,
+  nameIsCustom,
   providerId,
 }: {
   capabilities: ModelCapabilities;
+  capabilitiesIsCustom?: boolean;
   modelId: string;
   name: string;
+  nameIsCustom?: boolean;
   providerId: string;
 }): CustomModel {
   const model: CustomModel = {
     capabilities,
+    capabilitiesIsCustom: capabilitiesIsCustom ?? false,
     createdAt: new Date(),
     id: generateUUID(),
     modelId,
     name,
+    nameIsCustom: nameIsCustom ?? false,
     providerId,
   };
   store.models.set(model.id, model);
@@ -692,8 +707,10 @@ function createCustomModels({
 }: {
   models: Array<{
     capabilities: ModelCapabilities;
+    capabilitiesIsCustom?: boolean;
     modelId: string;
     name: string;
+    nameIsCustom?: boolean;
   }>;
   providerId: string;
 }): CustomModel[] {
@@ -703,10 +720,12 @@ function createCustomModels({
 
   const created = models.map((model) => ({
     capabilities: model.capabilities,
+    capabilitiesIsCustom: model.capabilitiesIsCustom ?? false,
     createdAt: new Date(),
     id: generateUUID(),
     modelId: model.modelId,
     name: model.name,
+    nameIsCustom: model.nameIsCustom ?? false,
     providerId,
   }));
   for (const model of created) {
@@ -731,13 +750,17 @@ function deleteCustomModel({
 
 function updateCustomModel({
   capabilities,
+  capabilitiesIsCustom,
   id,
   name,
+  nameIsCustom,
   providerId,
 }: {
   capabilities?: ModelCapabilities;
+  capabilitiesIsCustom?: boolean;
   id: string;
   name?: string;
+  nameIsCustom?: boolean;
   providerId: string;
 }): CustomModel {
   const existing = store.models.get(id);
@@ -747,7 +770,9 @@ function updateCustomModel({
   const updated: CustomModel = {
     ...existing,
     ...(capabilities === undefined ? {} : { capabilities }),
+    ...(capabilitiesIsCustom === undefined ? {} : { capabilitiesIsCustom }),
     ...(name === undefined ? {} : { name }),
+    ...(nameIsCustom === undefined ? {} : { nameIsCustom }),
   };
   store.models.set(id, updated);
   return updated;

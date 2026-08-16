@@ -2,8 +2,10 @@ import { auth } from "@/app/(auth)/auth";
 import { getLiveCatalogModelsForProvider } from "@/lib/ai/catalog";
 import {
   createCustomModels,
+  getCustomModelsByProviderId,
   getCustomProviderById,
   getDecryptedApiKey,
+  updateCustomProvider,
 } from "@/lib/db/queries";
 import { ChatbotError } from "@/lib/errors";
 
@@ -62,7 +64,16 @@ export async function POST(
       : [];
     const catalogMap = new Map(catalogModels.map((m) => [m.modelId, m]));
 
-    const modelEntries = models.map((m: { id: string }) => {
+    const modelEntries: Array<{
+      capabilities: {
+        reasoning: boolean;
+        tools: boolean;
+        vision: boolean;
+        reasoningEfforts?: string[];
+      };
+      modelId: string;
+      name: string;
+    }> = models.map((m: { id: string }) => {
       const catalogEntry = catalogMap.get(m.id);
       return {
         capabilities: catalogEntry?.capabilities ?? {
@@ -75,8 +86,22 @@ export async function POST(
       };
     });
 
+    await updateCustomProvider({
+      defaultConfig: { models: modelEntries },
+      id,
+      userId: session.user.id,
+    });
+
+    const existingModels = await getCustomModelsByProviderId({
+      providerId: id,
+    });
+    const existingModelIds = new Set(existingModels.map((m) => m.modelId));
+    const newModels = modelEntries.filter(
+      (m) => !existingModelIds.has(m.modelId)
+    );
+
     const created = await createCustomModels({
-      models: modelEntries,
+      models: newModels,
       providerId: id,
     });
 

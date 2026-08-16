@@ -57,6 +57,13 @@
       "when": 1786616754111,
       "tag": "0008_mature_echo",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1786869665012,
+      "tag": "0009_wakeful_pestilence",
+      "breakpoints": true
     }
   ]
 }

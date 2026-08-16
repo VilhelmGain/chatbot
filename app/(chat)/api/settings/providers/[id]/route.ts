@@ -35,6 +35,7 @@ export async function GET(
   return Response.json({
     baseURL: provider.baseURL,
     createdAt: provider.createdAt,
+    hasDefaultConfig: Boolean(provider.defaultConfig),
     id: provider.id,
     name: provider.name,
     type: provider.type,

@@ -122,6 +122,7 @@ export type Stream = InferSelectModel<typeof stream>;
 export const customProvider = pgTable("CustomProvider", {
   baseURL: varchar("baseURL", { length: 512 }).notNull(),
   createdAt: timestamp("createdAt").notNull().defaultNow(),
+  defaultConfig: json("defaultConfig").$type<ProviderDefaultConfig>(),
   encryptedApiKey: text("encryptedApiKey").notNull(),
   id: uuid("id").primaryKey().notNull().defaultRandom(),
   iv: varchar("iv", { length: 32 }).notNull(),
@@ -136,12 +137,29 @@ export const customProvider = pgTable("CustomProvider", {
 
 export type CustomProvider = InferSelectModel<typeof customProvider>;
 
+export type ProviderDefaultConfig = {
+  models: Array<{
+    modelId: string;
+    name: string;
+    capabilities: {
+      tools: boolean;
+      vision: boolean;
+      reasoning: boolean;
+      reasoningEfforts?: string[];
+    };
+  }>;
+};
+
 export const customModel = pgTable("CustomModel", {
   capabilities: json("capabilities").notNull(),
+  capabilitiesIsCustom: boolean("capabilitiesIsCustom")
+    .notNull()
+    .default(false),
   createdAt: timestamp("createdAt").notNull().defaultNow(),
   id: uuid("id").primaryKey().notNull().defaultRandom(),
   modelId: varchar("modelId", { length: 256 }).notNull(),
   name: varchar("name", { length: 256 }).notNull(),
+  nameIsCustom: boolean("nameIsCustom").notNull().default(false),
   providerId: uuid("providerId")
     .notNull()
     .references(() => customProvider.id, { onDelete: "cascade" }),

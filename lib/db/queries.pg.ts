@@ -30,6 +30,7 @@ import {
   type DBMessage,
   document,
   message,
+  type ProviderDefaultConfig,
   type Suggestion,
   stream,
   suggestion,
@@ -663,6 +664,7 @@ export async function getCustomProvidersByUserId({
       .select({
         baseURL: customProvider.baseURL,
         createdAt: customProvider.createdAt,
+        defaultConfig: customProvider.defaultConfig,
         id: customProvider.id,
         name: customProvider.name,
         providerKey: customProvider.providerKey,
@@ -741,6 +743,7 @@ export async function createCustomProvider({
 export async function updateCustomProvider({
   apiKey,
   baseURL,
+  defaultConfig,
   id,
   name,
   type,
@@ -748,6 +751,7 @@ export async function updateCustomProvider({
 }: {
   apiKey?: string;
   baseURL?: string;
+  defaultConfig?: ProviderDefaultConfig | null;
   id: string;
   name?: string;
   type?: "openai" | "anthropic";
@@ -763,6 +767,9 @@ export async function updateCustomProvider({
   }
   if (type !== undefined) {
     updateData.type = type;
+  }
+  if (defaultConfig !== undefined) {
+    updateData.defaultConfig = defaultConfig;
   }
 
   if (apiKey !== undefined) {
@@ -1071,13 +1078,17 @@ export async function getCustomModelsByProviderId({
 
 export async function createCustomModel({
   capabilities,
+  capabilitiesIsCustom,
   modelId,
   name,
+  nameIsCustom,
   providerId,
 }: {
   capabilities: ModelCapabilities;
+  capabilitiesIsCustom?: boolean;
   modelId: string;
   name: string;
+  nameIsCustom?: boolean;
   providerId: string;
 }): Promise<CustomModel> {
   try {
@@ -1085,10 +1096,12 @@ export async function createCustomModel({
       .insert(customModel)
       .values({
         capabilities,
+        capabilitiesIsCustom: capabilitiesIsCustom ?? false,
         createdAt: new Date(),
         id: generateUUID(),
         modelId,
         name,
+        nameIsCustom: nameIsCustom ?? false,
         providerId,
       })
       .returning();
@@ -1105,8 +1118,10 @@ export async function createCustomModels({
 }: {
   models: Array<{
     capabilities: ModelCapabilities;
+    capabilitiesIsCustom?: boolean;
     modelId: string;
     name: string;
+    nameIsCustom?: boolean;
   }>;
   providerId: string;
 }): Promise<CustomModel[]> {
@@ -1120,10 +1135,12 @@ export async function createCustomModels({
       .values(
         models.map((m) => ({
           capabilities: m.capabilities,
+          capabilitiesIsCustom: m.capabilitiesIsCustom ?? false,
           createdAt: new Date(),
           id: generateUUID(),
           modelId: m.modelId,
           name: m.name,
+          nameIsCustom: m.nameIsCustom ?? false,
           providerId,
         }))
       )
@@ -1163,13 +1180,17 @@ export async function deleteCustomModel({
 
 export async function updateCustomModel({
   capabilities,
+  capabilitiesIsCustom,
   id,
   name,
+  nameIsCustom,
   providerId,
 }: {
   capabilities?: ModelCapabilities;
+  capabilitiesIsCustom?: boolean;
   id: string;
   name?: string;
+  nameIsCustom?: boolean;
   providerId: string;
 }): Promise<CustomModel> {
   try {
@@ -1177,8 +1198,14 @@ export async function updateCustomModel({
     if (capabilities !== undefined) {
       updates.capabilities = capabilities;
     }
+    if (capabilitiesIsCustom !== undefined) {
+      updates.capabilitiesIsCustom = capabilitiesIsCustom;
+    }
     if (name !== undefined) {
       updates.name = name;
+    }
+    if (nameIsCustom !== undefined) {
+      updates.nameIsCustom = nameIsCustom;
     }
 
     if (Object.keys(updates).length === 0) {
@@ -1266,10 +1293,12 @@ export async function getCustomModelsForUser({
     const results = await db
       .select({
         capabilities: customModel.capabilities,
+        capabilitiesIsCustom: customModel.capabilitiesIsCustom,
         createdAt: customModel.createdAt,
         id: customModel.id,
         modelId: customModel.modelId,
         name: customModel.name,
+        nameIsCustom: customModel.nameIsCustom,
         providerId: customModel.providerId,
         providerName: customProvider.name,
         providerType: customProvider.type,

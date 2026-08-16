@@ -72,8 +72,11 @@ export async function PATCH(
 
   const updated = await updateCustomModel({
     capabilities: parsed.data.capabilities,
+    capabilitiesIsCustom:
+      parsed.data.capabilities === undefined ? undefined : true,
     id: modelId,
     name: parsed.data.name,
+    nameIsCustom: parsed.data.name === undefined ? undefined : true,
     providerId: id,
   });
 
