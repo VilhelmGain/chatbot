@@ -41,5 +41,5 @@ jobs:
             NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL=${{ vars.NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL }}
             NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL=${{ vars.NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL }}
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME || lower(github.repository_owner) }}/chat:latest
-            ${{ secrets.DOCKERHUB_USERNAME || lower(github.repository_owner) }}/chat:${{ github.sha }}
+            ${{ secrets.DOCKERHUB_USERNAME || github.repository_owner }}/chat:latest
+            ${{ secrets.DOCKERHUB_USERNAME || github.repository_owner }}/chat:${{ github.sha }}
