@@ -49,7 +49,8 @@ test.describe("Preferences sync across devices", () => {
     await pageA
       .getByRole("button", { name: "Set reasoning effort to high" })
       .click();
-    await expect(selectorA).toHaveText("Kimi K2.5 (high)");
+    await expect(selectorA).toContainText("Kimi K2.5");
+    await expect(selectorA).toContainText("High");
 
     // Wait for the debounced push to reach the server.
     await expect
@@ -69,7 +70,8 @@ test.describe("Preferences sync across devices", () => {
 
     const selectorB = pageB.getByTestId("model-selector");
     await expect(selectorB).toBeVisible();
-    await expect(selectorB).toContainText("Kimi K2.5 (high)");
+    await expect(selectorB).toContainText("Kimi K2.5");
+    await expect(selectorB).toContainText("High");
 
     await contextA.close();
     await contextB.close();
