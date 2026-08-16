@@ -1,10 +1,27 @@
 "use client";
 
-import { Download, Loader2, Plus, Sparkles, Trash2 } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import {
+  Check,
+  Download,
+  Loader2,
+  Pencil,
+  Plus,
+  RotateCcw,
+  Sparkles,
+  Trash2,
+  X,
+} from "lucide-react";
+import {
+  type ChangeEvent,
+  type KeyboardEvent,
+  useCallback,
+  useEffect,
+  useState,
+} from "react";
 import useSWR from "swr";
 import { toast } from "@/components/chat/toast";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { AddModelForm } from "./add-model-form";
 
@@ -15,14 +32,17 @@ type CustomModel = {
     vision: boolean;
     reasoningEfforts?: string[];
   };
+  capabilitiesIsCustom: boolean;
   createdAt: string;
   id: string;
   modelId: string;
   name: string;
+  nameIsCustom: boolean;
   providerId: string;
 };
 
 type ModelManagerProps = {
+  hasDefaultConfig?: boolean;
   providerId: string;
   providerKey: string | null;
 };
@@ -56,7 +76,11 @@ const CAPABILITY_STYLES: Array<{
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
-export function ModelManager({ providerId, providerKey }: ModelManagerProps) {
+export function ModelManager({
+  hasDefaultConfig = false,
+  providerId,
+  providerKey,
+}: ModelManagerProps) {
   const {
     data: models,
     error,
@@ -70,6 +94,8 @@ export function ModelManager({ providerId, providerKey }: ModelManagerProps) {
   const [showAddModel, setShowAddModel] = useState(false);
   const [isDetecting, setIsDetecting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
+  const [confirmReset, setConfirmReset] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
 
   const handleModelAdded = useCallback(() => {
     setShowAddModel(false);
@@ -140,6 +166,37 @@ export function ModelManager({ providerId, providerKey }: ModelManagerProps) {
     setShowAddModel((prev) => !prev);
   }, []);
 
+  const handleReset = useCallback(async () => {
+    if (!confirmReset) {
+      setConfirmReset(true);
+      return;
+    }
+
+    setIsResetting(true);
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/api/settings/providers/${providerId}/reset`,
+        { method: "POST" }
+      );
+      const data = await response.json();
+
+      if (data.error) {
+        toast({ description: data.error, type: "error" });
+      } else {
+        toast({
+          description: `Reset ${data.reset} model(s) to default`,
+          type: "success",
+        });
+        mutate();
+      }
+    } catch {
+      toast({ description: "Reset failed", type: "error" });
+    } finally {
+      setConfirmReset(false);
+      setIsResetting(false);
+    }
+  }, [confirmReset, mutate, providerId]);
+
   useEffect(() => {
     if (error) {
       toast({ description: "Failed to load models", type: "error" });
@@ -191,6 +248,21 @@ export function ModelManager({ providerId, providerKey }: ModelManagerProps) {
             <Plus className="mr-1.5 size-3" />
             Add Model
           </Button>
+          {hasDefaultConfig ? (
+            <Button
+              disabled={isResetting}
+              onClick={handleReset}
+              size="sm"
+              variant={confirmReset ? "destructive" : "outline"}
+            >
+              {isResetting ? (
+                <Loader2 className="mr-1.5 size-3 animate-spin" />
+              ) : (
+                <RotateCcw className="mr-1.5 size-3" />
+              )}
+              {confirmReset ? "Confirm reset?" : "Reset to default"}
+            </Button>
+          ) : null}
         </div>
       </div>
 
@@ -243,6 +315,8 @@ function ModelRow({
 }) {
   const [capabilities, setCapabilities] = useState(model.capabilities);
   const [isSaving, setIsSaving] = useState(false);
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [nameInput, setNameInput] = useState(model.name);
 
   const handleDelete = useCallback(async () => {
     try {
@@ -265,6 +339,62 @@ function ModelRow({
       });
     }
   }, [model.id, onDeleted, providerId]);
+
+  const handleSaveName = useCallback(async () => {
+    const name = nameInput.trim();
+    if (!name || name === model.name) {
+      setIsEditingName(false);
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/api/settings/providers/${providerId}/models/${model.id}`,
+        {
+          body: JSON.stringify({ name }),
+          headers: { "Content-Type": "application/json" },
+          method: "PATCH",
+        }
+      );
+      if (response.ok) {
+        onUpdated();
+        toast({ description: "Model name updated", type: "success" });
+        setIsEditingName(false);
+      } else {
+        toast({ description: "Failed to update model name", type: "error" });
+      }
+    } catch {
+      toast({ description: "Failed to update model name", type: "error" });
+    } finally {
+      setIsSaving(false);
+    }
+  }, [model.id, model.name, nameInput, onUpdated, providerId]);
+
+  const handleCancelEditName = useCallback(() => {
+    setNameInput(model.name);
+    setIsEditingName(false);
+  }, [model.name]);
+
+  const handleStartEditName = useCallback(() => {
+    setNameInput(model.name);
+    setIsEditingName(true);
+  }, [model.name]);
+
+  const handleNameChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
+    setNameInput(e.target.value);
+  }, []);
+
+  const handleNameKeyDown = useCallback(
+    (e: KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === "Enter") {
+        handleSaveName();
+      } else if (e.key === "Escape") {
+        handleCancelEditName();
+      }
+    },
+    [handleCancelEditName, handleSaveName]
+  );
 
   const handleToggleCapability = useCallback(
     async (key: CapabilityKey) => {
@@ -300,7 +430,52 @@ function ModelRow({
   return (
     <div className="flex items-center justify-between rounded-xl bg-transparent px-3 py-2">
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium">{model.name}</p>
+        {isEditingName ? (
+          <div className="mb-1 flex items-center gap-1">
+            <Input
+              className="h-7 max-w-56 px-2 text-sm"
+              onChange={handleNameChange}
+              onKeyDown={handleNameKeyDown}
+              value={nameInput}
+            />
+            <Button
+              className="size-6 p-0"
+              disabled={isSaving}
+              onClick={handleSaveName}
+              size="icon"
+              variant="ghost"
+            >
+              <Check className="size-3.5" />
+            </Button>
+            <Button
+              className="size-6 p-0"
+              disabled={isSaving}
+              onClick={handleCancelEditName}
+              size="icon"
+              variant="ghost"
+            >
+              <X className="size-3.5" />
+            </Button>
+          </div>
+        ) : (
+          <div className="flex items-center gap-1.5">
+            <p className="truncate text-sm font-medium">{model.name}</p>
+            <Button
+              aria-label="Edit model name"
+              className="size-5 p-0"
+              onClick={handleStartEditName}
+              size="icon"
+              variant="ghost"
+            >
+              <Pencil className="size-3 text-muted-foreground" />
+            </Button>
+            {model.nameIsCustom || model.capabilitiesIsCustom ? (
+              <span className="rounded-md bg-foreground/5 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                custom
+              </span>
+            ) : null}
+          </div>
+        )}
         <p className="truncate text-xs text-muted-foreground">
           {model.modelId}
         </p>

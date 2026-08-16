@@ -93,8 +93,10 @@ export async function POST(
   if (singleResult.success) {
     const model = await createCustomModel({
       capabilities: singleResult.data.capabilities,
+      capabilitiesIsCustom: true,
       modelId: singleResult.data.modelId,
       name: singleResult.data.name,
+      nameIsCustom: true,
       providerId: id,
     });
     return Response.json(model, { status: 201 });

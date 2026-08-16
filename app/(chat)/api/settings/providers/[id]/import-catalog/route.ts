@@ -1,11 +1,23 @@
 import { auth } from "@/app/(auth)/auth";
 import { getLiveCatalogModelsForProvider } from "@/lib/ai/catalog";
+import type { ModelCapabilities } from "@/lib/ai/models.client";
 import {
   createCustomModels,
   getCustomModelsByProviderId,
   getCustomProviderById,
+  updateCustomModel,
+  updateCustomProvider,
 } from "@/lib/db/queries";
 import { ChatbotError } from "@/lib/errors";
+
+function capabilitiesEqual(
+  a: ModelCapabilities,
+  b: ModelCapabilities
+): boolean {
+  return (
+    a.reasoning === b.reasoning && a.tools === b.tools && a.vision === b.vision
+  );
+}
 
 export async function POST(
   _request: Request,
@@ -42,24 +54,68 @@ export async function POST(
     );
   }
 
+  await updateCustomProvider({
+    defaultConfig: { models: catalogModels },
+    id,
+    userId: session.user.id,
+  });
+
   const existingModels = await getCustomModelsByProviderId({ providerId: id });
-  const existingModelIds = new Set(existingModels.map((m) => m.modelId));
+  const existingByModelId = new Map(existingModels.map((m) => [m.modelId, m]));
 
-  const newModels = catalogModels.filter(
-    (m) => !existingModelIds.has(m.modelId)
-  );
+  let updated = 0;
+  const newModels: typeof catalogModels = [];
+  const updateOps: Array<{
+    capabilities?: ModelCapabilities;
+    id: string;
+    name?: string;
+  }> = [];
 
-  if (newModels.length === 0) {
-    return Response.json({ imported: 0, models: [] });
+  for (const catalogModel of catalogModels) {
+    const existing = existingByModelId.get(catalogModel.modelId);
+
+    if (!existing) {
+      newModels.push(catalogModel);
+      continue;
+    }
+
+    const patch: { capabilities?: ModelCapabilities; name?: string } = {};
+    if (!existing.nameIsCustom && existing.name !== catalogModel.name) {
+      patch.name = catalogModel.name;
+    }
+    if (
+      !existing.capabilitiesIsCustom &&
+      !capabilitiesEqual(
+        existing.capabilities as ModelCapabilities,
+        catalogModel.capabilities
+      )
+    ) {
+      patch.capabilities = catalogModel.capabilities;
+    }
+
+    if (Object.keys(patch).length > 0) {
+      updateOps.push({ ...patch, id: existing.id });
+    }
   }
 
-  const created = await createCustomModels({
-    models: newModels,
-    providerId: id,
-  });
+  if (updateOps.length > 0) {
+    await Promise.all(
+      updateOps.map((op) => updateCustomModel({ ...op, providerId: id }))
+    );
+    updated = updateOps.length;
+  }
+
+  const created =
+    newModels.length > 0
+      ? await createCustomModels({
+          models: newModels,
+          providerId: id,
+        })
+      : [];
 
   return Response.json({
     imported: created.length,
     models: created,
+    updated,
   });
 }

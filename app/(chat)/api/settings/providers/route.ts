@@ -5,6 +5,7 @@ import {
   createCustomModels,
   createCustomProvider,
   getCustomProvidersByUserId,
+  updateCustomProvider,
 } from "@/lib/db/queries";
 import { ChatbotError } from "@/lib/errors";
 
@@ -27,7 +28,12 @@ export async function GET() {
     userId: session.user.id,
   });
 
-  return Response.json(providers);
+  return Response.json(
+    providers.map((provider) => ({
+      ...provider,
+      hasDefaultConfig: Boolean(provider.defaultConfig),
+    }))
+  );
 }
 
 export async function POST(request: Request) {
@@ -64,6 +70,11 @@ export async function POST(request: Request) {
         await createCustomModels({
           models: catalogModels,
           providerId: provider.id,
+        });
+        await updateCustomProvider({
+          defaultConfig: { models: catalogModels },
+          id: provider.id,
+          userId: session.user.id,
         });
       }
     }

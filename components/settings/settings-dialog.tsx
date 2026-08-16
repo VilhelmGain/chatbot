@@ -59,6 +59,7 @@ import { cn } from "@/lib/utils";
 type CustomProvider = {
   baseURL: string;
   createdAt: string;
+  hasDefaultConfig?: boolean;
   id: string;
   name: string;
   providerKey: string | null;
@@ -629,6 +630,7 @@ function ProviderRow({
       />
       {isExpanded ? (
         <ModelManager
+          hasDefaultConfig={Boolean(provider.hasDefaultConfig)}
           providerId={provider.id}
           providerKey={provider.providerKey}
         />
