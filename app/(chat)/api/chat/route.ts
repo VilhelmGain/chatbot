@@ -362,6 +362,10 @@ export async function POST(request: Request) {
         let hasModelActivity = false;
         let healthCheckTimer: ReturnType<typeof setTimeout> | undefined;
         let outputTokens = 0;
+        let inputTokens = 0;
+        let cacheHitInputTokens = 0;
+        let cacheMissInputTokens = 0;
+        let reasoningTokens = 0;
         let tokensPerSecond: number | undefined;
         let timeToFirstToken: number | undefined;
 
@@ -530,6 +534,13 @@ export async function POST(request: Request) {
               }
               if (part.type === "finish-step") {
                 outputTokens += part.usage.outputTokens ?? 0;
+                inputTokens += part.usage.inputTokens ?? 0;
+                cacheHitInputTokens +=
+                  part.usage.inputTokenDetails?.cacheReadTokens ?? 0;
+                cacheMissInputTokens +=
+                  part.usage.inputTokenDetails?.noCacheTokens ?? 0;
+                reasoningTokens +=
+                  part.usage.outputTokenDetails?.reasoningTokens ?? 0;
                 tokensPerSecond =
                   part.performance.outputTokensPerSecond ??
                   part.performance.effectiveOutputTokensPerSecond;
@@ -537,7 +548,11 @@ export async function POST(request: Request) {
 
                 return {
                   ...baseMessageMetadata,
+                  cacheHitInputTokens,
+                  cacheMissInputTokens,
+                  inputTokens,
                   outputTokens,
+                  reasoningTokens,
                   timeToFirstToken,
                   tokensPerSecond,
                 };
@@ -545,7 +560,17 @@ export async function POST(request: Request) {
               if (part.type === "finish") {
                 return {
                   ...baseMessageMetadata,
+                  cacheHitInputTokens:
+                    part.totalUsage.inputTokenDetails?.cacheReadTokens ??
+                    cacheHitInputTokens,
+                  cacheMissInputTokens:
+                    part.totalUsage.inputTokenDetails?.noCacheTokens ??
+                    cacheMissInputTokens,
+                  inputTokens: part.totalUsage.inputTokens ?? inputTokens,
                   outputTokens: part.totalUsage.outputTokens ?? outputTokens,
+                  reasoningTokens:
+                    part.totalUsage.outputTokenDetails?.reasoningTokens ??
+                    reasoningTokens,
                   timeToFirstToken,
                   tokensPerSecond,
                 };

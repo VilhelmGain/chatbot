@@ -19,7 +19,6 @@ import { DocumentToolResult } from "./document";
 import { DocumentPreview } from "./document-preview";
 import { SparklesIcon } from "./icons";
 import { MessageActions } from "./message-actions";
-import { MessageMeta } from "./message-meta";
 import { MessageReasoning } from "./message-reasoning";
 import { PreviewAttachment } from "./preview-attachment";
 import { Weather } from "./weather";
@@ -650,7 +649,6 @@ const PurePreviewMessage = ({
     <>
       {attachments}
       {parts}
-      {isAssistant && <MessageMeta message={message} />}
       {actions}
     </>
   );

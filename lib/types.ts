@@ -13,7 +13,10 @@ import type { Suggestion } from "./db/schema";
 export type VisibilityType = "private" | "public";
 
 export const messageMetadataSchema = z.object({
+  cacheHitInputTokens: z.number().optional(),
+  cacheMissInputTokens: z.number().optional(),
   createdAt: z.string(),
+  inputTokens: z.number().optional(),
   modelId: z.string().optional(),
   modelName: z.string().optional(),
   outputTokens: z.number().optional(),
@@ -29,6 +32,7 @@ export const messageMetadataSchema = z.object({
       "max",
     ])
     .optional(),
+  reasoningTokens: z.number().optional(),
   timeToFirstToken: z.number().optional(),
   tokensPerSecond: z.number().optional(),
 });
