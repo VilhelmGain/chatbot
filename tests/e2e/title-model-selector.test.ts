@@ -87,7 +87,8 @@ test.describe("Title Model Selector", () => {
     await mediumEffort.click();
 
     await expect(page.getByPlaceholder("Search models...")).not.toBeVisible();
-    await expect(trigger).toHaveText("Kimi K2.5 (medium)");
+    await expect(trigger).toContainText("Kimi K2.5");
+    await expect(trigger).toContainText("Medium");
 
     const cookies = await page.context().cookies();
     const titleModel = cookies.find((c) => c.name === "title-model");

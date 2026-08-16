@@ -1,8 +1,8 @@
-import { expect, test } from "@playwright/test";
+import { expect, type Page, test } from "@playwright/test";
 import { signIn } from "../helpers";
 
 test.describe("Stats for nerds", () => {
-  test("shows model label and hover stats when enabled", async ({ page }) => {
+  test("shows model label and stats popover when enabled", async ({ page }) => {
     await signIn(page);
 
     const providerRes = await page.request.post("/api/settings/providers", {
@@ -97,11 +97,8 @@ test.describe("Stats for nerds", () => {
       "Mock Chat Model"
     );
     await assistant.hover();
-    const stats = assistant.getByTestId("message-nerd-stats");
-    await expect(stats).toHaveCSS("opacity", "1");
-    await expect(stats).toHaveText(
-      /^\d+\.\d{2} tps\s*\d+ Tokens\s*Time-to-first-token: \d+\.\d s$/
-    );
+    await assistant.getByTestId("message-stats-button").click();
+    await expectStatsContent(page);
 
     await page.reload();
     const reloadedAssistant = page.getByTestId("message-assistant").first();
@@ -109,9 +106,21 @@ test.describe("Stats for nerds", () => {
       reloadedAssistant.getByTestId("message-model-label")
     ).toContainText("Mock Chat Model");
     await reloadedAssistant.hover();
-    await expect(reloadedAssistant.getByTestId("message-nerd-stats")).toHaveCSS(
-      "opacity",
-      "1"
-    );
+    await reloadedAssistant.getByTestId("message-stats-button").click();
+    await expectStatsContent(page);
   });
 });
+
+async function expectStatsContent(page: Page) {
+  const statsContent = page.getByTestId("message-stats-content");
+  await expect(statsContent).toBeVisible();
+  await expect(statsContent).toContainText("Mock Chat Model");
+  const text = await statsContent.innerText();
+  expect(text).toMatch(/Tokens \/ second\s+\d+\.\d{2}/);
+  expect(text).toMatch(/Time to first token\s+\d+\.\d s/);
+  expect(text).toMatch(/Input tokens\s+10/);
+  expect(text).toMatch(/Cache hit input tokens\s+0/);
+  expect(text).toMatch(/Cache miss input tokens\s+10/);
+  expect(text).toMatch(/Output tokens\s+20/);
+  expect(text).toMatch(/Reasoning tokens\s+0/);
+}
