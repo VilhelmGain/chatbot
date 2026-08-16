@@ -1188,10 +1188,11 @@ function PureModelSelectorCompact({
               <ModelSelectorName>{selectedModelName}</ModelSelectorName>
               {reasoningEffort === "default" ? null : (
                 <Badge
-                  className="h-4 rounded px-1.5 text-[10px] font-medium capitalize"
+                  className="h-4 rounded px-1.5 text-[10px] font-medium"
                   variant="outline"
                 >
-                  {reasoningEffort}
+                  {reasoningEffort.charAt(0).toUpperCase() +
+                    reasoningEffort.slice(1)}
                 </Badge>
               )}
             </>

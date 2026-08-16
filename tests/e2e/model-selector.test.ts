@@ -167,6 +167,11 @@ test.describe("Model Selector", () => {
     await expect(modelButton).toContainText("Kimi K2.5");
     await expect(modelButton).toContainText("High");
 
+    // Wait for the popover to fully unmount before reopening. Radix keeps the
+    // content mounted during the close animation, and clicking the trigger in
+    // that window can leave it stuck closed (trigger expanded, content closed).
+    await expect(page.locator("[data-slot='popover-content']")).toHaveCount(0);
+
     await modelButton.click();
     // Reopening the picker for an already-selected reasoning model shows its
     // effort picker directly, so changing the effort is a single click.
