@@ -17,6 +17,15 @@ const updateModelSchema = z.object({
     })
     .optional(),
   name: z.string().min(1).max(256).optional(),
+  pricing: z
+    .object({
+      cachedInput: z.number().nonnegative().nullable(),
+      cachedOutput: z.number().nonnegative().nullable(),
+      input: z.number().nonnegative().nullable(),
+      output: z.number().nonnegative().nullable(),
+    })
+    .nullable()
+    .optional(),
 });
 
 export async function DELETE(
@@ -77,6 +86,8 @@ export async function PATCH(
     id: modelId,
     name: parsed.data.name,
     nameIsCustom: parsed.data.name === undefined ? undefined : true,
+    pricing: parsed.data.pricing,
+    pricingIsCustom: parsed.data.pricing === undefined ? undefined : true,
     providerId: id,
   });
 

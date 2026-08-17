@@ -11,6 +11,7 @@ import type {
   CustomProvider,
   DBMessage,
   Document,
+  ModelPricing,
   ProviderDefaultConfig,
   Stream,
   Suggestion,
@@ -34,6 +35,7 @@ type Store = {
   toolConfigs: Map<string, ToolConfig>;
   toolApiKeys: Map<string, string>;
   userSettings: Map<string, UserSettings>;
+  catalogSync?: { id: number; syncedAt: Date | null };
 };
 
 function getOrCreateStore(): Store {
@@ -44,6 +46,7 @@ function getOrCreateStore(): Store {
   if (!globalStore[GLOBAL_STORE_KEY]) {
     globalStore[GLOBAL_STORE_KEY] = {
       apiKeys: new Map(),
+      catalogSync: undefined,
       chats: new Map(),
       documents: [],
       messages: new Map(),
@@ -81,13 +84,18 @@ function seedProviderAndModel(userId: string) {
   store.providers.set(providerId, provider);
 
   const model: CustomModel = {
+    cachedInput: null,
+    cachedOutput: null,
     capabilities: { reasoning: false, tools: true, vision: false },
     capabilitiesIsCustom: false,
     createdAt: now,
     id: generateUUID(),
+    input: null,
     modelId: "chat-model",
     name: "Mock Chat Model",
     nameIsCustom: false,
+    output: null,
+    pricingIsCustom: false,
     providerId,
   };
   store.models.set(model.id, model);
@@ -566,6 +574,15 @@ function getCustomProvidersByUserId({
     }));
 }
 
+function getCatalogSync() {
+  return store.catalogSync;
+}
+
+function updateCatalogSync({ syncedAt }: { syncedAt: Date }) {
+  store.catalogSync = { id: 1, syncedAt };
+  return store.catalogSync;
+}
+
 function getCustomProviderById({
   id,
 }: {
@@ -678,6 +695,8 @@ function createCustomModel({
   modelId,
   name,
   nameIsCustom,
+  pricing,
+  pricingIsCustom,
   providerId,
 }: {
   capabilities: ModelCapabilities;
@@ -685,16 +704,23 @@ function createCustomModel({
   modelId: string;
   name: string;
   nameIsCustom?: boolean;
+  pricing?: ModelPricing | null;
+  pricingIsCustom?: boolean;
   providerId: string;
 }): CustomModel {
   const model: CustomModel = {
+    cachedInput: pricing?.cachedInput ?? null,
+    cachedOutput: pricing?.cachedOutput ?? null,
     capabilities,
     capabilitiesIsCustom: capabilitiesIsCustom ?? false,
     createdAt: new Date(),
     id: generateUUID(),
+    input: pricing?.input ?? null,
     modelId,
     name,
     nameIsCustom: nameIsCustom ?? false,
+    output: pricing?.output ?? null,
+    pricingIsCustom: pricingIsCustom ?? false,
     providerId,
   };
   store.models.set(model.id, model);
@@ -711,6 +737,8 @@ function createCustomModels({
     modelId: string;
     name: string;
     nameIsCustom?: boolean;
+    pricing?: ModelPricing | null;
+    pricingIsCustom?: boolean;
   }>;
   providerId: string;
 }): CustomModel[] {
@@ -719,13 +747,18 @@ function createCustomModels({
   }
 
   const created = models.map((model) => ({
+    cachedInput: model.pricing?.cachedInput ?? null,
+    cachedOutput: model.pricing?.cachedOutput ?? null,
     capabilities: model.capabilities,
     capabilitiesIsCustom: model.capabilitiesIsCustom ?? false,
     createdAt: new Date(),
     id: generateUUID(),
+    input: model.pricing?.input ?? null,
     modelId: model.modelId,
     name: model.name,
     nameIsCustom: model.nameIsCustom ?? false,
+    output: model.pricing?.output ?? null,
+    pricingIsCustom: model.pricingIsCustom ?? false,
     providerId,
   }));
   for (const model of created) {
@@ -754,6 +787,8 @@ function updateCustomModel({
   id,
   name,
   nameIsCustom,
+  pricing,
+  pricingIsCustom,
   providerId,
 }: {
   capabilities?: ModelCapabilities;
@@ -761,6 +796,8 @@ function updateCustomModel({
   id: string;
   name?: string;
   nameIsCustom?: boolean;
+  pricing?: ModelPricing | null;
+  pricingIsCustom?: boolean;
   providerId: string;
 }): CustomModel {
   const existing = store.models.get(id);
@@ -773,6 +810,15 @@ function updateCustomModel({
     ...(capabilitiesIsCustom === undefined ? {} : { capabilitiesIsCustom }),
     ...(name === undefined ? {} : { name }),
     ...(nameIsCustom === undefined ? {} : { nameIsCustom }),
+    ...(pricing === undefined
+      ? {}
+      : {
+          cachedInput: pricing?.cachedInput ?? null,
+          cachedOutput: pricing?.cachedOutput ?? null,
+          input: pricing?.input ?? null,
+          output: pricing?.output ?? null,
+        }),
+    ...(pricingIsCustom === undefined ? {} : { pricingIsCustom }),
   };
   store.models.set(id, updated);
   return updated;
@@ -1034,6 +1080,7 @@ export const inMemoryQueries = {
   deleteToolConfig,
   getAllChatsByUserId,
   getAllMessagesByUserId,
+  getCatalogSync,
   getChatById,
   getChatsByUserId,
   getCustomModelsByProviderId,
@@ -1058,6 +1105,7 @@ export const inMemoryQueries = {
   saveDocument,
   saveMessages,
   saveSuggestions,
+  updateCatalogSync,
   updateChatTitleById,
   updateChatVisibilityById,
   updateCustomModel,

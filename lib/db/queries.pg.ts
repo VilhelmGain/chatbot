@@ -24,11 +24,13 @@ import {
   type Chat,
   type CustomModel,
   type CustomProvider,
+  catalogSync,
   chat,
   customModel,
   customProvider,
   type DBMessage,
   document,
+  type ModelPricing,
   message,
   type ProviderDefaultConfig,
   type Suggestion,
@@ -682,6 +684,35 @@ export async function getCustomProvidersByUserId({
   }
 }
 
+export async function getCatalogSync() {
+  try {
+    const [sync] = await db
+      .select()
+      .from(catalogSync)
+      .where(eq(catalogSync.id, 1))
+      .limit(1);
+    return sync;
+  } catch (error) {
+    throw new ChatbotError("bad_request:database", { cause: error });
+  }
+}
+
+export async function updateCatalogSync({ syncedAt }: { syncedAt: Date }) {
+  try {
+    const [sync] = await db
+      .insert(catalogSync)
+      .values({ id: 1, syncedAt })
+      .onConflictDoUpdate({
+        set: { syncedAt },
+        target: catalogSync.id,
+      })
+      .returning();
+    return sync;
+  } catch (error) {
+    throw new ChatbotError("bad_request:database", { cause: error });
+  }
+}
+
 export async function getCustomProviderById({
   id,
 }: {
@@ -1083,6 +1114,8 @@ export async function createCustomModel({
   modelId,
   name,
   nameIsCustom,
+  pricing,
+  pricingIsCustom,
   providerId,
 }: {
   capabilities: ModelCapabilities;
@@ -1090,6 +1123,8 @@ export async function createCustomModel({
   modelId: string;
   name: string;
   nameIsCustom?: boolean;
+  pricing?: ModelPricing | null;
+  pricingIsCustom?: boolean;
   providerId: string;
 }): Promise<CustomModel> {
   try {
@@ -1100,9 +1135,11 @@ export async function createCustomModel({
         capabilitiesIsCustom: capabilitiesIsCustom ?? false,
         createdAt: new Date(),
         id: generateUUID(),
+        ...pricing,
         modelId,
         name,
         nameIsCustom: nameIsCustom ?? false,
+        pricingIsCustom: pricingIsCustom ?? false,
         providerId,
       })
       .returning();
@@ -1123,6 +1160,8 @@ export async function createCustomModels({
     modelId: string;
     name: string;
     nameIsCustom?: boolean;
+    pricing?: ModelPricing | null;
+    pricingIsCustom?: boolean;
   }>;
   providerId: string;
 }): Promise<CustomModel[]> {
@@ -1139,9 +1178,11 @@ export async function createCustomModels({
           capabilitiesIsCustom: m.capabilitiesIsCustom ?? false,
           createdAt: new Date(),
           id: generateUUID(),
+          ...m.pricing,
           modelId: m.modelId,
           name: m.name,
           nameIsCustom: m.nameIsCustom ?? false,
+          pricingIsCustom: m.pricingIsCustom ?? false,
           providerId,
         }))
       )
@@ -1185,6 +1226,8 @@ export async function updateCustomModel({
   id,
   name,
   nameIsCustom,
+  pricing,
+  pricingIsCustom,
   providerId,
 }: {
   capabilities?: ModelCapabilities;
@@ -1192,6 +1235,8 @@ export async function updateCustomModel({
   id: string;
   name?: string;
   nameIsCustom?: boolean;
+  pricing?: ModelPricing | null;
+  pricingIsCustom?: boolean;
   providerId: string;
 }): Promise<CustomModel> {
   try {
@@ -1207,6 +1252,15 @@ export async function updateCustomModel({
     }
     if (nameIsCustom !== undefined) {
       updates.nameIsCustom = nameIsCustom;
+    }
+    if (pricing !== undefined) {
+      updates.input = pricing?.input ?? null;
+      updates.output = pricing?.output ?? null;
+      updates.cachedInput = pricing?.cachedInput ?? null;
+      updates.cachedOutput = pricing?.cachedOutput ?? null;
+    }
+    if (pricingIsCustom !== undefined) {
+      updates.pricingIsCustom = pricingIsCustom;
     }
 
     if (Object.keys(updates).length === 0) {
@@ -1293,13 +1347,18 @@ export async function getCustomModelsForUser({
   try {
     const results = await db
       .select({
+        cachedInput: customModel.cachedInput,
+        cachedOutput: customModel.cachedOutput,
         capabilities: customModel.capabilities,
         capabilitiesIsCustom: customModel.capabilitiesIsCustom,
         createdAt: customModel.createdAt,
         id: customModel.id,
+        input: customModel.input,
         modelId: customModel.modelId,
         name: customModel.name,
         nameIsCustom: customModel.nameIsCustom,
+        output: customModel.output,
+        pricingIsCustom: customModel.pricingIsCustom,
         providerId: customModel.providerId,
         providerName: customProvider.name,
         providerType: customProvider.type,

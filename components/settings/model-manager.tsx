@@ -38,6 +38,11 @@ type CustomModel = {
   modelId: string;
   name: string;
   nameIsCustom: boolean;
+  input: number | null;
+  output: number | null;
+  cachedInput: number | null;
+  cachedOutput: number | null;
+  pricingIsCustom: boolean;
   providerId: string;
 };
 
@@ -469,7 +474,9 @@ function ModelRow({
             >
               <Pencil className="size-3 text-muted-foreground" />
             </Button>
-            {model.nameIsCustom || model.capabilitiesIsCustom ? (
+            {model.nameIsCustom ||
+            model.capabilitiesIsCustom ||
+            model.pricingIsCustom ? (
               <span className="rounded-md bg-foreground/5 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
                 custom
               </span>
@@ -478,6 +485,11 @@ function ModelRow({
         )}
         <p className="truncate text-xs text-muted-foreground">
           {model.modelId}
+        </p>
+        <p className="truncate text-[10px] text-muted-foreground">
+          {model.input === null || model.output === null
+            ? "Pricing unavailable"
+            : `$${model.input}/$${model.output} per 1M tokens${model.pricingIsCustom ? " · custom" : ""}`}
         </p>
         <div className="mt-1.5 flex gap-1.5">
           {CAPABILITY_STYLES.map(({ key, label, activeClasses }) => (

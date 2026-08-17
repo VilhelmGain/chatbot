@@ -1,7 +1,9 @@
 import type { InferSelectModel } from "drizzle-orm";
 import {
   boolean,
+  doublePrecision,
   foreignKey,
+  integer,
   json,
   pgTable,
   primaryKey,
@@ -147,25 +149,45 @@ export type ProviderDefaultConfig = {
       reasoning: boolean;
       reasoningEfforts?: string[];
     };
+    pricing?: ModelPricing;
   }>;
 };
 
+export type ModelPricing = {
+  input: number | null;
+  output: number | null;
+  cachedInput: number | null;
+  cachedOutput: number | null;
+};
+
 export const customModel = pgTable("CustomModel", {
+  cachedInput: doublePrecision("cachedInput"),
+  cachedOutput: doublePrecision("cachedOutput"),
   capabilities: json("capabilities").notNull(),
   capabilitiesIsCustom: boolean("capabilitiesIsCustom")
     .notNull()
     .default(false),
   createdAt: timestamp("createdAt").notNull().defaultNow(),
   id: uuid("id").primaryKey().notNull().defaultRandom(),
+  input: doublePrecision("input"),
   modelId: varchar("modelId", { length: 256 }).notNull(),
   name: varchar("name", { length: 256 }).notNull(),
   nameIsCustom: boolean("nameIsCustom").notNull().default(false),
+  output: doublePrecision("output"),
+  pricingIsCustom: boolean("pricingIsCustom").notNull().default(false),
   providerId: uuid("providerId")
     .notNull()
     .references(() => customProvider.id, { onDelete: "cascade" }),
 });
 
 export type CustomModel = InferSelectModel<typeof customModel>;
+
+export const catalogSync = pgTable("CatalogSync", {
+  id: integer("id").primaryKey(),
+  syncedAt: timestamp("syncedAt"),
+});
+
+export type CatalogSync = InferSelectModel<typeof catalogSync>;
 
 export const toolConfig = pgTable(
   "ToolConfig",

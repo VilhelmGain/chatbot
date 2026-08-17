@@ -2,6 +2,7 @@ import type { Model, Provider, ProviderMap } from "@opencode-ai/models";
 import { Models } from "@opencode-ai/models";
 import { generatedAt, providers } from "@opencode-ai/models/snapshot";
 import { isTestEnvironment } from "../constants";
+import type { ModelPricing } from "../db/schema";
 
 export type CatalogProvider = {
   key: string;
@@ -21,16 +22,11 @@ export type CatalogModel = {
     reasoning: boolean;
     reasoningEfforts?: string[];
   };
-  pricing?: {
-    input: number;
-    output: number;
-    reasoning?: number;
-    cacheRead?: number;
-    cacheWrite?: number;
-  };
+  pricing?: ModelPricing;
 };
 
 const LIVE_CATALOG_TTL_MS = 5 * 60 * 1000;
+const PERSISTED_SYNC_TTL_MS = 60 * 60 * 1000;
 
 let liveCache: { fetchedAt: number; providers: ProviderMap | null } | null =
   null;
@@ -83,11 +79,10 @@ function providerToCatalogModels(p: Provider): CatalogModel[] {
       name: m.name,
       pricing: m.cost
         ? {
-            cacheRead: m.cost.cache_read,
-            cacheWrite: m.cost.cache_write,
-            input: m.cost.input,
-            output: m.cost.output,
-            reasoning: m.cost.reasoning,
+            cachedInput: m.cost.cache_read ?? null,
+            cachedOutput: m.cost.cache_write ?? null,
+            input: m.cost.input ?? null,
+            output: m.cost.output ?? null,
           }
         : undefined,
     }));
@@ -137,6 +132,64 @@ export async function getLiveCatalogModel(
   return (await getLiveCatalogModelsForProvider(providerKey)).find(
     (entry) => entry.modelId === modelId
   );
+}
+
+export async function syncCatalogPricingForUser(userId: string) {
+  const {
+    getCatalogSync,
+    getCustomModelsByProviderId,
+    getCustomProvidersByUserId,
+    updateCatalogSync,
+    updateCustomModel,
+  } = await import("../db/queries");
+  const lastSync = await getCatalogSync();
+  const isStale =
+    !lastSync?.syncedAt ||
+    Date.now() - lastSync.syncedAt.getTime() >= PERSISTED_SYNC_TTL_MS;
+  const live = await getLiveProviders(isStale);
+  if (!live) {
+    return;
+  }
+
+  const configuredProviders = await getCustomProvidersByUserId({ userId });
+  await Promise.all(
+    configuredProviders.flatMap((configuredProvider) => {
+      if (
+        !configuredProvider.providerKey ||
+        !live[configuredProvider.providerKey]
+      ) {
+        return [];
+      }
+      const catalogModels = new Map(
+        providerToCatalogModels(live[configuredProvider.providerKey]).map(
+          (model) => [model.modelId, model]
+        )
+      );
+      return getCustomModelsByProviderId({
+        providerId: configuredProvider.id,
+      }).then((models) =>
+        Promise.all(
+          models
+            .filter((model) => !model.pricingIsCustom)
+            .flatMap((model) => {
+              const catalogModel = catalogModels.get(model.modelId);
+              if (!catalogModel) {
+                return [];
+              }
+              return updateCustomModel({
+                id: model.id,
+                pricing: catalogModel.pricing ?? null,
+                pricingIsCustom: false,
+                providerId: configuredProvider.id,
+              });
+            })
+        )
+      );
+    })
+  );
+  if (isStale) {
+    await updateCatalogSync({ syncedAt: new Date() });
+  }
 }
 
 export function mapModelCapabilities(model: Model): {
