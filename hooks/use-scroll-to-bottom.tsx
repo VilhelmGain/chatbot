@@ -94,22 +94,14 @@ export function useScrollToBottom() {
       }
     };
 
-    const mutationObserver = new MutationObserver(scrollIfNeeded);
-    mutationObserver.observe(container, {
-      characterData: true,
-      childList: true,
-      subtree: true,
-    });
-
     const resizeObserver = new ResizeObserver(scrollIfNeeded);
     resizeObserver.observe(container);
-
-    for (const child of container.children) {
-      resizeObserver.observe(child);
+    if (container.firstElementChild instanceof HTMLElement) {
+      resizeObserver.observe(container.firstElementChild);
     }
+    resizeObserver.observe(endRef.current ?? container);
 
     return () => {
-      mutationObserver.disconnect();
       resizeObserver.disconnect();
     };
   }, []);

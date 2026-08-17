@@ -790,6 +790,51 @@ textarea:focus-visible {
   animation: menu-item-in 220ms var(--ease-spring) both;
 }
 
+@media (max-width: 767px) {
+  .dark .glass-surface {
+    background: color-mix(
+      in srgb,
+      var(--surface-container-lowest) 94%,
+      var(--foreground)
+    );
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+
+  .dark .glass-floating {
+    background: var(--surface-container-lowest);
+    box-shadow: 0 8px 24px -6px rgb(15 23 25 / 0.2);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+
+  .dark .bg-noise {
+    display: none;
+  }
+
+  .dark .bg-aurora {
+    opacity: 0.45;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .shimmer,
+  .dot-pulse,
+  .thinking-dot,
+  .composer-glow {
+    animation: none !important;
+  }
+}
+
 [data-slot="dropdown-menu-content"]
   > [data-slot="dropdown-menu-item"]:nth-child(1),
 [data-slot="dropdown-menu-content"]

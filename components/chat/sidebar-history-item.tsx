@@ -158,7 +158,7 @@ const PureChatItem = ({
 
   return (
     <SidebarMenuItem
-      className="fade-up"
+      className="motion-safe:fade-up"
       style={enterDelay ? { animationDelay: `${enterDelay}ms` } : undefined}
     >
       {isEditing ? (
