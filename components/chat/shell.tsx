@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { forkChat } from "@/app/(chat)/actions";
@@ -41,6 +41,7 @@ export function ChatShell() {
     currentModelId,
     setCurrentModelId,
   } = useActiveChat();
+  const pathname = usePathname();
 
   const [editingMessage, setEditingMessage] = useState<ChatMessage | null>(
     null
@@ -154,12 +155,12 @@ export function ChatShell() {
             />
 
             <MobileSidebarToggle className="absolute left-3 top-3 z-20" />
-            <div className="absolute right-3 top-3 z-20">
+            {pathname?.includes("/chat/") ? (
               <ConversationInfoDrawer
                 chatId={chatId}
                 messageCount={messages.length}
               />
-            </div>
+            ) : null}
 
             <div className="sticky bottom-0 z-10 mx-auto flex w-full max-w-4xl gap-2 px-2 pb-3 md:px-4 md:pb-4">
               {!isReadonly && (

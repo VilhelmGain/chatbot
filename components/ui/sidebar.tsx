@@ -49,6 +49,7 @@ function useSidebar() {
 
 function SidebarProvider({
   defaultOpen = true,
+  cookieName = SIDEBAR_COOKIE_NAME,
   open: openProp,
   onOpenChange: setOpenProp,
   className,
@@ -57,6 +58,7 @@ function SidebarProvider({
   ...props
 }: React.ComponentProps<"div"> & {
   defaultOpen?: boolean
+  cookieName?: string
   open?: boolean
   onOpenChange?: (open: boolean) => void
 }) {
@@ -74,9 +76,9 @@ function SidebarProvider({
         _setOpen(openState)
       }
 
-      document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`
+      document.cookie = `${cookieName}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`
     },
-    [setOpenProp, open]
+    [cookieName, setOpenProp, open]
   )
 
   const toggleSidebar = React.useCallback(() => {
