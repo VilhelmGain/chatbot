@@ -20,6 +20,30 @@ export async function getModelPricing(modelId?: string) {
   if (!providerKey || modelParts.length === 0) {
     return;
   }
+  if (providerKey.startsWith("custom-")) {
+    const { getCustomModelsByProviderId } = await import("../db/queries");
+    const models = await getCustomModelsByProviderId({
+      providerId: providerKey.slice(7),
+    });
+    const model = models.find(
+      (entry) => entry.modelId === modelParts.join("/")
+    );
+    if (
+      !model ||
+      model.input === null ||
+      model.output === null ||
+      model.cachedInput === null ||
+      model.cachedOutput === null
+    ) {
+      return;
+    }
+    return {
+      cachedInput: model.cachedInput,
+      cachedOutput: model.cachedOutput,
+      input: model.input,
+      output: model.output,
+    };
+  }
   return (await getLiveCatalogModel(providerKey, modelParts.join("/")))
     ?.pricing;
 }
@@ -29,6 +53,14 @@ export function calculateUsageCost(
   pricing?: ModelPricing
 ): number | null {
   if (!pricing) {
+    return null;
+  }
+  if (
+    pricing.input === null ||
+    pricing.output === null ||
+    pricing.cachedInput === null ||
+    pricing.cachedOutput === null
+  ) {
     return null;
   }
   const input = Math.max(
@@ -43,10 +75,10 @@ export function calculateUsageCost(
   const output = Math.max(0, (usage.outputTokens ?? 0) - reasoning);
   return (
     (input * pricing.input +
-      cacheHit * (pricing.cacheRead ?? pricing.input) +
+      cacheHit * (pricing.cachedInput ?? pricing.input) +
       cacheMiss * pricing.input +
       output * pricing.output +
-      reasoning * (pricing.reasoning ?? pricing.output)) /
+      reasoning * pricing.output) /
     1_000_000
   );
 }

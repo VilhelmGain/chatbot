@@ -48,7 +48,10 @@ export async function GET(
 
   return Response.json({
     pricedMessages: pricedCosts.length,
-    total: pricedCosts.reduce((sum, cost) => sum + cost, 0),
+    total:
+      pricedCosts.length === costs.length
+        ? pricedCosts.reduce((sum, cost) => sum + cost, 0)
+        : null,
     unavailableMessages: costs.length - pricedCosts.length,
   });
 }
