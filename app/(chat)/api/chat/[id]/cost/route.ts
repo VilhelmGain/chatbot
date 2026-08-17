@@ -29,7 +29,6 @@ export async function GET(
       .map(async (message) => {
         const metadata = message.metadata as {
           cacheHitInputTokens?: number;
-          cacheHitOutputTokens?: number;
           cacheMissInputTokens?: number;
           cost?: unknown;
           inputTokens?: number;
@@ -65,14 +64,14 @@ export async function GET(
       inputTokens: number;
       outputTokens: number;
       cachedInputTokens: number;
-      cachedOutputTokens: number;
+      cacheMissInputTokens: number;
     }
   >();
   for (const { cost, metadata } of costs) {
     const model = metadata.modelName ?? metadata.modelId ?? "Unknown model";
     const current = byModel.get(model) ?? {
       cachedInputTokens: 0,
-      cachedOutputTokens: 0,
+      cacheMissInputTokens: 0,
       cost: 0,
       inputTokens: 0,
       outputTokens: 0,
@@ -82,7 +81,7 @@ export async function GET(
     current.inputTokens += metadata.inputTokens ?? 0;
     current.outputTokens += metadata.outputTokens ?? 0;
     current.cachedInputTokens += metadata.cacheHitInputTokens ?? 0;
-    current.cachedOutputTokens += metadata.cacheHitOutputTokens ?? 0;
+    current.cacheMissInputTokens += metadata.cacheMissInputTokens ?? 0;
     byModel.set(model, current);
   }
 
@@ -154,8 +153,8 @@ export async function GET(
         (sum, entry) => sum + (entry.metadata.cacheHitInputTokens ?? 0),
         0
       ),
-      cachedOutput: costs.reduce(
-        (sum, entry) => sum + (entry.metadata.cacheHitOutputTokens ?? 0),
+      cacheMissInput: costs.reduce(
+        (sum, entry) => sum + (entry.metadata.cacheMissInputTokens ?? 0),
         0
       ),
       input: costs.reduce(
