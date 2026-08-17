@@ -31,9 +31,7 @@ export async function getModelPricing(modelId?: string) {
     if (
       !model ||
       model.input === null ||
-      model.output === null ||
-      model.cachedInput === null ||
-      model.cachedOutput === null
+      model.output === null
     ) {
       return;
     }
@@ -57,9 +55,7 @@ export function calculateUsageCost(
   }
   if (
     pricing.input === null ||
-    pricing.output === null ||
-    pricing.cachedInput === null ||
-    pricing.cachedOutput === null
+    pricing.output === null
   ) {
     return null;
   }
