@@ -134,7 +134,7 @@ export function PureMessageActions({
 
   return (
     <Actions className="-ml-0.5">
-      <div className="hidden items-center opacity-0 transition-opacity duration-150 group-hover/message:opacity-100 md:flex">
+      <div className="hidden min-w-0 flex-1 items-center opacity-0 transition-opacity duration-150 group-hover/message:opacity-100 md:flex">
         <Action
           className="text-muted-foreground/50 hover:text-foreground"
           onClick={handleCopy}
@@ -168,7 +168,10 @@ export function PureMessageActions({
                 <InfoIcon />
               </Button>
             </PopoverTrigger>
-            <PopoverContent align="start">
+            <PopoverContent
+              align="start"
+              className="w-[min(16rem,calc(100vw-1rem))] p-3 text-xs"
+            >
               <NerdStatsContent
                 modelName={modelName}
                 reasoningEffort={reasoningEffort}
@@ -180,7 +183,7 @@ export function PureMessageActions({
 
         {modelName ? (
           <span
-            className="ml-1 max-w-40 truncate text-[11px] leading-4 text-muted-foreground/70"
+            className="ml-1 min-w-0 flex-1 truncate text-[11px] leading-4 text-muted-foreground/70"
             data-testid="message-model-label"
           >
             {modelName}
@@ -238,7 +241,11 @@ export function PureMessageActions({
                     <span>Stats for nerds</span>
                   </DropdownMenuItem>
                 </PopoverTrigger>
-                <PopoverContent align="end" side="right">
+                <PopoverContent
+                  align="end"
+                  className="w-[min(16rem,calc(100vw-1rem))] p-3 text-xs"
+                  side="bottom"
+                >
                   <NerdStatsContent
                     modelName={modelName}
                     reasoningEffort={reasoningEffort}
@@ -258,7 +265,7 @@ function StatRow({ label, value }: { label: string; value: string | number }) {
   const displayValue =
     typeof value === "number" ? value.toLocaleString() : value;
   return (
-    <div className="flex items-center justify-between gap-6">
+    <div className="flex items-center justify-between gap-4">
       <span className="text-muted-foreground">{label}</span>
       <span className="text-right tabular-nums">{displayValue}</span>
     </div>
@@ -275,12 +282,12 @@ function NerdStatsContent({
   reasoningEffort?: string;
 }) {
   return (
-    <div className="grid gap-1.5" data-testid="message-stats-content">
+    <div className="grid gap-1" data-testid="message-stats-content">
       {modelName ? (
         <>
-          <div className="flex items-center justify-between gap-6 pb-1">
+          <div className="flex min-w-0 items-center justify-between gap-4 pb-1">
             <span className="text-muted-foreground">Model</span>
-            <span className="max-w-40 truncate text-right font-medium">
+            <span className="min-w-0 truncate text-right font-medium">
               {modelName}
               {reasoningEffort ? ` · ${reasoningEffort}` : null}
             </span>
