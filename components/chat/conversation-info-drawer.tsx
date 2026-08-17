@@ -97,21 +97,13 @@ export function ConversationInfoDrawer({
                 </p>
               ) : null}
               {data?.tokens ? (
-                <div className="mt-4 space-y-2 border-t border-border/70 pt-3 text-xs">
-                  <div className="grid grid-cols-2 gap-2">
-                    <TokenStat label="Input" value={data.tokens.input} />
-                    <TokenStat label="Output" value={data.tokens.output} />
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <TokenStat
-                      label="Cached input"
-                      value={data.tokens.cachedInput}
-                    />
-                    <TokenStat
-                      label="Cache miss"
-                      value={data.tokens.cacheMissInput}
-                    />
-                  </div>
+                <div className="mt-4 grid grid-cols-3 gap-2 border-t border-border/70 pt-3 text-xs">
+                  <TokenStat label="Input" value={data.tokens.cacheMissInput} />
+                  <TokenStat label="Output" value={data.tokens.output} />
+                  <TokenStat
+                    label="Cached input"
+                    value={data.tokens.cachedInput}
+                  />
                 </div>
               ) : null}
               {data?.byModel?.length ? (
