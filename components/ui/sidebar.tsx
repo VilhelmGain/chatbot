@@ -16,7 +16,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { PanelLeftIcon } from "lucide-react"
-import { animate, motion, useMotionValue } from "framer-motion"
+import { animate, motion, useMotionValue, useReducedMotion } from "framer-motion"
 import { createPortal } from "react-dom"
 
 const SIDEBAR_COOKIE_NAME = "sidebar_state"
@@ -151,6 +151,7 @@ function MobileSidebarSheet({
   const expandedRef = React.useRef(false)
   const [mounted, setMounted] = React.useState(false)
   const sheetHeight = useMotionValue(0)
+  const prefersReducedMotion = useReducedMotion()
   const viewportHeight = React.useRef(0)
   const dragStartHeight = React.useRef(0)
 
@@ -168,36 +169,52 @@ function MobileSidebarSheet({
     setExpanded(false)
     viewportHeight.current =
       window.visualViewport?.height ?? window.innerHeight
-    animate(
-      sheetHeight,
-      Math.round(viewportHeight.current * MOBILE_SIDEBAR_PARTIAL_RATIO),
-      { type: "spring", stiffness: 340, damping: 42 }
+    const partialHeight = Math.round(
+      viewportHeight.current * MOBILE_SIDEBAR_PARTIAL_RATIO
     )
+    if (prefersReducedMotion) {
+      sheetHeight.set(partialHeight)
+    } else {
+      animate(sheetHeight, partialHeight, {
+        type: "spring",
+        stiffness: 340,
+        damping: 42,
+      })
+    }
 
     document.body.style.overflow = "hidden"
     return () => {
       document.body.style.overflow = ""
     }
-  }, [open, sheetHeight])
+  }, [open, prefersReducedMotion, sheetHeight])
 
   const snapTo = React.useCallback(
     (target: number) => {
-      animate(sheetHeight, target, {
-        type: "spring",
-        stiffness: 360,
-        damping: 44,
-      })
+      if (prefersReducedMotion) {
+        sheetHeight.set(target)
+      } else {
+        animate(sheetHeight, target, {
+          type: "spring",
+          stiffness: 360,
+          damping: 44,
+        })
+      }
     },
-    [sheetHeight]
+    [prefersReducedMotion, sheetHeight]
   )
 
   const requestDismiss = React.useCallback(() => {
-    animate(sheetHeight, 0, {
-      duration: 0.18,
-      ease: "easeIn",
-      onComplete: onDismiss,
-    })
-  }, [onDismiss, sheetHeight])
+    if (prefersReducedMotion) {
+      sheetHeight.set(0)
+      onDismiss()
+    } else {
+      animate(sheetHeight, 0, {
+        duration: 0.18,
+        ease: "easeIn",
+        onComplete: onDismiss,
+      })
+    }
+  }, [onDismiss, prefersReducedMotion, sheetHeight])
 
   React.useEffect(() => {
     if (!open) {

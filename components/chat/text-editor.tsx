@@ -46,6 +46,8 @@ function PureEditor({
 }: EditorProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<EditorView | null>(null);
+  const initialContentRef = useRef(content);
+  const streamFrameRef = useRef<number | null>(null);
   const [activeSuggestion, setActiveSuggestion] = useState<UISuggestion | null>(
     null
   );
@@ -54,7 +56,7 @@ function PureEditor({
   useEffect(() => {
     if (containerRef.current && !editorRef.current) {
       const state = EditorState.create({
-        doc: buildDocumentFromContent(content),
+        doc: buildDocumentFromContent(initialContentRef.current),
         plugins: [
           ...exampleSetup({ menuBar: false, schema: documentSchema }),
           inputRules({
@@ -97,7 +99,7 @@ function PureEditor({
         editorRef.current = null;
       }
     };
-  }, [content]);
+  }, []);
 
   useEffect(() => {
     if (editorRef.current) {
@@ -114,26 +116,17 @@ function PureEditor({
   }, [onSaveContent]);
 
   useEffect(() => {
-    if (editorRef.current && content) {
-      const currentContent = buildContentFromDocument(
-        editorRef.current.state.doc
-      );
-
-      if (status === "streaming") {
-        const newDocument = buildDocumentFromContent(content);
-
-        const transaction = editorRef.current.state.tr.replaceWith(
-          0,
-          editorRef.current.state.doc.content.size,
-          newDocument.content
+    const synchronize = () => {
+      streamFrameRef.current = null;
+      if (editorRef.current && content) {
+        const currentContent = buildContentFromDocument(
+          editorRef.current.state.doc
         );
 
-        transaction.setMeta("no-save", true);
-        editorRef.current.dispatch(transaction);
-        return;
-      }
+        if (currentContent === content) {
+          return;
+        }
 
-      if (currentContent !== content) {
         const newDocument = buildDocumentFromContent(content);
 
         const transaction = editorRef.current.state.tr.replaceWith(
@@ -145,8 +138,32 @@ function PureEditor({
         transaction.setMeta("no-save", true);
         editorRef.current.dispatch(transaction);
       }
+    };
+
+    if (status === "streaming") {
+      if (streamFrameRef.current === null) {
+        streamFrameRef.current = requestAnimationFrame(synchronize);
+      }
+    } else {
+      synchronize();
     }
+
+    return () => {
+      if (streamFrameRef.current !== null) {
+        cancelAnimationFrame(streamFrameRef.current);
+        streamFrameRef.current = null;
+      }
+    };
   }, [content, status]);
+
+  useEffect(
+    () => () => {
+      if (streamFrameRef.current !== null) {
+        cancelAnimationFrame(streamFrameRef.current);
+      }
+    },
+    []
+  );
 
   useEffect(() => {
     if (editorRef.current?.state.doc && content) {

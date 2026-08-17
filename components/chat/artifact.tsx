@@ -280,7 +280,7 @@ function PureArtifact({
       ? currentVersionIndex === documents.length - 1
       : true;
 
-  const { width: windowWidth, height: windowHeight } = useWindowSize({
+  const { width: windowWidth } = useWindowSize({
     initializeWithValue: false,
   });
   const isMobile = windowWidth ? windowWidth < 768 : false;
@@ -433,25 +433,11 @@ function PureArtifact({
   if (isMobile) {
     return (
       <motion.div
-        animate={{
-          borderRadius: 0,
-          height: windowHeight,
-          opacity: 1,
-          width: "100dvw",
-          x: 0,
-          y: 0,
-        }}
+        animate={{ opacity: 1, x: 0, y: 0 }}
         className="fixed inset-0 z-50 flex h-dvh flex-col overflow-hidden bg-sidebar"
         data-testid="artifact"
         exit={{ opacity: 0, scale: 0.95 }}
-        initial={{
-          borderRadius: 50,
-          height: artifact.boundingBox.height,
-          opacity: 1,
-          width: artifact.boundingBox.width,
-          x: artifact.boundingBox.left,
-          y: artifact.boundingBox.top,
-        }}
+        initial={{ opacity: 0, x: 0, y: 12 }}
         transition={{ damping: 30, stiffness: 300, type: "spring" }}
       >
         {artifactPanel}
