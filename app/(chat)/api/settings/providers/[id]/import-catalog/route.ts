@@ -69,6 +69,8 @@ export async function POST(
     capabilities?: ModelCapabilities;
     id: string;
     name?: string;
+    pricing?: (typeof catalogModels)[number]["pricing"] | null;
+    pricingIsCustom?: boolean;
   }> = [];
 
   for (const catalogModel of catalogModels) {
@@ -79,7 +81,12 @@ export async function POST(
       continue;
     }
 
-    const patch: { capabilities?: ModelCapabilities; name?: string } = {};
+    const patch: {
+      capabilities?: ModelCapabilities;
+      name?: string;
+      pricing?: (typeof catalogModels)[number]["pricing"] | null;
+      pricingIsCustom?: boolean;
+    } = {};
     if (!existing.nameIsCustom && existing.name !== catalogModel.name) {
       patch.name = catalogModel.name;
     }
@@ -91,6 +98,10 @@ export async function POST(
       )
     ) {
       patch.capabilities = catalogModel.capabilities;
+    }
+    if (!existing.pricingIsCustom) {
+      patch.pricing = catalogModel.pricing ?? null;
+      patch.pricingIsCustom = false;
     }
 
     if (Object.keys(patch).length > 0) {

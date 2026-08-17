@@ -15,6 +15,7 @@ export type VisibilityType = "private" | "public";
 export const messageMetadataSchema = z.object({
   cacheHitInputTokens: z.number().optional(),
   cacheMissInputTokens: z.number().optional(),
+  cost: z.number().nonnegative().optional(),
   createdAt: z.string(),
   inputTokens: z.number().optional(),
   modelId: z.string().optional(),

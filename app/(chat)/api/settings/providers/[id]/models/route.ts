@@ -17,6 +17,15 @@ const createModelSchema = z.object({
   }),
   modelId: z.string().min(1).max(256),
   name: z.string().min(1).max(256),
+  pricing: z
+    .object({
+      cachedInput: z.number().nonnegative().nullable(),
+      cachedOutput: z.number().nonnegative().nullable(),
+      input: z.number().nonnegative().nullable(),
+      output: z.number().nonnegative().nullable(),
+    })
+    .nullable()
+    .optional(),
 });
 
 const bulkCreateModelsSchema = z.object({
@@ -30,6 +39,15 @@ const bulkCreateModelsSchema = z.object({
       }),
       modelId: z.string().min(1).max(256),
       name: z.string().min(1).max(256),
+      pricing: z
+        .object({
+          cachedInput: z.number().nonnegative().nullable(),
+          cachedOutput: z.number().nonnegative().nullable(),
+          input: z.number().nonnegative().nullable(),
+          output: z.number().nonnegative().nullable(),
+        })
+        .nullable()
+        .optional(),
     })
   ),
 });
@@ -97,6 +115,8 @@ export async function POST(
       modelId: singleResult.data.modelId,
       name: singleResult.data.name,
       nameIsCustom: true,
+      pricing: singleResult.data.pricing ?? null,
+      pricingIsCustom: singleResult.data.pricing !== undefined,
       providerId: id,
     });
     return Response.json(model, { status: 201 });

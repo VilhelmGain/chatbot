@@ -64,6 +64,20 @@
       "when": 1786869665012,
       "tag": "0009_wakeful_pestilence",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1786970000000,
+      "tag": "0010_show_conversation_cost",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1786960255656,
+      "tag": "0011_moaning_fixer",
+      "breakpoints": true
     }
   ]
 }

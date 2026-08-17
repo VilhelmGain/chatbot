@@ -17,6 +17,7 @@ import {
   getCustomCapabilitiesForUser,
   isAllowedModelId,
 } from "@/lib/ai/models";
+import { calculateUsageCost, getModelPricing } from "@/lib/ai/pricing";
 import { type RequestHints, systemPrompt } from "@/lib/ai/prompts";
 import {
   getCustomProviderOptionsKey,
@@ -349,6 +350,7 @@ export async function POST(request: Request) {
       modelName: selectedModelName,
       reasoningEffort: isReasoningModel ? reasoningEffort : undefined,
     };
+    const modelPricing = await getModelPricing(chatModel);
 
     const modelMessages = await convertToModelMessages(
       await resolveAttachmentParts(uiMessages)
@@ -546,7 +548,7 @@ export async function POST(request: Request) {
                   part.performance.effectiveOutputTokensPerSecond;
                 timeToFirstToken ??= part.performance.timeToFirstOutputMs;
 
-                return {
+                const metadata = {
                   ...baseMessageMetadata,
                   cacheHitInputTokens,
                   cacheMissInputTokens,
@@ -556,9 +558,11 @@ export async function POST(request: Request) {
                   timeToFirstToken,
                   tokensPerSecond,
                 };
+                const cost = calculateUsageCost(metadata, modelPricing);
+                return cost === null ? metadata : { ...metadata, cost };
               }
               if (part.type === "finish") {
-                return {
+                const metadata = {
                   ...baseMessageMetadata,
                   cacheHitInputTokens:
                     part.totalUsage.inputTokenDetails?.cacheReadTokens ??
@@ -574,6 +578,8 @@ export async function POST(request: Request) {
                   timeToFirstToken,
                   tokensPerSecond,
                 };
+                const cost = calculateUsageCost(metadata, modelPricing);
+                return cost === null ? metadata : { ...metadata, cost };
               }
             },
             sendReasoning: isReasoningModel,

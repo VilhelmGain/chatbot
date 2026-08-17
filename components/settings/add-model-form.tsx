@@ -12,12 +12,25 @@ type AddModelFormProps = {
   onModelAdded: () => void;
 };
 
+const PRICING_FIELDS = [
+  ["input", "Input"],
+  ["output", "Output"],
+  ["cachedInput", "Cached input"],
+  ["cachedOutput", "Cached output"],
+] as const;
+
 export function AddModelForm({ providerId, onModelAdded }: AddModelFormProps) {
   const [modelId, setModelId] = useState("");
   const [name, setName] = useState("");
   const [tools, setTools] = useState(true);
   const [vision, setVision] = useState(false);
   const [reasoning, setReasoning] = useState(false);
+  const [pricing, setPricing] = useState({
+    cachedInput: "",
+    cachedOutput: "",
+    input: "",
+    output: "",
+  });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -35,6 +48,12 @@ export function AddModelForm({ providerId, onModelAdded }: AddModelFormProps) {
               capabilities: { reasoning, tools, vision },
               modelId,
               name,
+              pricing: Object.fromEntries(
+                Object.entries(pricing).map(([key, value]) => [
+                  key,
+                  value === "" ? null : Number(value),
+                ])
+              ),
             }),
             headers: { "Content-Type": "application/json" },
             method: "POST",
@@ -48,6 +67,12 @@ export function AddModelForm({ providerId, onModelAdded }: AddModelFormProps) {
 
         setModelId("");
         setName("");
+        setPricing({
+          cachedInput: "",
+          cachedOutput: "",
+          input: "",
+          output: "",
+        });
         onModelAdded();
       } catch (err) {
         setError(err instanceof Error ? err.message : "An error occurred");
@@ -55,7 +80,7 @@ export function AddModelForm({ providerId, onModelAdded }: AddModelFormProps) {
         setIsLoading(false);
       }
     },
-    [modelId, name, onModelAdded, providerId, reasoning, tools, vision]
+    [modelId, name, onModelAdded, pricing, providerId, reasoning, tools, vision]
   );
 
   const handleModelIdChange = useCallback(
@@ -83,6 +108,25 @@ export function AddModelForm({ providerId, onModelAdded }: AddModelFormProps) {
   const handleReasoningChange = useCallback((checked: boolean) => {
     setReasoning(checked);
   }, []);
+
+  const handlePricingChange = useCallback(
+    (key: keyof typeof pricing, value: string) => {
+      setPricing((current) => ({ ...current, [key]: value }));
+    },
+    []
+  );
+
+  const handlePricingInputChange = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const key = event.currentTarget.dataset.pricingKey as
+        | keyof typeof pricing
+        | undefined;
+      if (key) {
+        handlePricingChange(key, event.currentTarget.value);
+      }
+    },
+    [handlePricingChange]
+  );
 
   return (
     <form
@@ -115,6 +159,25 @@ export function AddModelForm({ providerId, onModelAdded }: AddModelFormProps) {
             required
             value={name}
           />
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-1.5">
+        <Label className="text-xs">Pricing (USD per million tokens)</Label>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          {PRICING_FIELDS.map(([key, label]) => (
+            <Input
+              aria-label={`${label} pricing`}
+              data-pricing-key={key}
+              key={key}
+              min="0"
+              onChange={handlePricingInputChange}
+              placeholder={label}
+              step="any"
+              type="number"
+              value={pricing[key as keyof typeof pricing]}
+            />
+          ))}
         </div>
       </div>
 

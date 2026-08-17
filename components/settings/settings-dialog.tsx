@@ -53,6 +53,10 @@ import {
   setEnterBehavior,
   useEnterBehavior,
 } from "@/lib/enter-behavior";
+import {
+  setShowConversationCost,
+  useShowConversationCost,
+} from "@/lib/show-conversation-cost";
 import { setStatsForNerds, useStatsForNerds } from "@/lib/stats-for-nerds";
 import { cn } from "@/lib/utils";
 
@@ -348,6 +352,7 @@ function MobileSettingsNavButton({
 function PreferencesPanel() {
   const { theme, setTheme } = useTheme();
   const statsForNerds = useStatsForNerds();
+  const showConversationCost = useShowConversationCost();
 
   return (
     <>
@@ -425,6 +430,22 @@ function PreferencesPanel() {
               data-testid="stats-for-nerds-toggle"
               id="stats-for-nerds"
               onCheckedChange={setStatsForNerds}
+            />
+          </div>
+          <div className="flex items-center justify-between gap-4 rounded-lg border border-border bg-muted/70 px-3 py-2.5">
+            <div className="flex flex-col gap-1">
+              <Label htmlFor="show-conversation-cost">
+                Show conversation cost
+              </Label>
+              <p className="text-xs text-muted-foreground">
+                Show model pricing in the conversation information drawer.
+              </p>
+            </div>
+            <Checkbox
+              checked={showConversationCost}
+              data-testid="show-conversation-cost-toggle"
+              id="show-conversation-cost"
+              onCheckedChange={setShowConversationCost}
             />
           </div>
         </div>

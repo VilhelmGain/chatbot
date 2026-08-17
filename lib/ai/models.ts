@@ -51,6 +51,8 @@ export async function getCustomModelsForUser(
 ): Promise<ChatModel[]> {
   const { getCustomModelsByProviderId, getCustomProvidersByUserId } =
     await import("../db/queries");
+  const { syncCatalogPricingForUser } = await import("./catalog");
+  await syncCatalogPricingForUser(userId);
   const providers = await getCustomProvidersByUserId({ userId });
   const allModels = await Promise.all(
     providers.map(async (provider) => {

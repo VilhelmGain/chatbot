@@ -59,6 +59,8 @@ export async function POST(
     id: string;
     name: string;
     nameIsCustom: boolean;
+    pricing: (typeof snapshotModels)[number]["pricing"] | null;
+    pricingIsCustom: boolean;
   }> = [];
 
   for (const snapshotModel of snapshotModels) {
@@ -69,8 +71,14 @@ export async function POST(
         existing.name !== snapshotModel.name ||
         JSON.stringify(existing.capabilities) !==
           JSON.stringify(snapshotModel.capabilities) ||
+        existing.input !== (snapshotModel.pricing?.input ?? null) ||
+        existing.output !== (snapshotModel.pricing?.output ?? null) ||
+        existing.cachedInput !== (snapshotModel.pricing?.cachedInput ?? null) ||
+        existing.cachedOutput !==
+          (snapshotModel.pricing?.cachedOutput ?? null) ||
         existing.nameIsCustom ||
-        existing.capabilitiesIsCustom;
+        existing.capabilitiesIsCustom ||
+        existing.pricingIsCustom;
 
       if (needsUpdate) {
         updateOps.push({
@@ -79,6 +87,8 @@ export async function POST(
           id: existing.id,
           name: snapshotModel.name,
           nameIsCustom: false,
+          pricing: snapshotModel.pricing ?? null,
+          pricingIsCustom: false,
         });
         reset += 1;
       }

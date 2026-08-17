@@ -55,7 +55,7 @@ test.describe("Light mode colors", () => {
     const select = page.locator('[data-slot="select-trigger"]').first();
     await expect(select).toHaveCSS("border-top-color", "rgb(196, 207, 210)");
 
-    const checkbox = page.getByRole("checkbox");
+    const checkbox = page.getByTestId("stats-for-nerds-toggle");
     const checkboxStyles = await checkbox.evaluate((el) => {
       const styles = getComputedStyle(el);
       return {

@@ -24,6 +24,7 @@ import {
   syncPreference,
   writeLocalPreference,
 } from "@/lib/preferences-sync";
+import { setShowConversationCost } from "@/lib/show-conversation-cost";
 import { setStatsForNerds } from "@/lib/stats-for-nerds";
 
 const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
@@ -106,6 +107,10 @@ export function PreferencesSync() {
 
       if (typeof prefs.statsForNerds === "boolean") {
         setStatsForNerds(prefs.statsForNerds);
+      }
+
+      if (typeof prefs.showConversationCost === "boolean") {
+        setShowConversationCost(prefs.showConversationCost);
       }
 
       if (isValidEnterBehavior(prefs.enterBehavior)) {
