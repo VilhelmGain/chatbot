@@ -144,10 +144,12 @@ function MobileSidebarSheet({
   open,
   onDismiss,
   children,
+  label = "Chat threads",
 }: {
   open: boolean
   onDismiss: () => void
   children: React.ReactNode
+  label?: string
 }) {
   const [expanded, setExpanded] = React.useState(false)
   const expandedRef = React.useRef(false)
@@ -263,7 +265,7 @@ function MobileSidebarSheet({
       />
       <motion.div
         animate={{ opacity: 1 }}
-        aria-label="Chat threads"
+        aria-label={label}
         aria-modal="true"
         className={cn(
           "!absolute inset-x-0 bottom-0 flex flex-col overflow-hidden text-sidebar-foreground glass-floating",
@@ -352,6 +354,7 @@ function Sidebar({
   side = "left",
   variant = "sidebar",
   collapsible = "offcanvas",
+  mobileSheetLabel,
   className,
   children,
   ...props
@@ -359,6 +362,7 @@ function Sidebar({
   side?: "left" | "right"
   variant?: "sidebar" | "floating" | "inset"
   collapsible?: "offcanvas" | "icon" | "none"
+  mobileSheetLabel?: string
 }) {
   const { isMobile, state, openMobile, setOpenMobile } = useSidebar()
 
@@ -380,6 +384,7 @@ function Sidebar({
   if (isMobile) {
     return (
       <MobileSidebarSheet
+        label={mobileSheetLabel}
         onDismiss={() => setOpenMobile(false)}
         open={openMobile}
       >

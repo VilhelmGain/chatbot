@@ -155,12 +155,6 @@ export function ChatShell() {
             />
 
             <MobileSidebarToggle className="absolute left-3 top-3 z-20" />
-            {pathname?.includes("/chat/") ? (
-              <ConversationInfoDrawer
-                chatId={chatId}
-                messageCount={messages.length}
-              />
-            ) : null}
 
             <div className="sticky bottom-0 z-10 mx-auto flex w-full max-w-4xl gap-2 px-2 pb-3 md:px-4 md:pb-4">
               {!isReadonly && (
@@ -207,6 +201,13 @@ export function ChatShell() {
           status={status}
           stop={stop}
         />
+
+        {pathname?.includes("/chat/") ? (
+          <ConversationInfoDrawer
+            chatId={chatId}
+            messageCount={messages.length}
+          />
+        ) : null}
       </div>
 
       <DataStreamHandler />

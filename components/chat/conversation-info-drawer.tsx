@@ -13,12 +13,19 @@ import {
 import { CodeIcon, FileIcon, MoreHorizontalIcon, PaperclipIcon } from "./icons";
 
 const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
-const fetcher = (url: string) => fetch(url).then((response) => response.json());
+const fetcher = async (url: string) => {
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`Failed to load conversation info: ${response.status}`);
+  }
+  return response.json();
+};
 
 type ConversationInfo = {
   artifacts: Array<{ id: string; kind: string; title: string }>;
   attachments: Array<{ contentType: string; name: string; url: string }>;
   byModel: Array<{
+    cacheMissInputTokens: number;
     cachedInputTokens: number;
     cost: number | null;
     inputTokens: number;
@@ -26,8 +33,8 @@ type ConversationInfo = {
     outputTokens: number;
   }>;
   tokens: {
+    cacheMissInput: number;
     cachedInput: number;
-    cachedOutput: number;
     input: number;
     output: number;
   };
@@ -57,7 +64,7 @@ export function ConversationInfoDrawer({
       onOpenChange={setOpen}
       open={open}
     >
-      <Sidebar side="right">
+      <Sidebar mobileSheetLabel="Conversation information" side="right">
         <SidebarHeader className="border-b border-border px-5 py-5">
           <h2 className="font-semibold text-sm">Conversation information</h2>
           <p className="text-sm text-muted-foreground">
@@ -75,97 +82,100 @@ export function ConversationInfoDrawer({
                   {data?.pricedMessages ?? 0} responses
                 </span>
               </div>
-            <p className="mt-2 text-2xl font-semibold tabular-nums">
-              {isLoading
-                ? "Loading..."
-                : data?.total === null
-                  ? "Unavailable"
-                  : formatCost(data?.total)}
-            </p>
-            {data?.unavailableMessages ? (
-              <p className="mt-2 text-xs text-muted-foreground">
-                Pricing is unavailable for {data.unavailableMessages} response
-                {data.unavailableMessages === 1 ? "" : "s"}; total is
-                unavailable.
+              <p className="mt-2 text-2xl font-semibold tabular-nums">
+                {isLoading
+                  ? "Loading..."
+                  : data?.total === null
+                    ? "Unavailable"
+                    : formatCost(data?.total)}
               </p>
-            ) : null}
-            {data?.tokens ? (
-              <div className="mt-4 grid grid-cols-2 gap-2 border-t border-border/70 pt-3 text-xs sm:grid-cols-4">
-                <TokenStat label="Input" value={data.tokens.input} />
-                <TokenStat label="Output" value={data.tokens.output} />
-                <TokenStat label="Cached input" value={data.tokens.cachedInput} />
-                <TokenStat
-                  label="Cached output"
-                  value={data.tokens.cachedOutput}
-                />
-              </div>
-            ) : null}
-            {data?.byModel.length ? (
-              <div className="mt-4 space-y-2 border-t border-border/70 pt-3">
-                {data.byModel.map((entry) => (
-                  <div
-                    className="flex items-center justify-between gap-3 text-xs"
-                    key={entry.model}
-                  >
-                    <span className="truncate text-muted-foreground">
-                      {entry.model}
-                    </span>
-                    <span className="shrink-0 tabular-nums">
-                      {entry.cost === null
-                        ? "Unavailable"
-                        : formatCost(entry.cost)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            ) : null}
+              {data?.unavailableMessages ? (
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Pricing is unavailable for {data.unavailableMessages} response
+                  {data.unavailableMessages === 1 ? "" : "s"}; total is
+                  unavailable.
+                </p>
+              ) : null}
+              {data?.tokens ? (
+                <div className="mt-4 grid grid-cols-2 gap-2 border-t border-border/70 pt-3 text-xs sm:grid-cols-4">
+                  <TokenStat label="Input" value={data.tokens.input} />
+                  <TokenStat label="Output" value={data.tokens.output} />
+                  <TokenStat
+                    label="Cached input"
+                    value={data.tokens.cachedInput}
+                  />
+                  <TokenStat
+                    label="Cache miss input"
+                    value={data.tokens.cacheMissInput}
+                  />
+                </div>
+              ) : null}
+              {data?.byModel?.length ? (
+                <div className="mt-4 space-y-2 border-t border-border/70 pt-3">
+                  {data.byModel.map((entry) => (
+                    <div
+                      className="flex items-center justify-between gap-3 text-xs"
+                      key={entry.model}
+                    >
+                      <span className="truncate text-muted-foreground">
+                        {entry.model}
+                      </span>
+                      <span className="shrink-0 tabular-nums">
+                        {entry.cost === null
+                          ? "Unavailable"
+                          : formatCost(entry.cost)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
             </section>
             <InfoSection
-            count={data?.attachments.length ?? 0}
-            icon={<PaperclipIcon size={15} />}
-            title="Attachments"
-          >
-            {data?.attachments.length ? (
-              data.attachments.map((attachment) => (
-                <a
-                  className="flex min-w-0 items-center gap-2 rounded-lg px-2 py-1.5 text-sm hover:bg-muted"
-                  href={attachment.url}
-                  key={attachment.url || attachment.name}
-                  rel="noreferrer"
-                  target="_blank"
-                >
-                  <FileIcon size={15} />
-                  <span className="truncate">{attachment.name}</span>
-                </a>
-              ))
-            ) : (
-              <EmptyState text="No files uploaded" />
-            )}
+              count={data?.attachments?.length ?? 0}
+              icon={<PaperclipIcon size={15} />}
+              title="Attachments"
+            >
+              {data?.attachments?.length ? (
+                data.attachments.map((attachment) => (
+                  <a
+                    className="flex min-w-0 items-center gap-2 rounded-lg px-2 py-1.5 text-sm hover:bg-muted"
+                    href={attachment.url}
+                    key={attachment.url || attachment.name}
+                    rel="noreferrer"
+                    target="_blank"
+                  >
+                    <FileIcon size={15} />
+                    <span className="truncate">{attachment.name}</span>
+                  </a>
+                ))
+              ) : (
+                <EmptyState text="No files uploaded" />
+              )}
             </InfoSection>
             <InfoSection
-            count={data?.artifacts.length ?? 0}
-            icon={<CodeIcon size={15} />}
-            title="Artifacts"
-          >
-            {data?.artifacts.length ? (
-              data.artifacts.map((artifact) => (
-                <a
-                  className="flex min-w-0 items-center gap-2 rounded-lg px-2 py-1.5 text-sm hover:bg-muted"
-                  href={`${BASE_PATH}/api/document?id=${artifact.id}`}
-                  key={artifact.id}
-                  rel="noreferrer"
-                  target="_blank"
-                >
-                  <FileIcon size={15} />
-                  <span className="truncate">{artifact.title}</span>
-                  <span className="ml-auto text-[10px] uppercase text-muted-foreground">
-                    {artifact.kind}
-                  </span>
-                </a>
-              ))
-            ) : (
-              <EmptyState text="No artifacts created" />
-            )}
+              count={data?.artifacts?.length ?? 0}
+              icon={<CodeIcon size={15} />}
+              title="Artifacts"
+            >
+              {data?.artifacts?.length ? (
+                data.artifacts.map((artifact) => (
+                  <a
+                    className="flex min-w-0 items-center gap-2 rounded-lg px-2 py-1.5 text-sm hover:bg-muted"
+                    href={`${BASE_PATH}/api/document?id=${artifact.id}`}
+                    key={artifact.id}
+                    rel="noreferrer"
+                    target="_blank"
+                  >
+                    <FileIcon size={15} />
+                    <span className="truncate">{artifact.title}</span>
+                    <span className="ml-auto text-[10px] uppercase text-muted-foreground">
+                      {artifact.kind}
+                    </span>
+                  </a>
+                ))
+              ) : (
+                <EmptyState text="No artifacts created" />
+              )}
             </InfoSection>
           </div>
         </SidebarContent>
