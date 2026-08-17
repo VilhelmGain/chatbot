@@ -97,17 +97,21 @@ export function ConversationInfoDrawer({
                 </p>
               ) : null}
               {data?.tokens ? (
-                <div className="mt-4 grid grid-cols-2 gap-2 border-t border-border/70 pt-3 text-xs sm:grid-cols-4">
-                  <TokenStat label="Input" value={data.tokens.input} />
-                  <TokenStat label="Output" value={data.tokens.output} />
-                  <TokenStat
-                    label="Cached input"
-                    value={data.tokens.cachedInput}
-                  />
-                  <TokenStat
-                    label="Cache miss input"
-                    value={data.tokens.cacheMissInput}
-                  />
+                <div className="mt-4 space-y-2 border-t border-border/70 pt-3 text-xs">
+                  <div className="grid grid-cols-2 gap-2">
+                    <TokenStat label="Input" value={data.tokens.input} />
+                    <TokenStat label="Output" value={data.tokens.output} />
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <TokenStat
+                      label="Cached input"
+                      value={data.tokens.cachedInput}
+                    />
+                    <TokenStat
+                      label="Cache miss"
+                      value={data.tokens.cacheMissInput}
+                    />
+                  </div>
                 </div>
               ) : null}
               {data?.byModel?.length ? (
@@ -196,8 +200,8 @@ export function ConversationInfoDrawer({
 
 function TokenStat({ label, value }: { label: string; value: number }) {
   return (
-    <div>
-      <p className="text-muted-foreground">{label}</p>
+    <div className="min-w-0">
+      <p className="truncate text-muted-foreground">{label}</p>
       <p className="mt-1 font-medium tabular-nums">{value.toLocaleString()}</p>
     </div>
   );

@@ -28,11 +28,7 @@ export async function getModelPricing(modelId?: string) {
     const model = models.find(
       (entry) => entry.modelId === modelParts.join("/")
     );
-    if (
-      !model ||
-      model.input === null ||
-      model.output === null
-    ) {
+    if (!model || model.input === null || model.output === null) {
       return;
     }
     return {
@@ -53,10 +49,7 @@ export function calculateUsageCost(
   if (!pricing) {
     return null;
   }
-  if (
-    pricing.input === null ||
-    pricing.output === null
-  ) {
+  if (pricing.input === null || pricing.output === null) {
     return null;
   }
   const input = Math.max(
