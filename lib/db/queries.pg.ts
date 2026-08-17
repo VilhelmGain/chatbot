@@ -996,6 +996,7 @@ type UserSettingsUpdate = Partial<
     | "reasoningEffort"
     | "sidebarCollapsed"
     | "statsForNerds"
+    | "showConversationCost"
     | "theme"
     | "titleModelId"
     | "titleReasoningEffort"

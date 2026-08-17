@@ -21,6 +21,13 @@ export type CatalogModel = {
     reasoning: boolean;
     reasoningEfforts?: string[];
   };
+  pricing?: {
+    input: number;
+    output: number;
+    reasoning?: number;
+    cacheRead?: number;
+    cacheWrite?: number;
+  };
 };
 
 const LIVE_CATALOG_TTL_MS = 5 * 60 * 1000;
@@ -74,6 +81,15 @@ function providerToCatalogModels(p: Provider): CatalogModel[] {
       capabilities: mapModelCapabilities(m),
       modelId: m.id,
       name: m.name,
+      pricing: m.cost
+        ? {
+            cacheRead: m.cost.cache_read,
+            cacheWrite: m.cost.cache_write,
+            input: m.cost.input,
+            output: m.cost.output,
+            reasoning: m.cost.reasoning,
+          }
+        : undefined,
     }));
 }
 
@@ -112,6 +128,15 @@ export async function getLiveCatalogModelsForProvider(
   }
 
   return providerToCatalogModels(provider);
+}
+
+export async function getLiveCatalogModel(
+  providerKey: string,
+  modelId: string
+): Promise<CatalogModel | undefined> {
+  return (await getLiveCatalogModelsForProvider(providerKey)).find(
+    (entry) => entry.modelId === modelId
+  );
 }
 
 export function mapModelCapabilities(model: Model): {

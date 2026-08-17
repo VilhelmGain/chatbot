@@ -959,6 +959,7 @@ type UserSettingsUpdate = Partial<
     | "reasoningEffort"
     | "sidebarCollapsed"
     | "statsForNerds"
+    | "showConversationCost"
     | "theme"
     | "titleModelId"
     | "titleReasoningEffort"
@@ -1003,6 +1004,7 @@ function upsertUserSettings({
     id: existing?.id ?? generateUUID(),
     identityDisplayMode: null,
     reasoningEffort: null,
+    showConversationCost: null,
     sidebarCollapsed: null,
     statsForNerds: null,
     theme: null,

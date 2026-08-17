@@ -23,6 +23,7 @@ const preferenceSchema = z
     fontMono: z.string().max(64).nullable().optional(),
     identityDisplayMode: z.enum(IDENTITY_DISPLAY_MODES).nullable().optional(),
     reasoningEffort: z.enum(REASONING_EFFORTS).nullable().optional(),
+    showConversationCost: z.boolean().nullable().optional(),
     sidebarCollapsed: z.boolean().nullable().optional(),
     statsForNerds: z.boolean().nullable().optional(),
     theme: z.enum(THEMES).nullable().optional(),

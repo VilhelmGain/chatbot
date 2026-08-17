@@ -1,3 +1,4 @@
+import { formatCost } from "@/lib/format-cost";
 import type { ChatMessage } from "@/lib/types";
 
 export type MessageNerdStats = {
@@ -8,6 +9,7 @@ export type MessageNerdStats = {
   cacheMissInputTokens: number;
   outputTokens: number;
   reasoningTokens: number;
+  cost: string;
 };
 
 export function getMessageNerdStats(
@@ -23,6 +25,7 @@ export function getMessageNerdStats(
     cacheHitInputTokens,
     cacheMissInputTokens,
     reasoningTokens,
+    cost,
   } = message.metadata ?? {};
 
   if (
@@ -39,6 +42,7 @@ export function getMessageNerdStats(
   return {
     cacheHitInputTokens: Math.round(cacheHitInputTokens ?? 0),
     cacheMissInputTokens: Math.round(cacheMissInputTokens ?? 0),
+    cost: formatCost(cost),
     inputTokens: Math.round(inputTokens ?? 0),
     outputTokens: Math.round(outputTokens),
     reasoningTokens: Math.round(reasoningTokens ?? 0),

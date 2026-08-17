@@ -304,6 +304,7 @@ function NerdStatsContent({
       />
       <StatRow label="Output tokens" value={stats.outputTokens} />
       <StatRow label="Reasoning tokens" value={stats.reasoningTokens} />
+      <StatRow label="Cost" value={stats.cost} />
     </div>
   );
 }

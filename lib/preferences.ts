@@ -15,6 +15,7 @@ export type UserPreferences = {
   titleReasoningEffort: string | null;
   identityDisplayMode: string | null;
   statsForNerds: boolean | null;
+  showConversationCost: boolean | null;
   enterBehavior: string | null;
   fontBody: string | null;
   fontHeading: string | null;
@@ -43,6 +44,7 @@ export const PREFERENCE_KEYS: readonly PreferenceKey[] = [
   "titleReasoningEffort",
   "identityDisplayMode",
   "statsForNerds",
+  "showConversationCost",
   "enterBehavior",
   "fontBody",
   "fontHeading",
@@ -145,6 +147,11 @@ export const PREFERENCE_LOCAL_SOURCES: Record<
   reasoningEffort: {
     boolean: false,
     cookieName: "reasoning-effort",
+    inverse: false,
+  },
+  showConversationCost: {
+    boolean: true,
+    cookieName: "show-conversation-cost",
     inverse: false,
   },
   sidebarCollapsed: {

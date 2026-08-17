@@ -209,6 +209,7 @@ export const userSettings = pgTable(
     id: uuid("id").primaryKey().notNull().defaultRandom(),
     identityDisplayMode: varchar("identityDisplayMode", { length: 32 }),
     reasoningEffort: varchar("reasoningEffort", { length: 32 }),
+    showConversationCost: boolean("showConversationCost"),
     sidebarCollapsed: boolean("sidebarCollapsed"),
     statsForNerds: boolean("statsForNerds"),
     theme: varchar("theme", { length: 16 }),
