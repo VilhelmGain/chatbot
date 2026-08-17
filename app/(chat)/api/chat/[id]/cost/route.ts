@@ -33,6 +33,7 @@ export async function GET(
           cost?: unknown;
           inputTokens?: number;
           modelId?: string;
+          modelName?: string;
           outputTokens?: number;
           reasoningTokens?: number;
         };
