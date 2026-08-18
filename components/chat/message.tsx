@@ -7,15 +7,8 @@ import { cn, sanitizeText } from "@/lib/utils";
 import { MessageContent } from "../ai-elements/message";
 import { MessageResponse } from "../ai-elements/message-response";
 import { Shimmer } from "../ai-elements/shimmer";
-import {
-  Tool,
-  ToolContent,
-  ToolHeader,
-  ToolInput,
-  ToolOutput,
-} from "../ai-elements/tool";
+import { Tool, ToolContent, ToolHeader, ToolInput } from "../ai-elements/tool";
 import { useDataStream } from "./data-stream-provider";
-import { DocumentToolResult } from "./document";
 import { DocumentPreview } from "./document-preview";
 import { SparklesIcon } from "./icons";
 import { MessageActions } from "./message-actions";
@@ -324,7 +317,7 @@ const PurePreviewMessage = ({
       );
     }
 
-    if (type === "tool-createDocument") {
+    if (type === "tool-writeDocument") {
       const { toolCallId } = part;
 
       if (part.output && "error" in part.output) {
@@ -333,30 +326,7 @@ const PurePreviewMessage = ({
             className="rounded-lg border border-error/20 bg-error/10 p-4 text-error"
             key={toolCallId}
           >
-            Error creating document: {String(part.output.error)}
-          </div>
-        );
-      }
-
-      return (
-        <DocumentPreview
-          isReadonly={isReadonly}
-          key={toolCallId}
-          result={part.output}
-        />
-      );
-    }
-
-    if (type === "tool-updateDocument") {
-      const { toolCallId } = part;
-
-      if (part.output && "error" in part.output) {
-        return (
-          <div
-            className="rounded-lg border border-error/20 bg-error/10 p-4 text-error"
-            key={toolCallId}
-          >
-            Error updating document: {String(part.output.error)}
+            Error writing document: {String(part.output.error)}
           </div>
         );
       }
@@ -364,47 +334,14 @@ const PurePreviewMessage = ({
       return (
         <div className="relative" key={toolCallId}>
           <DocumentPreview
-            args={{ ...part.output, isUpdate: true }}
+            args={{
+              ...part.output,
+              isUpdate: Boolean(part.input && "id" in part.input),
+            }}
             isReadonly={isReadonly}
             result={part.output}
           />
         </div>
-      );
-    }
-
-    if (type === "tool-requestSuggestions") {
-      const { toolCallId, state } = part;
-
-      return (
-        <Tool
-          autoCollapse={hasFollowingPart(index)}
-          className="w-[min(100%,450px)]"
-          defaultOpen={true}
-          key={toolCallId}
-        >
-          <ToolHeader state={state} type="tool-requestSuggestions" />
-          <ToolContent>
-            {state === "input-available" && <ToolInput input={part.input} />}
-            {state === "output-available" && (
-              <ToolOutput
-                errorText={undefined}
-                output={
-                  "error" in part.output ? (
-                    <div className="rounded border p-2 text-red-500">
-                      Error: {String(part.output.error)}
-                    </div>
-                  ) : (
-                    <DocumentToolResult
-                      isReadonly={isReadonly}
-                      result={part.output}
-                      type="request-suggestions"
-                    />
-                  )
-                }
-              />
-            )}
-          </ToolContent>
-        </Tool>
       );
     }
 

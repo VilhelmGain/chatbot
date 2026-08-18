@@ -24,7 +24,6 @@ import {
   getLanguageModel,
   isOpenAICompatibleProvider,
 } from "@/lib/ai/providers";
-import { createDocument } from "@/lib/ai/tools/create-document";
 import { editDocument } from "@/lib/ai/tools/edit-document";
 import { fetchUrl } from "@/lib/ai/tools/fetch-url";
 import { getWeather } from "@/lib/ai/tools/get-weather";
@@ -35,10 +34,9 @@ import {
   TOOL_IDS,
   TOOL_IDS_SET,
 } from "@/lib/ai/tools/metadata";
-import { requestSuggestions } from "@/lib/ai/tools/request-suggestions";
 import { runPythonTool } from "@/lib/ai/tools/run-python";
 import { searchWeb } from "@/lib/ai/tools/search-web";
-import { updateDocument } from "@/lib/ai/tools/update-document";
+import { writeDocument } from "@/lib/ai/tools/write-document";
 import { resolveAttachmentParts } from "@/lib/attachments";
 import { isProductionEnvironment } from "@/lib/constants";
 import {
@@ -483,35 +481,13 @@ export async function POST(request: Request) {
           tools: {
             ...(effectiveToolNames.has("getWeather") ? { getWeather } : {}),
             ...(effectiveToolNames.has("fetchUrl") ? { fetchUrl } : {}),
-            ...(effectiveToolNames.has("createDocument")
+            ...(effectiveToolNames.has("writeDocument")
               ? {
-                  createDocument: createDocument({
-                    dataStream,
-                    modelId: chatModel,
-                    session,
-                  }),
+                  writeDocument: writeDocument({ dataStream, session }),
                 }
               : {}),
             ...(effectiveToolNames.has("editDocument")
               ? { editDocument: editDocument({ dataStream, session }) }
-              : {}),
-            ...(effectiveToolNames.has("updateDocument")
-              ? {
-                  updateDocument: updateDocument({
-                    dataStream,
-                    modelId: chatModel,
-                    session,
-                  }),
-                }
-              : {}),
-            ...(effectiveToolNames.has("requestSuggestions")
-              ? {
-                  requestSuggestions: requestSuggestions({
-                    dataStream,
-                    modelId: chatModel,
-                    session,
-                  }),
-                }
               : {}),
             ...(searchWebConfig === undefined
               ? {}
