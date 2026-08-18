@@ -12,7 +12,7 @@ type EditDocumentProps = {
 export const editDocument = ({ session, dataStream }: EditDocumentProps) =>
   tool({
     description:
-      "Make a targeted edit to an existing artifact by finding and replacing an exact string. Preferred over updateDocument for small changes. The old_string must match exactly.",
+      "Make a targeted edit to an existing artifact by finding and replacing an exact string. Preferred over writeDocument for targeted changes. The old_string must match exactly.",
     execute: async ({ id, old_string, new_string, replace_all }) => {
       const document = await getDocumentById({ id });
 

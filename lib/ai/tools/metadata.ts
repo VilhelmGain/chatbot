@@ -1,9 +1,7 @@
 export const TOOL_IDS = [
   "getWeather",
-  "createDocument",
+  "writeDocument",
   "editDocument",
-  "updateDocument",
-  "requestSuggestions",
   "searchWeb",
   "fetchUrl",
   "runPython",
@@ -13,20 +11,11 @@ export type ToolId = (typeof TOOL_IDS)[number];
 
 export const TOOL_IDS_SET: ReadonlySet<string> = new Set(TOOL_IDS);
 
-export const DOCUMENT_TOOL_IDS = [
-  "createDocument",
-  "editDocument",
-  "updateDocument",
-  "requestSuggestions",
-] as const;
+export const DOCUMENT_TOOL_IDS = ["writeDocument", "editDocument"] as const;
 
 export type ToolMetadata = { label: string; description: string };
 
 export const TOOL_METADATA: Record<ToolId, ToolMetadata> = {
-  createDocument: {
-    description: "Create scripts, documents, and spreadsheets.",
-    label: "Create document",
-  },
   editDocument: {
     description: "Make targeted edits to an existing artifact.",
     label: "Edit document",
@@ -39,10 +28,6 @@ export const TOOL_METADATA: Record<ToolId, ToolMetadata> = {
     description: "Get current weather at a location.",
     label: "Weather",
   },
-  requestSuggestions: {
-    description: "Get writing suggestions for a document.",
-    label: "Request suggestions",
-  },
   runPython: {
     description: "Run Python code to solve math, logic, and data problems.",
     label: "Python",
@@ -51,9 +36,9 @@ export const TOOL_METADATA: Record<ToolId, ToolMetadata> = {
     description: "Search the web for up-to-date information.",
     label: "Web search",
   },
-  updateDocument: {
-    description: "Rewrite an entire artifact.",
-    label: "Update document",
+  writeDocument: {
+    description: "Create or overwrite scripts, documents, and spreadsheets.",
+    label: "Write document",
   },
 };
 
