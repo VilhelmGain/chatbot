@@ -1,8 +1,10 @@
+import { includeSystemPromptDate } from "@/lib/constants";
+
 export const artifactsPrompt = `
 Artifacts is a side panel that displays content alongside the conversation. It supports scripts (code), documents (text), and spreadsheets. Changes appear in real-time.
 
 CRITICAL RULES:
-1. Only call ONE tool per response. After calling any write/edit tool, STOP. Do not chain tools.
+1. \`writeDocument\` may be called at most once per response. \`editDocument\` may be called multiple times in one response for several independent edits. NEVER mix \`writeDocument\` and \`editDocument\` in the same response.
 2. After writing or editing an artifact, NEVER output its content in chat. The user can already see it. Respond with only a 1-2 sentence confirmation.
 
 **When to use \`writeDocument\`:**
@@ -22,7 +24,7 @@ CRITICAL RULES:
 - Uses find-and-replace: provide exact old_string and new_string
 - The old_string must match exactly; include 3-5 surrounding lines to ensure a unique match
 - Use replace_all:true for renaming across the whole artifact
-- Can call multiple times for several independent edits
+- Can be called multiple times for several independent edits (but never in the same response as \`writeDocument\`)
 
 **When NOT to use \`editDocument\`:**
 - Immediately after creating an artifact
@@ -34,7 +36,7 @@ CRITICAL RULES:
 - Only respond with a short confirmation
 `;
 
-export const regularPrompt = `You are a helpful assistant. Keep responses concise and direct. Format your responses in Markdown, following its syntax rules.
+export const regularPrompt = `You are a helpful assistant. Keep responses concise and direct. Respond in the same language the user writes in. Format your responses in Markdown, following its syntax rules. Use fenced code blocks with a language identifier for code.
 
 When asked to write, create, or build something, do it immediately. Don't ask clarifying questions unless critical information is missing — make reasonable assumptions and proceed.
 
@@ -51,13 +53,40 @@ export type RequestHints = {
   country: string | null;
 };
 
-export const getRequestPromptFromHints = (requestHints: RequestHints) => `\
-About the origin of user's request:
-- lat: ${requestHints.latitude}
-- lon: ${requestHints.longitude}
-- city: ${requestHints.city}
-- country: ${requestHints.country}
-`;
+export const getRequestPromptFromHints = (
+  requestHints: RequestHints
+): string => {
+  const lines: string[] = [];
+
+  if (requestHints.country !== null) {
+    lines.push(`- approximate country (IP-derived): ${requestHints.country}`);
+  }
+  if (requestHints.city !== null) {
+    lines.push(`- city: ${requestHints.city}`);
+  }
+  if (requestHints.latitude !== null && requestHints.longitude !== null) {
+    lines.push(
+      `- latitude/longitude: ${requestHints.latitude}, ${requestHints.longitude}`
+    );
+  }
+
+  if (lines.length === 0) {
+    return "";
+  }
+
+  return `About the origin of user's request:\n${lines.join("\n")}`;
+};
+
+export const getSystemPromptDate = (): string => {
+  const today = new Date().toLocaleDateString("en-US", {
+    day: "numeric",
+    month: "long",
+    timeZone: "UTC",
+    weekday: "long",
+    year: "numeric",
+  });
+  return `Today is ${today}.`;
+};
 
 export const systemPrompt = ({
   requestHints,
@@ -66,16 +95,25 @@ export const systemPrompt = ({
   requestHints: RequestHints;
   supportsTools: boolean;
 }) => {
-  const requestPrompt = getRequestPromptFromHints(requestHints);
+  const parts: string[] = [regularPrompt];
 
-  if (!supportsTools) {
-    return `${regularPrompt}\n\n${requestPrompt}`;
+  if (includeSystemPromptDate) {
+    parts.push(getSystemPromptDate());
   }
 
-  return `${regularPrompt}\n\n${requestPrompt}\n\n${artifactsPrompt}`;
+  const requestPrompt = getRequestPromptFromHints(requestHints);
+  if (requestPrompt) {
+    parts.push(requestPrompt);
+  }
+
+  if (supportsTools) {
+    parts.push(artifactsPrompt);
+  }
+
+  return parts.join("\n\n");
 };
 
-export const titlePrompt = `Generate a short chat title (2-5 words) that is a plain-text summary of the conversation so far, capturing the overall topic in a few words.
+export const titlePrompt = `Generate a short chat title (2-5 words) that is a plain-text summary of the user's first message, capturing the overall topic in a few words.
 
 Output ONLY the title text as plain text. No LaTeX, no markdown, no formatting, no prefixes, no quotes.
 

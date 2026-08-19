@@ -144,7 +144,13 @@ export function searchWeb({
       }
     },
     inputSchema: z.object({
-      maxResults: z.number().int().min(1).max(10).optional(),
+      maxResults: z
+        .number()
+        .int()
+        .min(1)
+        .max(10)
+        .optional()
+        .describe("Number of search results to return (1-10, default 5)"),
       query: z.string().describe("The search query."),
     }),
   });

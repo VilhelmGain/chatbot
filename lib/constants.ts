@@ -1,6 +1,8 @@
 export const isProductionEnvironment = process.env.NODE_ENV === "production";
 export const isDevelopmentEnvironment = process.env.NODE_ENV === "development";
 export const isDemoMode = process.env.DEMO_MODE === "1";
+export const includeSystemPromptDate =
+  process.env.INCLUDE_SYSTEM_PROMPT_DATE !== "0";
 
 export const isTestEnvironment = Boolean(
   process.env.PLAYWRIGHT_TEST_BASE_URL ||
