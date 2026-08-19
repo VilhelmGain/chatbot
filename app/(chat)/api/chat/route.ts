@@ -48,6 +48,7 @@ import {
   getMessageCountByUserId,
   getMessagesByChatId,
   getToolConfigByUserId,
+  getUserSettings,
   saveChat,
   saveMessages,
   updateChatTitleById,
@@ -354,6 +355,18 @@ export async function POST(request: Request) {
       await resolveAttachmentParts(uiMessages)
     );
 
+    const userSettings = await getUserSettings({ userId: session.user.id });
+    const userAiContext = userSettings
+      ? {
+          aiAbout: userSettings.aiAbout,
+          aiIncludeDate: userSettings.aiIncludeDate,
+          aiIncludeLocation: userSettings.aiIncludeLocation,
+          aiInstructions: userSettings.aiInstructions,
+          aiPersonality: userSettings.aiPersonality,
+          aiUserName: userSettings.aiUserName,
+        }
+      : null;
+
     let lastStreamError: unknown = null;
 
     const stream = createUIMessageStream({
@@ -452,6 +465,7 @@ export async function POST(request: Request) {
           instructions: systemPrompt({
             requestHints,
             supportsTools: supportsTools && hasDocumentTools,
+            userAiContext,
           }),
           messages: modelMessages,
           model: await getLanguageModel(chatModel),

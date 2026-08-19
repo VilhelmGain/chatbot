@@ -993,6 +993,12 @@ function getCustomModelsForUser({ userId }: { userId: string }): Array<
 type UserSettingsUpdate = Partial<
   Pick<
     UserSettings,
+    | "aiAbout"
+    | "aiIncludeDate"
+    | "aiIncludeLocation"
+    | "aiInstructions"
+    | "aiPersonality"
+    | "aiUserName"
     | "chatModelId"
     | "enabledTools"
     | "enterBehavior"
@@ -1038,6 +1044,12 @@ function upsertUserSettings({
   }
 
   const settings: UserSettings = {
+    aiAbout: null,
+    aiIncludeDate: null,
+    aiIncludeLocation: null,
+    aiInstructions: null,
+    aiPersonality: null,
+    aiUserName: null,
     chatModelId: null,
     createdAt: existing?.createdAt ?? now,
     enabledTools: null,

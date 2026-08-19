@@ -1,5 +1,3 @@
-import { includeSystemPromptDate } from "@/lib/constants";
-
 export const artifactsPrompt = `
 Artifacts is a side panel that displays content alongside the conversation. It supports scripts (code), documents (text), and spreadsheets. Changes appear in real-time.
 
@@ -88,22 +86,53 @@ export const getSystemPromptDate = (): string => {
   return `Today is ${today}.`;
 };
 
+export type UserAiContext = {
+  aiAbout: string | null;
+  aiIncludeDate: boolean | null;
+  aiIncludeLocation: boolean | null;
+  aiInstructions: string | null;
+  aiPersonality: string | null;
+  aiUserName: string | null;
+};
+
 export const systemPrompt = ({
   requestHints,
   supportsTools,
+  userAiContext,
 }: {
   requestHints: RequestHints;
   supportsTools: boolean;
+  userAiContext?: UserAiContext | null;
 }) => {
   const parts: string[] = [regularPrompt];
 
-  if (includeSystemPromptDate) {
+  if (userAiContext?.aiIncludeDate) {
     parts.push(getSystemPromptDate());
   }
 
-  const requestPrompt = getRequestPromptFromHints(requestHints);
-  if (requestPrompt) {
-    parts.push(requestPrompt);
+  if (userAiContext?.aiIncludeLocation) {
+    const requestPrompt = getRequestPromptFromHints(requestHints);
+    if (requestPrompt) {
+      parts.push(requestPrompt);
+    }
+  }
+
+  if (userAiContext?.aiUserName?.trim()) {
+    parts.push(`The user's name is ${userAiContext.aiUserName.trim()}.`);
+  }
+
+  if (userAiContext?.aiAbout?.trim()) {
+    parts.push(`About the user: ${userAiContext.aiAbout.trim()}`);
+  }
+
+  if (userAiContext?.aiPersonality?.trim()) {
+    parts.push(
+      `Personality: respond with these traits — ${userAiContext.aiPersonality.trim()}.`
+    );
+  }
+
+  if (userAiContext?.aiInstructions?.trim()) {
+    parts.push(userAiContext.aiInstructions.trim());
   }
 
   if (supportsTools) {

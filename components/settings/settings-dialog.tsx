@@ -11,6 +11,7 @@ import {
   Server,
   Settings2,
   SlidersHorizontal,
+  Sparkles,
   Type,
   Wrench,
   X,
@@ -19,6 +20,7 @@ import { useTheme } from "next-themes";
 import { useCallback, useEffect, useRef, useState } from "react";
 import useSWR from "swr";
 import { toast } from "@/components/chat/toast";
+import { AiContextPanel } from "@/components/settings/ai-context-panel";
 import { ExportAttachments } from "@/components/settings/export-attachments";
 import { ExportChats } from "@/components/settings/export-chats";
 import { FontSelectors } from "@/components/settings/font-selectors";
@@ -72,7 +74,13 @@ type CustomProvider = {
   userId: string;
 };
 
-type SettingsSection = "preferences" | "data" | "providers" | "tools" | "legal";
+type SettingsSection =
+  | "preferences"
+  | "ai-context"
+  | "data"
+  | "providers"
+  | "tools"
+  | "legal";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
@@ -83,6 +91,13 @@ const NAV_ITEMS = [
     id: "preferences",
     label: "Preferences",
     title: "Chat preferences",
+  },
+  {
+    description: "Name, personality, and instructions for the assistant",
+    icon: Sparkles,
+    id: "ai-context",
+    label: "Personalization",
+    title: "Personalization",
   },
   {
     description: "Export chats and attachment files",
@@ -239,6 +254,7 @@ export function SettingsDialog({
                     {activeSection === "preferences" ? (
                       <PreferencesPanel />
                     ) : null}
+                    {activeSection === "ai-context" ? <AiContextPanel /> : null}
                     {activeSection === "data" ? <DataPanel /> : null}
                     {activeSection === "providers" ? <ProvidersPanel /> : null}
                     {activeSection === "tools" ? <ToolsPanel /> : null}
