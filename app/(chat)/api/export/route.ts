@@ -10,7 +10,7 @@ import { ChatbotError } from "@/lib/errors";
 import { chatToFilename, chatToMarkdown } from "@/lib/export/markdown";
 
 const exportRequestBodySchema = z.object({
-  chatIds: z.array(z.uuid()).optional(),
+  chatIds: z.array(z.uuid()).max(100).optional(),
 });
 
 /**
