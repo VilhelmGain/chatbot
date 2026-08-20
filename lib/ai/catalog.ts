@@ -27,36 +27,61 @@ export type CatalogModel = {
 
 const LIVE_CATALOG_TTL_MS = 5 * 60 * 1000;
 const PERSISTED_SYNC_TTL_MS = 60 * 60 * 1000;
+const LIVE_FETCH_TIMEOUT_MS = 5000;
 
 let liveCache: { fetchedAt: number; providers: ProviderMap | null } | null =
   null;
+let liveInFlight: Promise<ProviderMap | null> | null = null;
 
-async function getLiveProviders(force = false): Promise<ProviderMap | null> {
+function getLiveProviders(force = false): Promise<ProviderMap | null> {
   if (isTestEnvironment) {
-    return null;
+    return Promise.resolve(null);
   }
 
   const cached = liveCache;
   if (!force && cached && Date.now() - cached.fetchedAt < LIVE_CATALOG_TTL_MS) {
-    return cached.providers;
+    return Promise.resolve(cached.providers);
   }
 
-  try {
-    const client = Models.make();
-    const liveProviders = await client.providers();
-    liveCache = { fetchedAt: Date.now(), providers: liveProviders };
-    return liveProviders;
-  } catch (error) {
-    console.error(
-      "[catalog] Failed to fetch live catalog from models.dev:",
-      error
-    );
-    if (cached) {
-      return cached.providers;
-    }
-    liveCache = { fetchedAt: Date.now(), providers: null };
-    return null;
+  if (liveInFlight) {
+    return liveInFlight;
   }
+
+  const fetchPromise: Promise<ProviderMap | null> = (async () => {
+    try {
+      const client = Models.make();
+      const timeout = new Promise<never>((_, reject) => {
+        setTimeout(
+          () =>
+            reject(
+              new Error("[catalog] live catalog fetch timed out after 5s")
+            ),
+          LIVE_FETCH_TIMEOUT_MS
+        );
+      });
+      const liveProviders = (await Promise.race([
+        client.providers(),
+        timeout,
+      ])) as ProviderMap;
+      liveCache = { fetchedAt: Date.now(), providers: liveProviders };
+      return liveProviders;
+    } catch (error) {
+      console.error(
+        "[catalog] Failed to fetch live catalog from models.dev:",
+        error
+      );
+      if (cached) {
+        return cached.providers;
+      }
+      liveCache = { fetchedAt: Date.now(), providers: null };
+      return null;
+    } finally {
+      liveInFlight = null;
+    }
+  })();
+
+  liveInFlight = fetchPromise;
+  return fetchPromise;
 }
 
 function providerToCatalogProvider(p: Provider): CatalogProvider {

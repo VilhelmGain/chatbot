@@ -75,7 +75,19 @@ export class ChatbotError extends Error {
       );
     }
 
-    return Response.json({ cause, code, message }, { status: statusCode });
+    if (cause !== undefined) {
+      console.error({
+        cause,
+        code,
+        message,
+      });
+    }
+    const sanitizedCause = typeof cause === "string" ? cause : undefined;
+
+    return Response.json(
+      { cause: sanitizedCause, code, message },
+      { status: statusCode }
+    );
   }
 }
 

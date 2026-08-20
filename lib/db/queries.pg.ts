@@ -1155,6 +1155,25 @@ export async function getCustomModelsByProviderId({
   }
 }
 
+export async function getCustomModelsByProviderIds({
+  providerIds,
+}: {
+  providerIds: string[];
+}): Promise<CustomModel[]> {
+  try {
+    if (providerIds.length === 0) {
+      return [];
+    }
+    return await db
+      .select()
+      .from(customModel)
+      .where(inArray(customModel.providerId, providerIds))
+      .orderBy(asc(customModel.name), asc(customModel.modelId));
+  } catch (error) {
+    throw new ChatbotError("bad_request:database", { cause: error });
+  }
+}
+
 export async function createCustomModel({
   capabilities,
   capabilitiesIsCustom,

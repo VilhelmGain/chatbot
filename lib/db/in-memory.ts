@@ -705,6 +705,23 @@ function getCustomModelsByProviderId({
     );
 }
 
+function getCustomModelsByProviderIds({
+  providerIds,
+}: {
+  providerIds: string[];
+}): CustomModel[] {
+  if (providerIds.length === 0) {
+    return [];
+  }
+  const idSet = new Set(providerIds);
+  return [...store.models.values()]
+    .filter((model) => idSet.has(model.providerId))
+    .sort(
+      (a, b) =>
+        a.name.localeCompare(b.name) || a.modelId.localeCompare(b.modelId)
+    );
+}
+
 function createCustomModel({
   capabilities,
   capabilitiesIsCustom,
@@ -1118,6 +1135,7 @@ export const inMemoryQueries = {
   getChatById,
   getChatsByUserId,
   getCustomModelsByProviderId,
+  getCustomModelsByProviderIds,
   getCustomModelsForUser,
   getCustomProviderById,
   getCustomProviderByModelId,

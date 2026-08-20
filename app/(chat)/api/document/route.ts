@@ -76,7 +76,7 @@ export async function POST(request: Request) {
   const session = await auth();
 
   if (!session?.user) {
-    return new ChatbotError("not_found:document").toResponse();
+    return new ChatbotError("unauthorized:document").toResponse();
   }
 
   let content: string;
