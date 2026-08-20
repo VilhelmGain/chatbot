@@ -20,13 +20,16 @@ function getKey(salt: Buffer): Buffer {
     throw new Error("ENCRYPTION_KEY is required for API key encryption");
   }
   warnIfWeakKey(secret);
-  return crypto.hkdfSync(
+  const derived = crypto.hkdfSync(
     "sha256",
     Buffer.from(secret, "utf8"),
     salt,
     INFO,
     32
-  ) as unknown as Buffer;
+  ) as unknown as ArrayBuffer | Buffer;
+  return Buffer.isBuffer(derived)
+    ? derived
+    : Buffer.from(derived as ArrayBuffer);
 }
 
 function getLegacyKey(): Buffer {
