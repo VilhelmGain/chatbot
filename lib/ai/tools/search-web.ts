@@ -4,7 +4,8 @@ import { assertPublicUrl } from "@/lib/security/ssrf";
 import type { SearchProvider } from "./metadata";
 
 const TAVILY_SEARCH_ENDPOINT = "https://api.tavily.com/search";
-const FETCH_TIMEOUT_MS = 5000;
+const TAVILY_TIMEOUT_MS = 10_000;
+const SEARXNG_TIMEOUT_MS = 15_000;
 
 type SearchResult = {
   content: string;
@@ -33,7 +34,7 @@ async function searchTavily({
       "Content-Type": "application/json",
     },
     method: "POST",
-    signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+    signal: AbortSignal.timeout(TAVILY_TIMEOUT_MS),
   });
 
   if (!response.ok) {
@@ -81,7 +82,7 @@ async function searchSearxng({
   const response = await fetch(url, {
     headers: apiKey ? { "X-API-Key": apiKey } : undefined,
     method: "GET",
-    signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+    signal: AbortSignal.timeout(SEARXNG_TIMEOUT_MS),
   });
 
   if (!response.ok) {
