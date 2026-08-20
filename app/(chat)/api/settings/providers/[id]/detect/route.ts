@@ -8,6 +8,9 @@ import {
   updateCustomProvider,
 } from "@/lib/db/queries";
 import { ChatbotError } from "@/lib/errors";
+import { assertPublicUrl } from "@/lib/security/ssrf";
+
+const FETCH_TIMEOUT_MS = 5000;
 
 export async function POST(
   _request: Request,
@@ -40,11 +43,14 @@ export async function POST(
   const normalizedBaseURL = provider.baseURL.replace(/\/$/, "");
 
   try {
-    const response = await fetch(`${normalizedBaseURL}/models`, {
+    const targetUrl = `${normalizedBaseURL}/models`;
+    await assertPublicUrl(targetUrl);
+    const response = await fetch(targetUrl, {
       headers: {
         Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
       },
+      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
     });
 
     if (!response.ok) {
