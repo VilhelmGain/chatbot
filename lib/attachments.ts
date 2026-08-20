@@ -22,17 +22,24 @@ export const TEXT_MEDIA_TYPES = [
   "text/plain",
   "text/markdown",
   "text/csv",
-  "text/html",
   "application/json",
   "application/xml",
-  "text/javascript",
-  "text/x-typescript",
-  "text/typescript",
-  "text/x-shellscript",
   "text/yaml",
   "text/x-yaml",
   "application/yaml",
   "application/x-yaml",
+] as const;
+
+export const BLOCKED_MEDIA_TYPES: readonly string[] = [
+  "text/html",
+  "text/javascript",
+  "application/javascript",
+  "application/xhtml+xml",
+  "text/css",
+  "image/svg+xml",
+  "text/x-shellscript",
+  "text/x-typescript",
+  "text/typescript",
 ] as const;
 
 export const ALLOWED_MEDIA_TYPES: readonly string[] = [
