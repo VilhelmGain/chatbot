@@ -1,10 +1,9 @@
 "use client";
 
-import type { MotionProps } from "motion/react";
+import { motion, type MotionProps } from "framer-motion";
 import type { CSSProperties, ElementType, JSX } from "react";
 
 import { cn } from "@/lib/utils";
-import { motion } from "motion/react";
 import { memo, useMemo } from "react";
 
 type MotionHTMLProps = MotionProps & Record<string, unknown>;
