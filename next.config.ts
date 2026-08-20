@@ -26,6 +26,7 @@ const nextConfig: NextConfig = {
     appNewScrollHandler: true,
     cachedNavigations: true,
     inlineCss: true,
+    optimizePackageImports: ["framer-motion", "motion", "shiki", "streamdown"],
     prefetchInlining: true,
     turbopackFileSystemCacheForDev: true,
   },
@@ -53,7 +54,7 @@ const nextConfig: NextConfig = {
   },
   output: "standalone",
   outputFileTracingIncludes: {
-    "**/*": ["./node_modules/pyodide/**/*"],
+    "app/(chat)/api/**": ["./node_modules/pyodide/**/*"],
   },
   poweredByHeader: false,
   reactCompiler: true,

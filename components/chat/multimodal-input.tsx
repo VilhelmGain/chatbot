@@ -628,6 +628,38 @@ export const MultimodalInput = memo(
     if (prevProps.reasoningEffort !== nextProps.reasoningEffort) {
       return false;
     }
+    if (prevProps.className !== nextProps.className) {
+      return false;
+    }
+    if (prevProps.chatId !== nextProps.chatId) {
+      return false;
+    }
+    if (prevProps.setInput !== nextProps.setInput) {
+      return false;
+    }
+    if (prevProps.stop !== nextProps.stop) {
+      return false;
+    }
+    if (prevProps.sendMessage !== nextProps.sendMessage) {
+      return false;
+    }
+    if (prevProps.onModelChange !== nextProps.onModelChange) {
+      return false;
+    }
+    if (prevProps.setAttachments !== nextProps.setAttachments) {
+      return false;
+    }
+    if (prevProps.setMessages !== nextProps.setMessages) {
+      return false;
+    }
+    if (prevProps.setReasoningEffort !== nextProps.setReasoningEffort) {
+      return false;
+    }
+    if (prevProps.onCancelEdit !== nextProps.onCancelEdit) {
+      return false;
+    }
+    // width is derived via useWindowSize inside the component and triggers
+    // internal re-render; no prop comparison needed but included for completeness
 
     return true;
   }

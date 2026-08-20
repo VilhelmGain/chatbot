@@ -1,7 +1,7 @@
 import type { UseChatHelpers } from "@ai-sdk/react";
 import { motion } from "framer-motion";
 import { ArrowDownIcon } from "lucide-react";
-import { memo, useCallback, useEffect, useRef } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMessages } from "@/hooks/use-messages";
 import type { ChatMessage } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -22,6 +22,10 @@ type MessagesProps = {
   onEditMessage?: (message: ChatMessage) => void;
   onForkMessage?: (message: ChatMessage) => void;
 };
+
+const VIRTUALIZATION_THRESHOLD = 100;
+const ESTIMATED_ROW_HEIGHT = 320;
+const OVERSCAN = 10;
 
 function PureMessages({
   addToolApprovalResponse,
@@ -60,7 +64,74 @@ function PureMessages({
     scrollToBottom("smooth");
   }, [scrollToBottom]);
 
-  const virtualize = messages.length > 30;
+  const shouldVirtualize = messages.length > VIRTUALIZATION_THRESHOLD;
+  const fallbackVirtualize = !shouldVirtualize && messages.length > 30;
+
+  const [scrollTop, setScrollTop] = useState(0);
+  const [viewportHeight, setViewportHeight] = useState(800);
+
+  useEffect(() => {
+    if (!shouldVirtualize) {
+      return;
+    }
+    const container = messagesContainerRef.current;
+    if (!container) {
+      return;
+    }
+    const handleScroll = () => {
+      setScrollTop(container.scrollTop);
+    };
+    const handleResize = () => {
+      setViewportHeight(container.clientHeight);
+    };
+    handleResize();
+    handleScroll();
+    container.addEventListener("scroll", handleScroll, { passive: true });
+    const resizeObserver = new ResizeObserver(handleResize);
+    resizeObserver.observe(container);
+    return () => {
+      container.removeEventListener("scroll", handleScroll);
+      resizeObserver.disconnect();
+    };
+  }, [shouldVirtualize, messagesContainerRef]);
+
+  const { startIndex, endIndex } = useMemo(() => {
+    if (!shouldVirtualize) {
+      return { endIndex: messages.length, startIndex: 0 };
+    }
+    const start = Math.max(
+      0,
+      Math.floor(scrollTop / ESTIMATED_ROW_HEIGHT) - OVERSCAN
+    );
+    const end = Math.min(
+      messages.length,
+      Math.ceil((scrollTop + viewportHeight) / ESTIMATED_ROW_HEIGHT) + OVERSCAN
+    );
+    // Always include last messages when at bottom or streaming
+    if (isAtBottom && end < messages.length) {
+      const windowSize = end - start;
+      return {
+        endIndex: messages.length,
+        startIndex: Math.max(0, messages.length - windowSize),
+      };
+    }
+    return { endIndex: end, startIndex: start };
+  }, [shouldVirtualize, scrollTop, viewportHeight, messages.length, isAtBottom]);
+
+  const visibleMessages = useMemo(
+    () =>
+      shouldVirtualize
+        ? messages.slice(startIndex, endIndex)
+        : messages,
+    [shouldVirtualize, messages, startIndex, endIndex]
+  );
+
+  const topSpacerHeight = shouldVirtualize
+    ? startIndex * ESTIMATED_ROW_HEIGHT
+    : 0;
+  const bottomSpacerHeight = shouldVirtualize
+    ? (messages.length - endIndex) * ESTIMATED_ROW_HEIGHT
+    : 0;
 
   return (
     <div className="relative flex-1 bg-transparent">
@@ -78,25 +149,34 @@ function PureMessages({
         style={isArtifactVisible ? { scrollbarWidth: "none" } : undefined}
       >
         <div className="mx-auto flex min-h-full min-w-0 max-w-4xl flex-col gap-5 px-2 py-6 md:gap-7 md:px-4">
-          {messages.map((message, index) => (
-            <PreviewMessage
-              addToolApprovalResponse={addToolApprovalResponse}
-              isLoading={
-                status === "streaming" && messages.length - 1 === index
-              }
-              isReadonly={isReadonly}
-              key={message.id}
-              message={message}
-              onEdit={onEditMessage}
-              onFork={onForkMessage}
-              regenerate={regenerate}
-              requiresScrollPadding={
-                hasSentMessage && index === messages.length - 1
-              }
-              setMessages={setMessages}
-              virtualize={virtualize}
-            />
-          ))}
+          {shouldVirtualize && topSpacerHeight > 0 ? (
+            <div aria-hidden style={{ height: topSpacerHeight }} />
+          ) : null}
+          {visibleMessages.map((message, idx) => {
+            const actualIndex = shouldVirtualize ? startIndex + idx : idx;
+            return (
+              <PreviewMessage
+                addToolApprovalResponse={addToolApprovalResponse}
+                isLoading={
+                  status === "streaming" && messages.length - 1 === actualIndex
+                }
+                isReadonly={isReadonly}
+                key={message.id}
+                message={message}
+                onEdit={onEditMessage}
+                onFork={onForkMessage}
+                regenerate={regenerate}
+                requiresScrollPadding={
+                  hasSentMessage && actualIndex === messages.length - 1
+                }
+                setMessages={setMessages}
+                virtualize={fallbackVirtualize}
+              />
+            );
+          })}
+          {shouldVirtualize && bottomSpacerHeight > 0 ? (
+            <div aria-hidden style={{ height: bottomSpacerHeight }} />
+          ) : null}
 
           {status === "submitted" && messages.at(-1)?.role !== "assistant" && (
             <ThinkingMessage />

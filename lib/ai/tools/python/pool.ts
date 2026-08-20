@@ -32,9 +32,13 @@ type PoolWorker = {
   current: PendingJob | null;
 };
 
-const pool: PoolWorker[] = [];
+let pool: PoolWorker[] = [];
 const queue: PendingJob[] = [];
 let creating = false;
+
+function pruneBrokenWorkers() {
+  pool = pool.filter((entry) => !entry.broken);
+}
 
 function toErrorResult(error: string): PythonRunResult {
   return { error, ok: false, stderr: "", stdout: "" };
@@ -87,6 +91,7 @@ function spawnWorker(): Promise<PoolWorker> {
         return;
       }
       entry.broken = true;
+      pruneBrokenWorkers();
       if (!entry.ready) {
         reject(error);
       } else if (entry.current) {
@@ -169,12 +174,14 @@ function runJob(entry: PoolWorker, job: PendingJob) {
     clearJob(job);
     job.resolve(toErrorResult("Python execution timed out."));
     entry.worker.terminate().catch(() => undefined);
+    pruneBrokenWorkers();
     pump();
   }, EXECUTION_TIMEOUT_MS);
   entry.worker.postMessage({ code: job.code, type: "run" });
 }
 
 function dispatchQueuedJobs() {
+  pruneBrokenWorkers();
   for (;;) {
     if (queue.length === 0) {
       return;
@@ -193,6 +200,7 @@ function dispatchQueuedJobs() {
 }
 
 async function pump() {
+  pruneBrokenWorkers();
   dispatchQueuedJobs();
 
   if (queue.length === 0) {
