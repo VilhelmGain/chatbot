@@ -131,7 +131,7 @@ export async function rateLimit(
         o: { keys: string[]; arguments: string[] }
       ) => Promise<number>;
       sendCommand?: (args: string[]) => Promise<unknown>;
-      multi?: () => { incr: (k: string) => unknown; expire: (k: string, v: number) => unknown; exec: () => Promise<unknown> };
+      multi?: () => any;
       set?: (k: string, v: string, o: unknown) => Promise<string | null>;
       incr?: (k: string) => Promise<number>;
     };
