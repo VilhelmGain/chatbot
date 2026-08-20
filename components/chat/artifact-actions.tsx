@@ -15,10 +15,12 @@ type ArtifactActionsProps = {
   setMetadata: ArtifactActionContext["setMetadata"];
 };
 
-type ArtifactAction = {
+type ArtifactAction<
+  M extends Record<string, unknown> = Record<string, unknown>,
+> = {
   description: string;
   icon: ReactNode;
-  onClick: (context: ArtifactActionContext) => Promise<void> | void;
+  onClick: (context: ArtifactActionContext<M>) => Promise<void> | void;
 };
 
 function ArtifactActionButton({
@@ -93,29 +95,38 @@ function PureArtifactActions({
     throw new Error("Artifact definition not found!");
   }
 
-  const actionContext: ArtifactActionContext = {
+  const actionContext: ArtifactActionContext<Record<string, unknown>> = {
     content: artifact.content,
     currentVersionIndex,
     handleVersionChange,
     isCurrentVersion,
-    metadata,
+    metadata: metadata as unknown as Record<string, unknown>,
     mode,
-    setMetadata,
+    setMetadata: setMetadata as unknown as ArtifactActionContext<
+      Record<string, unknown>
+    >["setMetadata"],
   };
 
   return (
     <div className="flex flex-col items-center gap-0.5">
       {artifactDefinition.actions.map((action) => {
+        const typedAction = action as unknown as {
+          isDisabled?: (
+            ctx: ArtifactActionContext<Record<string, unknown>>
+          ) => boolean;
+        };
         const disabled =
           isLoading || artifact.status === "streaming"
             ? true
-            : action.isDisabled
-              ? action.isDisabled(actionContext)
+            : typedAction.isDisabled
+              ? typedAction.isDisabled(actionContext)
               : false;
 
         return (
           <ArtifactActionButton
-            action={action}
+            action={
+              action as unknown as ArtifactAction<Record<string, unknown>>
+            }
             actionContext={actionContext}
             disabled={disabled}
             isActive={mode === "diff" && action.description === "View changes"}

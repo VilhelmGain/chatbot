@@ -17,7 +17,7 @@ import postgres from "postgres";
 import type { ArtifactKind } from "@/components/chat/artifact";
 import type { ModelCapabilities } from "@/lib/ai/models.client";
 import type { VisibilityType } from "@/lib/types";
-import { decrypt, encrypt } from "../ai/encryption";
+import { decrypt, encrypt, needsReEncrypt } from "../ai/encryption";
 import { ChatbotError } from "../errors";
 import { generateUUID } from "../utils";
 import {
@@ -678,8 +678,10 @@ export async function getCustomProvidersByUserId({
         createdAt: customProvider.createdAt,
         defaultConfig: customProvider.defaultConfig,
         id: customProvider.id,
+        keyVersion: customProvider.keyVersion,
         name: customProvider.name,
         providerKey: customProvider.providerKey,
+        salt: customProvider.salt,
         type: customProvider.type,
         updatedAt: customProvider.updatedAt,
         userId: customProvider.userId,
@@ -757,7 +759,7 @@ export async function createCustomProvider({
   userId: string;
 }): Promise<CustomProvider> {
   try {
-    const { encrypted, iv } = encrypt(apiKey);
+    const { encrypted, iv, salt, keyVersion } = encrypt(apiKey);
 
     const result = await db
       .insert(customProvider)
@@ -767,8 +769,10 @@ export async function createCustomProvider({
         encryptedApiKey: encrypted,
         id: generateUUID(),
         iv,
+        keyVersion,
         name,
         providerKey,
+        salt,
         type,
         updatedAt: new Date(),
         userId,
@@ -814,9 +818,11 @@ export async function updateCustomProvider({
   }
 
   if (apiKey !== undefined) {
-    const { encrypted, iv } = encrypt(apiKey);
+    const { encrypted, iv, salt, keyVersion } = encrypt(apiKey);
     updateData.encryptedApiKey = encrypted;
     updateData.iv = iv;
+    updateData.salt = salt;
+    updateData.keyVersion = keyVersion;
   }
 
   try {
@@ -875,7 +881,9 @@ export async function getToolConfigsByUserId({
         createdAt: toolConfig.createdAt,
         enabled: toolConfig.enabled,
         id: toolConfig.id,
+        keyVersion: toolConfig.keyVersion,
         provider: toolConfig.provider,
+        salt: toolConfig.salt,
         toolId: toolConfig.toolId,
         updatedAt: toolConfig.updatedAt,
         userId: toolConfig.userId,
@@ -911,7 +919,26 @@ export async function getToolConfigByUserId({
       )
       .limit(1);
 
-    return configs[0];
+    const [config] = configs;
+    if (config && needsReEncrypt(config.keyVersion, config.salt)) {
+      try {
+        const apiKey = decrypt(
+          config.encryptedApiKey,
+          config.iv,
+          config.salt ?? null
+        );
+        const { encrypted, iv, salt, keyVersion } = encrypt(apiKey);
+        const [updated] = await db
+          .update(toolConfig)
+          .set({ encryptedApiKey: encrypted, iv, keyVersion, salt })
+          .where(eq(toolConfig.id, config.id))
+          .returning();
+        return updated ?? config;
+      } catch {
+        // best-effort re-encrypt
+      }
+    }
+    return config;
   } catch (error) {
     throw new ChatbotError("bad_request:database", { cause: error });
   }
@@ -945,9 +972,11 @@ export async function upsertToolConfig({
         updateData.baseURL = baseURL;
       }
       if (apiKey !== undefined) {
-        const { encrypted, iv } = encrypt(apiKey);
+        const { encrypted, iv, salt, keyVersion } = encrypt(apiKey);
         updateData.encryptedApiKey = encrypted;
         updateData.iv = iv;
+        updateData.salt = salt;
+        updateData.keyVersion = keyVersion;
       }
 
       const result = await db
@@ -963,7 +992,7 @@ export async function upsertToolConfig({
       throw new ChatbotError("bad_request:tools");
     }
 
-    const { encrypted, iv } = encrypt(apiKey ?? "");
+    const { encrypted, iv, salt, keyVersion } = encrypt(apiKey ?? "");
 
     const result = await db
       .insert(toolConfig)
@@ -974,7 +1003,9 @@ export async function upsertToolConfig({
         encryptedApiKey: encrypted,
         id: generateUUID(),
         iv,
+        keyVersion,
         provider,
+        salt,
         toolId,
         updatedAt: new Date(),
         userId,
@@ -1342,7 +1373,24 @@ export async function getDecryptedApiKey({
     throw new ChatbotError("not_found:provider");
   }
   try {
-    return decrypt(provider.encryptedApiKey, provider.iv);
+    const apiKey = decrypt(
+      provider.encryptedApiKey,
+      provider.iv,
+      provider.salt ?? null
+    );
+    // re-encrypt path: migrate legacy rows to HKDF+salt
+    if (needsReEncrypt(provider.keyVersion, provider.salt)) {
+      try {
+        const { encrypted, iv, salt, keyVersion } = encrypt(apiKey);
+        await db
+          .update(customProvider)
+          .set({ encryptedApiKey: encrypted, iv, keyVersion, salt })
+          .where(eq(customProvider.id, provider.id));
+      } catch {
+        // best-effort re-encrypt
+      }
+    }
+    return apiKey;
   } catch (error) {
     throw new ChatbotError("bad_request:provider", { cause: error });
   }

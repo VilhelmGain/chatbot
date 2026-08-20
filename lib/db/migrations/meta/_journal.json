@@ -85,6 +85,20 @@
       "when": 1787152558629,
       "tag": "0012_uneven_scorpion",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1787217954225,
+      "tag": "0013_fair_rafael_vega",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1787217957972,
+      "tag": "0014_clear_the_renegades",
+      "breakpoints": true
     }
   ]
 }

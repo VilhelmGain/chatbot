@@ -1,6 +1,11 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
+import {
+  type Dispatch,
+  type SetStateAction,
+  useCallback,
+  useMemo,
+} from "react";
 import useSWR from "swr";
 import type { UIArtifact } from "@/components/chat/artifact";
 
@@ -20,6 +25,8 @@ export const initialArtifactData: UIArtifact = {
 };
 
 type Selector<T> = (state: UIArtifact) => T;
+
+export type ArtifactMetadata = Record<string, unknown> | null;
 
 export function useArtifactSelector<Selected>(selector: Selector<Selected>) {
   const { data: localArtifact } = useSWR<UIArtifact>("artifact", null, {
@@ -67,8 +74,8 @@ export function useArtifact() {
     [setLocalArtifact]
   );
 
-  const { data: localArtifactMetadata, mutate: setLocalArtifactMetadata } =
-    useSWR<any>(
+  const { data: localArtifactMetadata, mutate: mutateMetadata } =
+    useSWR<ArtifactMetadata>(
       () =>
         artifact.documentId ? `artifact-metadata-${artifact.documentId}` : null,
       null,
@@ -77,13 +84,33 @@ export function useArtifact() {
       }
     );
 
+  const setMetadata = useCallback(
+    (value: SetStateAction<ArtifactMetadata>) => {
+      mutateMetadata(
+        (current) => {
+          const base = current ?? null;
+          if (typeof value === "function") {
+            return (value as (prev: ArtifactMetadata) => ArtifactMetadata)(
+              base
+            );
+          }
+          return value;
+        },
+        { revalidate: false }
+      );
+    },
+    [mutateMetadata]
+  );
+
   return useMemo(
     () => ({
       artifact,
       metadata: localArtifactMetadata,
       setArtifact,
-      setMetadata: setLocalArtifactMetadata,
+      setMetadata: setMetadata as unknown as Dispatch<
+        SetStateAction<ArtifactMetadata>
+      >,
     }),
-    [artifact, setArtifact, localArtifactMetadata, setLocalArtifactMetadata]
+    [artifact, setArtifact, localArtifactMetadata, setMetadata]
   );
 }

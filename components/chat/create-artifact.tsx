@@ -5,7 +5,9 @@ import type { Suggestion } from "@/lib/db/schema";
 import type { ChatMessage, CustomUIDataTypes } from "@/lib/types";
 import type { UIArtifact } from "./artifact";
 
-export type ArtifactActionContext<M = any> = {
+export type ArtifactActionContext<
+  M extends Record<string, unknown> = Record<string, unknown>,
+> = {
   content: string;
   handleVersionChange: (type: "next" | "prev" | "toggle" | "latest") => void;
   currentVersionIndex: number;
@@ -15,7 +17,9 @@ export type ArtifactActionContext<M = any> = {
   setMetadata: Dispatch<SetStateAction<M>>;
 };
 
-type ArtifactAction<M = any> = {
+type ArtifactAction<
+  M extends Record<string, unknown> = Record<string, unknown>,
+> = {
   icon: ReactNode;
   label?: string;
   description: string;
@@ -33,7 +37,9 @@ export type ArtifactToolbarItem = {
   onClick: (context: ArtifactToolbarContext) => void;
 };
 
-type ArtifactContent<M = any> = {
+type ArtifactContent<
+  M extends Record<string, unknown> = Record<string, unknown>,
+> = {
   title: string;
   content: string;
   mode: "edit" | "diff";
@@ -49,12 +55,17 @@ type ArtifactContent<M = any> = {
   setMetadata: Dispatch<SetStateAction<M>>;
 };
 
-type InitializeParameters<M = any> = {
+type InitializeParameters<
+  M extends Record<string, unknown> = Record<string, unknown>,
+> = {
   documentId: string;
   setMetadata: Dispatch<SetStateAction<M>>;
 };
 
-type ArtifactConfig<T extends string, M = any> = {
+type ArtifactConfig<
+  T extends string,
+  M extends Record<string, unknown> = Record<string, unknown>,
+> = {
   kind: T;
   description: string;
   content: ComponentType<ArtifactContent<M>>;
@@ -68,13 +79,16 @@ type ArtifactConfig<T extends string, M = any> = {
   }) => void;
 };
 
-export class Artifact<T extends string, M = any> {
+export class Artifact<
+  T extends string,
+  M extends Record<string, unknown> = Record<string, unknown>,
+> {
   readonly kind: T;
   readonly description: string;
   readonly content: ComponentType<ArtifactContent<M>>;
   readonly actions: ArtifactAction<M>[];
   readonly toolbar: ArtifactToolbarItem[];
-  readonly initialize?: (parameters: InitializeParameters) => void;
+  readonly initialize?: (parameters: InitializeParameters<M>) => void;
   readonly onStreamPart: (args: {
     setMetadata: Dispatch<SetStateAction<M>>;
     setArtifact: Dispatch<SetStateAction<UIArtifact>>;
