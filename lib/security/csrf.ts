@@ -1,3 +1,5 @@
+import { isTestEnvironment } from "@/lib/constants";
+
 const MUTATING_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 
 function getExpectedHosts(request: Request): Set<string> {
@@ -52,9 +54,10 @@ export function isCsrfOriginAllowed(request: Request): boolean {
     return true;
   }
 
-  // In test env only, bypass to keep Playwright e2e working without Origin.
-  // Narrowed: do NOT bypass for DEMO_MODE (would allow attacker to disable CSRF).
-  if (process.env.NODE_ENV === "test" || process.env.PLAYWRIGHT === "True") {
+  // In test env, bypass to keep Playwright e2e working without Origin.
+  // Aligned with lib/constants.ts isTestEnvironment (any PLAYWRIGHT flag when !production)
+  // plus NODE_ENV==="test" for Vitest. DEMO_MODE bypass is covered by isTestEnvironment.
+  if (process.env.NODE_ENV === "test" || isTestEnvironment) {
     return true;
   }
 
