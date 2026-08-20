@@ -7,6 +7,7 @@ import {
   upsertToolConfig,
 } from "@/lib/db/queries";
 import { ChatbotError } from "@/lib/errors";
+import { isTestEnvironment } from "@/lib/constants";
 import { assertPublicUrl } from "@/lib/security/ssrf";
 
 const normalizeBaseURL = (value: string) => {
@@ -80,7 +81,9 @@ export async function PUT(
 
   if (body.baseURL) {
     try {
-      await assertPublicUrl(body.baseURL);
+      await assertPublicUrl(body.baseURL, {
+        allowPrivate: isTestEnvironment,
+      });
     } catch (error) {
       return new ChatbotError("bad_request:tools", {
         cause: error instanceof Error ? error.message : String(error),

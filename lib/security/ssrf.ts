@@ -120,7 +120,10 @@ function isPrivateIp(ip: string): boolean {
   }
 }
 
-export async function assertPublicUrl(rawUrl: string): Promise<URL> {
+export async function assertPublicUrl(
+  rawUrl: string,
+  opts?: { allowPrivate?: boolean }
+): Promise<URL> {
   let url: URL;
   try {
     url = new URL(rawUrl);
@@ -130,6 +133,10 @@ export async function assertPublicUrl(rawUrl: string): Promise<URL> {
 
   if (url.protocol !== "http:" && url.protocol !== "https:") {
     throw new Error("Only http:// and https:// URLs are supported.");
+  }
+
+  if (opts?.allowPrivate) {
+    return url;
   }
 
   const hostnameLower = url.hostname.toLowerCase();

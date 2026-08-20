@@ -8,6 +8,7 @@ import {
   updateCustomProvider,
 } from "@/lib/db/queries";
 import { ChatbotError } from "@/lib/errors";
+import { isTestEnvironment } from "@/lib/constants";
 import { checkDetectRateLimit } from "@/lib/ratelimit";
 import { assertPublicUrl } from "@/lib/security/ssrf";
 import { getClientIp } from "@/lib/server/request-utils";
@@ -55,7 +56,7 @@ export async function POST(
 
   try {
     const targetUrl = `${normalizedBaseURL}/models`;
-    await assertPublicUrl(targetUrl);
+    await assertPublicUrl(targetUrl, { allowPrivate: isTestEnvironment });
     const response = await fetch(targetUrl, {
       headers: {
         Authorization: `Bearer ${apiKey}`,
