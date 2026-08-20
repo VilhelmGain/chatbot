@@ -7,9 +7,12 @@ config({
 
 const postgresUrl = process.env.POSTGRES_URL;
 if (!postgresUrl) {
-  console.warn(
-    "[drizzle.config] POSTGRES_URL is not set – drizzle-kit commands will fail without a database URL"
-  );
+  const msg =
+    "[drizzle.config] POSTGRES_URL is not set – drizzle-kit commands will fail without a database URL";
+  if (process.env.NODE_ENV === "production") {
+    throw new Error(msg);
+  }
+  console.warn(msg);
 }
 
 export default defineConfig({

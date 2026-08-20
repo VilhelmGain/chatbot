@@ -1,5 +1,5 @@
 import { readFile, stat, writeFile } from "node:fs/promises";
-import { basename, join } from "node:path";
+import { basename, isAbsolute, join, relative, resolve } from "node:path";
 import { NextResponse } from "next/server";
 
 import { auth } from "@/app/(auth)/auth";
@@ -53,11 +53,12 @@ export async function GET(
     return NextResponse.json({ error: "File not found" }, { status: 404 });
   }
 
-  const uploadDir = join(process.cwd(), getUploadDir());
-  const filePath = join(uploadDir, safeName);
+  const uploadDir = resolve(process.cwd(), getUploadDir());
+  const filePath = resolve(uploadDir, safeName);
 
-  // Prevent path traversal: filePath must stay inside uploadDir
-  if (!filePath.startsWith(uploadDir)) {
+  // Prevent path traversal: filePath must stay inside uploadDir (hardened via relative)
+  const rel = relative(uploadDir, filePath);
+  if (isAbsolute(rel) || rel.startsWith("..")) {
     return NextResponse.json({ error: "File not found" }, { status: 404 });
   }
 

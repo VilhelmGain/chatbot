@@ -158,11 +158,12 @@ export async function localFileUrlToDataUrl(
   }
 
   try {
-    const { join, resolve } = await import("node:path");
+    const { resolve, relative, isAbsolute } = await import("node:path");
     const { cwd } = await import("node:process");
     const uploadDir = resolve(cwd(), getUploadDir());
-    const filePath = join(uploadDir, filename);
-    if (!filePath.startsWith(uploadDir)) {
+    const filePath = resolve(uploadDir, filename);
+    const rel = relative(uploadDir, filePath);
+    if (isAbsolute(rel) || rel.startsWith("..")) {
       return null;
     }
     const buffer = await readFile(filePath);

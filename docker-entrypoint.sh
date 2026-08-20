@@ -1,5 +1,6 @@
 #!/bin/sh
 set -e
+trap 'rm -f /tmp/migrate.mjs' EXIT
 
 if [ -z "$ENCRYPTION_KEY" ]; then
   echo "ERROR: ENCRYPTION_KEY is not set. It is required to encrypt provider API keys."
@@ -17,13 +18,15 @@ import { migrate } from "drizzle-orm/postgres-js/migrator";
 async function waitForPostgres(url, maxAttempts = 30) {
   console.log("Waiting for PostgreSQL...");
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    let connection;
     try {
-      const connection = postgres(url, { max: 1 });
+      connection = postgres(url, { max: 1 });
       await connection`SELECT 1`;
       await connection.end();
       console.log("PostgreSQL is ready!");
       return true;
     } catch (err) {
+      try { if (connection) await connection.end(); } catch {}
       console.log(`Attempt ${attempt}/${maxAttempts}: PostgreSQL not ready, waiting...`);
       await new Promise((resolve) => setTimeout(resolve, 2000));
     }
@@ -42,11 +45,16 @@ if (!isReady) {
   process.exit(1);
 }
 
-const connection = postgres(process.env.POSTGRES_URL, { max: 1 });
-const db = drizzle(connection);
-console.log("Running migrations...");
-await migrate(db, { migrationsFolder: "./lib/db/migrations" });
-console.log("Migrations complete");
+let _conn;
+try {
+  _conn = postgres(process.env.POSTGRES_URL, { max: 1 });
+  const db = drizzle(_conn);
+  console.log("Running migrations...");
+  await migrate(db, { migrationsFolder: "./lib/db/migrations" });
+  console.log("Migrations complete");
+} finally {
+  try { if (_conn) await _conn.end(); } catch {}
+}
 process.exit(0);
 MIGRATE_EOF
 node /tmp/migrate.mjs
