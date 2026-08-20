@@ -72,7 +72,17 @@ export const getWeather = tool({
       .string()
       .describe("City name (e.g., 'San Francisco', 'New York', 'London')")
       .optional(),
-    latitude: z.number().optional(),
-    longitude: z.number().optional(),
+    latitude: z
+      .number()
+      .describe(
+        "Latitude in decimal degrees (e.g., 37.7749). Required when no city name is provided."
+      )
+      .optional(),
+    longitude: z
+      .number()
+      .describe(
+        "Longitude in decimal degrees (e.g., -122.4194). Required when no city name is provided."
+      )
+      .optional(),
   }),
 });

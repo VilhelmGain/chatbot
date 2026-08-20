@@ -219,6 +219,12 @@ export type ToolConfig = InferSelectModel<typeof toolConfig>;
 export const userSettings = pgTable(
   "UserSettings",
   {
+    aiAbout: text("aiAbout"),
+    aiIncludeDate: boolean("aiIncludeDate"),
+    aiIncludeLocation: boolean("aiIncludeLocation"),
+    aiInstructions: text("aiInstructions"),
+    aiPersonality: varchar("aiPersonality", { length: 512 }),
+    aiUserName: varchar("aiUserName", { length: 128 }),
     chatModelId: varchar("chatModelId", { length: 512 }),
     createdAt: timestamp("createdAt").notNull().defaultNow(),
     enabledTools: json("enabledTools"),

@@ -1015,6 +1015,12 @@ export async function deleteToolConfig({
 type UserSettingsUpdate = Partial<
   Pick<
     UserSettings,
+    | "aiAbout"
+    | "aiIncludeDate"
+    | "aiIncludeLocation"
+    | "aiInstructions"
+    | "aiPersonality"
+    | "aiUserName"
     | "chatModelId"
     | "enabledTools"
     | "enterBehavior"

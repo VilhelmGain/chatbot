@@ -84,7 +84,11 @@ export const editDocument = ({ session, dataStream }: EditDocumentProps) =>
     },
     inputSchema: z.object({
       id: z.string().describe("The ID of the artifact to edit"),
-      new_string: z.string().describe("Replacement string"),
+      new_string: z
+        .string()
+        .describe(
+          "Replacement text for old_string. Use an empty string to delete the matched text."
+        ),
       old_string: z
         .string()
         .describe(
