@@ -7,6 +7,7 @@ import {
   updateCustomProvider,
 } from "@/lib/db/queries";
 import { ChatbotError } from "@/lib/errors";
+import { assertPublicUrl } from "@/lib/security/ssrf";
 
 const updateProviderSchema = z.object({
   apiKey: z.string().min(1).optional(),
@@ -68,6 +69,16 @@ export async function PUT(
     body = updateProviderSchema.parse(json);
   } catch {
     return new ChatbotError("bad_request:provider").toResponse();
+  }
+
+  if (body.baseURL) {
+    try {
+      await assertPublicUrl(body.baseURL);
+    } catch (error) {
+      return new ChatbotError("bad_request:provider", {
+        cause: error instanceof Error ? error.message : String(error),
+      }).toResponse();
+    }
   }
 
   try {

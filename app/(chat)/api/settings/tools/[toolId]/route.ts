@@ -7,6 +7,7 @@ import {
   upsertToolConfig,
 } from "@/lib/db/queries";
 import { ChatbotError } from "@/lib/errors";
+import { assertPublicUrl } from "@/lib/security/ssrf";
 
 const normalizeBaseURL = (value: string) => {
   const trimmed = value.trim().replace(/\/+$/, "");
@@ -74,6 +75,16 @@ export async function PUT(
         : body.baseURL === undefined;
     if (missingRequired) {
       return new ChatbotError("bad_request:tools").toResponse();
+    }
+  }
+
+  if (body.baseURL) {
+    try {
+      await assertPublicUrl(body.baseURL);
+    } catch (error) {
+      return new ChatbotError("bad_request:tools", {
+        cause: error instanceof Error ? error.message : String(error),
+      }).toResponse();
     }
   }
 
