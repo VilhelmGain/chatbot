@@ -1,5 +1,6 @@
+import { randomUUID } from "node:crypto";
 import { mkdir, writeFile } from "node:fs/promises";
-import { join } from "node:path";
+import { extname, join } from "node:path";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -61,7 +62,9 @@ export async function POST(request: Request) {
     }
 
     const filename = (formData.get("file") as File).name;
-    const safeName = `${Date.now()}-${filename.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
+    const sanitized = filename.replace(/[^a-zA-Z0-9._-]/g, "_");
+    const ext = extname(sanitized);
+    const safeName = `${randomUUID()}${ext}`;
     const fileBuffer = Buffer.from(await file.arrayBuffer());
 
     try {

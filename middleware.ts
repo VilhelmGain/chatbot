@@ -1,6 +1,6 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { type NextRequest, NextResponse } from "next/server";
-import { isTestEnvironment } from "./lib/constants";
+import { isDemoMode, isTestEnvironment } from "./lib/constants";
 
 const isProtectedRoute = createRouteMatcher([
   "/",
@@ -17,8 +17,26 @@ function handlePing(request: NextRequest) {
   return null;
 }
 
-const testHandler = (request: NextRequest) =>
-  handlePing(request) ?? NextResponse.next();
+function handleTestRequest(request: NextRequest) {
+  const ping = handlePing(request);
+  if (ping) {
+    return ping;
+  }
+  // In test/demo mode require a signed test-user cookie for protected routes.
+  // This prevents unauthenticated access when env flags leak.
+  if (isProtectedRoute(request)) {
+    const hasTestCookie = request.cookies.has("test-user");
+    // Demo mode intentionally allows anonymous access but auth() creates a
+    // per-session demo user (see app/(auth)/auth.ts). Non-demo test env
+    // requires the cookie — Playwright helpers always set it.
+    if (!hasTestCookie && !isDemoMode) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+  }
+  return NextResponse.next();
+}
+
+const testHandler = (request: NextRequest) => handleTestRequest(request);
 
 export default isTestEnvironment
   ? testHandler

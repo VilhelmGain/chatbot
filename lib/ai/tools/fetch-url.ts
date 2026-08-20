@@ -58,18 +58,38 @@ function htmlToText(html: string): string {
     .trim();
 }
 
+const MAX_REDIRECTS = 5;
+
 export const fetchUrl = tool({
   description:
     "Fetch and read the content of a single web page by URL. Use this when you need the actual text of a specific page, such as an article, documentation page, or blog post. For finding pages, use searchWeb instead.",
   execute: async ({ url }) => {
     try {
-      const validatedUrl = await assertPublicUrl(url);
+      let currentUrl = await assertPublicUrl(url);
+      let response: Response | null = null;
 
-      const response = await fetch(validatedUrl, {
-        headers: { "User-Agent": USER_AGENT },
-        redirect: "follow",
-        signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
-      });
+      for (let redirects = 0; redirects <= MAX_REDIRECTS; redirects += 1) {
+        response = await fetch(currentUrl, {
+          headers: { "User-Agent": USER_AGENT },
+          redirect: "manual",
+          signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+        });
+
+        if (response.status >= 300 && response.status < 400) {
+          const location = response.headers.get("location");
+          if (!location) {
+            break;
+          }
+          const nextUrl = new URL(location, currentUrl).toString();
+          currentUrl = await assertPublicUrl(nextUrl);
+          continue;
+        }
+        break;
+      }
+
+      if (!response) {
+        return { error: "Failed to fetch the page. Please try again." };
+      }
 
       if (!response.ok) {
         return {
@@ -98,7 +118,7 @@ export const fetchUrl = tool({
             : content,
         contentType: contentType.split(";")[0]?.trim() || "text/html",
         title: isHtml ? extractTitle(raw) : undefined,
-        url: response.url || validatedUrl.href,
+        url: response.url || currentUrl.href,
       };
     } catch (error) {
       const message =

@@ -9,10 +9,32 @@ const TTL_SECONDS = 60 * 60;
 export const RATE_LIMITS = {
   chat: { limit: 500, windowSeconds: TTL_SECONDS },
   detect: { limit: 20, windowSeconds: TTL_SECONDS },
+  document: { limit: 60, windowSeconds: TTL_SECONDS },
   export: { limit: 20, windowSeconds: TTL_SECONDS },
+  filesGet: { limit: 60, windowSeconds: TTL_SECONDS },
+  history: { limit: 60, windowSeconds: TTL_SECONDS },
+  messages: { limit: 100, windowSeconds: TTL_SECONDS },
   providerTest: { limit: 20, windowSeconds: TTL_SECONDS },
+  suggestions: { limit: 30, windowSeconds: TTL_SECONDS },
   upload: { limit: 30, windowSeconds: TTL_SECONDS },
 } as const;
+
+// In-memory fallback when REDIS_URL is not configured (default local dev)
+const memoryStore = new Map<string, { count: number; resetAt: number }>();
+function memoryRateLimit(
+  key: string,
+  limit: number,
+  windowSeconds: number
+): number {
+  const now = Date.now();
+  const entry = memoryStore.get(key);
+  if (!entry || entry.resetAt <= now) {
+    memoryStore.set(key, { count: 1, resetAt: now + windowSeconds * 1000 });
+    return 1;
+  }
+  entry.count += 1;
+  return entry.count;
+}
 
 let client: ReturnType<typeof createClient> | null = null;
 
@@ -31,9 +53,10 @@ function getClient() {
 }
 
 /**
- * Generic sliding-window rate limiter backed by Redis.
- * Uses INCR + EXPIRE (without NX) so TTL is refreshed on every hit.
- * Fail-open with a warning when Redis is unavailable, but never silently.
+ * Generic fixed-window rate limiter backed by Redis with in-memory fallback.
+ * Uses Lua INCR+EXPIRE only on first hit so TTL is not refreshed each request.
+ * Fail-closed when REDIS_URL is set but Redis is unavailable; uses in-memory
+ * fallback when REDIS_URL is unset.
  */
 export async function rateLimit(
   key: string,
@@ -48,26 +71,62 @@ export async function rateLimit(
 
   if (!redis?.isReady) {
     if (process.env.REDIS_URL) {
+      // Fail-closed when Redis is expected but not ready
       console.warn(
-        `Rate limit check for "${key}" skipped: Redis not ready (fail-open with warning)`
+        `Rate limit check for "${key}" failed: Redis not ready (fail-closed)`
       );
-    } else {
-      console.warn(
-        `Rate limit check for "${key}" skipped: REDIS_URL not configured (no IP rate limiting)`
-      );
+      throw new ChatbotError("rate_limit:chat");
+    }
+    // In-memory fallback when REDIS_URL not configured
+    const count = memoryRateLimit(key, limit, windowSeconds);
+    if (count > limit) {
+      throw new ChatbotError("rate_limit:chat");
     }
     return;
   }
 
   try {
-    const results = await redis
-      .multi()
-      .incr(key)
-      .expire(key, windowSeconds)
-      .exec();
-
-    // results is an array of replies; first element is the INCR count
-    const count = results?.[0] as unknown as number | undefined;
+    // Fixed-window Lua: INCR and EXPIRE only when count==1
+    // exec returns Array<[error, reply]> per redis client
+    let count: number | undefined;
+    // Try eval-based fixed window if available
+    const maybeEval = (redis as unknown as { eval?: unknown }).eval;
+    if (typeof maybeEval === "function") {
+      const script =
+        "local c = redis.call('INCR', KEYS[1]) if c == 1 then redis.call('EXPIRE', KEYS[1], ARGV[1]) end return c";
+      const res = await (
+        redis as unknown as {
+          eval: (
+            s: string,
+            o: { keys: string[]; arguments: string[] }
+          ) => Promise<number>;
+        }
+      ).eval(script, {
+        arguments: [String(windowSeconds)],
+        keys: [key],
+      });
+      count = typeof res === "number" ? res : Number(res);
+    } else {
+      const results = (await redis
+        .multi()
+        .incr(key)
+        .expire(key, windowSeconds)
+        .exec()) as unknown as Array<[Error | null, number]> | null;
+      // Correct extraction: exec returns [[null,count],[null,1]]
+      const first = results?.[0];
+      count = Array.isArray(first)
+        ? (first[1] as number)
+        : (first as unknown as number);
+      // If using multi+expire we still refresh TTL incorrectly, but fallback path above is preferred.
+      // For legacy compat, check if count is number
+      if (
+        typeof count !== "number" &&
+        results &&
+        typeof (results[0] as unknown as number) === "number"
+      ) {
+        count = results[0] as unknown as number;
+      }
+    }
 
     if (typeof count === "number" && count > limit) {
       throw new ChatbotError("rate_limit:chat");
@@ -76,7 +135,19 @@ export async function rateLimit(
     if (error instanceof ChatbotError) {
       throw error;
     }
-    console.warn(`Rate limit check for "${key}" failed (fail-open):`, error);
+    // Fail-closed on Redis errors when REDIS_URL is set
+    if (process.env.REDIS_URL) {
+      console.warn(
+        `Rate limit check for "${key}" failed (fail-closed):`,
+        error
+      );
+      throw new ChatbotError("rate_limit:chat");
+    }
+    // Fallback to memory when no REDIS_URL
+    const count = memoryRateLimit(key, limit, windowSeconds);
+    if (count > limit) {
+      throw new ChatbotError("rate_limit:chat");
+    }
   }
 }
 
@@ -152,5 +223,60 @@ export async function checkDetectRateLimit(
     ? `detect-rate-limit:${ip}:user:${userId}`
     : `detect-rate-limit:user:${userId}`;
   const { limit, windowSeconds } = RATE_LIMITS.detect;
+  await rateLimit(key, limit, windowSeconds);
+}
+
+export async function checkHistoryRateLimit(
+  ip: string | undefined,
+  userId: string
+) {
+  const key = ip
+    ? `history-rate-limit:${ip}:user:${userId}`
+    : `history-rate-limit:user:${userId}`;
+  const { limit, windowSeconds } = RATE_LIMITS.history;
+  await rateLimit(key, limit, windowSeconds);
+}
+
+export async function checkMessagesRateLimit(
+  ip: string | undefined,
+  userId: string
+) {
+  const key = ip
+    ? `messages-rate-limit:${ip}:user:${userId}`
+    : `messages-rate-limit:user:${userId}`;
+  const { limit, windowSeconds } = RATE_LIMITS.messages;
+  await rateLimit(key, limit, windowSeconds);
+}
+
+export async function checkDocumentRateLimit(
+  ip: string | undefined,
+  userId: string
+) {
+  const key = ip
+    ? `document-rate-limit:${ip}:user:${userId}`
+    : `document-rate-limit:user:${userId}`;
+  const { limit, windowSeconds } = RATE_LIMITS.document;
+  await rateLimit(key, limit, windowSeconds);
+}
+
+export async function checkSuggestionsRateLimit(
+  ip: string | undefined,
+  userId: string
+) {
+  const key = ip
+    ? `suggestions-rate-limit:${ip}:user:${userId}`
+    : `suggestions-rate-limit:user:${userId}`;
+  const { limit, windowSeconds } = RATE_LIMITS.suggestions;
+  await rateLimit(key, limit, windowSeconds);
+}
+
+export async function checkFilesGetRateLimit(
+  ip: string | undefined,
+  userId: string
+) {
+  const key = ip
+    ? `files-get-rate-limit:${ip}:user:${userId}`
+    : `files-get-rate-limit:user:${userId}`;
+  const { limit, windowSeconds } = RATE_LIMITS.filesGet;
   await rateLimit(key, limit, windowSeconds);
 }

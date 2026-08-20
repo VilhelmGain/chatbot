@@ -1,6 +1,9 @@
 import { z } from "zod";
 import { auth } from "@/app/(auth)/auth";
 import { getChatById, getMessagesByChatId } from "@/lib/db/queries";
+import { ChatbotError } from "@/lib/errors";
+import { checkMessagesRateLimit } from "@/lib/ratelimit";
+import { getClientIp } from "@/lib/server/request-utils";
 import { convertToUIMessages } from "@/lib/utils";
 
 export async function GET(request: Request) {
@@ -15,8 +18,18 @@ export async function GET(request: Request) {
     return Response.json({ error: "invalid chatId" }, { status: 400 });
   }
 
-  const [session, chat, messages] = await Promise.all([
-    auth(),
+  const session = await auth();
+  if (session?.user) {
+    try {
+      await checkMessagesRateLimit(getClientIp(request), session.user.id);
+    } catch (error) {
+      if (error instanceof ChatbotError) {
+        return error.toResponse();
+      }
+      throw error;
+    }
+  }
+  const [chat, messages] = await Promise.all([
     getChatById({ id: chatId }),
     getMessagesByChatId({ id: chatId }),
   ]);

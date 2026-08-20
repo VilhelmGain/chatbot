@@ -23,8 +23,8 @@ export function assertProductionSecurity(): void {
   }
 
   if (isProductionEnvironment && hasPlaywrightFlag) {
-    console.warn(
-      "[security] PLAYWRIGHT/CI_PLAYWRIGHT flags are set in production but will be ignored. " +
+    throw new Error(
+      "[security] PLAYWRIGHT/CI_PLAYWRIGHT flags are set in production. Refusing to start. " +
         "Unset PLAYWRIGHT, PLAYWRIGHT_TEST_BASE_URL, and CI_PLAYWRIGHT in production."
     );
   }
