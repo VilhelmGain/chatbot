@@ -58,6 +58,28 @@ export async function POST(request: Request) {
       const filePath = join(uploadDir, safeName);
       await writeFile(filePath, fileBuffer);
 
+      // Persist ownership metadata for authenticated file serving.
+      try {
+        const metaDir = join(uploadDir, ".meta");
+        await mkdir(metaDir, { recursive: true });
+        const metaPath = join(metaDir, `${safeName}.json`);
+        await writeFile(
+          metaPath,
+          JSON.stringify({
+            contentType: file.type,
+            createdAt: new Date().toISOString(),
+            originalName: filename.slice(0, 100),
+            safeName,
+            size: fileBuffer.length,
+            userId: session.user.id,
+          })
+        );
+      } catch {
+        // Ownership metadata is best-effort; file is already stored.
+        // GET will deny access if metadata is missing, so log but don't fail.
+        console.error("Failed to write file metadata", { safeName });
+      }
+
       const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
       return NextResponse.json({
         contentType: file.type,
