@@ -8,18 +8,29 @@ import {
   updateCustomProvider,
 } from "@/lib/db/queries";
 import { ChatbotError } from "@/lib/errors";
+import { checkDetectRateLimit } from "@/lib/ratelimit";
 import { assertPublicUrl } from "@/lib/security/ssrf";
+import { getClientIp } from "@/lib/server/request-utils";
 
 const FETCH_TIMEOUT_MS = 5000;
 
 export async function POST(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await auth();
 
   if (!session?.user) {
     return new ChatbotError("unauthorized:provider").toResponse();
+  }
+
+  try {
+    await checkDetectRateLimit(getClientIp(request), session.user.id);
+  } catch (error) {
+    if (error instanceof ChatbotError) {
+      return error.toResponse();
+    }
+    throw error;
   }
 
   const { id } = await params;

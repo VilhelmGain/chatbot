@@ -1,11 +1,25 @@
 export function getClientIp(request: Request): string | undefined {
+  const trustedProxies = process.env.TRUSTED_PROXIES;
   const forwarded = request.headers.get("x-forwarded-for");
-  if (forwarded) {
-    return forwarded.split(",")[0].trim();
-  }
   const realIp = request.headers.get("x-real-ip");
+
+  // When behind a trusted proxy (e.g. nginx, Cloudflare, Vercel with
+  // TRUSTED_PROXIES set), x-forwarded-for is appended by the proxy and the
+  // first entry is the original client IP.
+  if (forwarded && trustedProxies && trustedProxies.length > 0) {
+    const first = forwarded.split(",")[0].trim();
+    if (first) {
+      return first;
+    }
+  }
+
+  // Prefer x-real-ip when available — it is set by trusted reverse proxies
+  // and is less spoofable than x-forwarded-for.
   if (realIp) {
-    return realIp;
+    const trimmed = realIp.trim();
+    if (trimmed) {
+      return trimmed;
+    }
   }
 }
 

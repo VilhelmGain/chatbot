@@ -8,6 +8,8 @@ import {
 import type { Chat } from "@/lib/db/schema";
 import { ChatbotError } from "@/lib/errors";
 import { chatToFilename, chatToMarkdown } from "@/lib/export/markdown";
+import { checkExportRateLimit } from "@/lib/ratelimit";
+import { getClientIp } from "@/lib/server/request-utils";
 
 const exportRequestBodySchema = z.object({
   chatIds: z.array(z.uuid()).max(100).optional(),
@@ -51,6 +53,15 @@ export async function POST(request: Request) {
   }
 
   const userId = session.user.id;
+
+  try {
+    await checkExportRateLimit(getClientIp(request), userId);
+  } catch (error) {
+    if (error instanceof ChatbotError) {
+      return error.toResponse();
+    }
+    throw error;
+  }
 
   let chats: Chat[];
 

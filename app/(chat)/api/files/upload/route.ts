@@ -5,6 +5,9 @@ import { z } from "zod";
 
 import { auth } from "@/app/(auth)/auth";
 import { ALLOWED_MEDIA_TYPES, MAX_FILE_SIZE } from "@/lib/attachments";
+import { ChatbotError } from "@/lib/errors";
+import { checkUploadRateLimit } from "@/lib/ratelimit";
+import { getClientIp } from "@/lib/server/request-utils";
 
 const UPLOAD_DIR = process.env.UPLOAD_DIR ?? "./uploads";
 
@@ -24,6 +27,15 @@ export async function POST(request: Request) {
 
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  try {
+    await checkUploadRateLimit(getClientIp(request), session.user.id);
+  } catch (error) {
+    if (error instanceof ChatbotError) {
+      return error.toResponse();
+    }
+    throw error;
   }
 
   if (request.body === null) {

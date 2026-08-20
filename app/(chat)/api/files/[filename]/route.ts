@@ -81,11 +81,17 @@ export async function GET(
       });
       const owned = messages.some((m) => {
         const parts = m.parts as unknown[];
-        if (!Array.isArray(parts)) return false;
+        if (!Array.isArray(parts)) {
+          return false;
+        }
         return parts.some((p) => {
-          if (typeof p !== "object" || p === null) return false;
-          const url = (p as { url?: unknown }).url;
-          if (typeof url !== "string") return false;
+          if (typeof p !== "object" || p === null) {
+            return false;
+          }
+          const { url } = p as { url?: unknown };
+          if (typeof url !== "string") {
+            return false;
+          }
           try {
             const base = basename(new URL(url, "http://local").pathname);
             return base === safeName;

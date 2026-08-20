@@ -175,7 +175,9 @@ export async function POST(request: Request) {
         (model) => model.modelId === chatModel.split("/").slice(1).join("/")
       )?.name ?? chatModel;
 
-    await checkIpRateLimit(getClientIp(request));
+    await checkIpRateLimit(getClientIp(request), {
+      userId: session.user.id,
+    });
 
     const messageCount = await getMessageCountByUserId({
       differenceInHours: 1,

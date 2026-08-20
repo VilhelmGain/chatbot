@@ -10,6 +10,8 @@ import {
   readLocalAttachment,
   uniqueZipPath,
 } from "@/lib/export/attachments";
+import { checkExportRateLimit } from "@/lib/ratelimit";
+import { getClientIp } from "@/lib/server/request-utils";
 
 const exportAttachmentsBodySchema = z.object({
   attachmentIds: z.array(z.string()).max(100).optional(),
@@ -52,6 +54,15 @@ export async function POST(request: Request) {
 
   if (!session?.user) {
     return new ChatbotError("unauthorized:chat").toResponse();
+  }
+
+  try {
+    await checkExportRateLimit(getClientIp(request), session.user.id);
+  } catch (error) {
+    if (error instanceof ChatbotError) {
+      return error.toResponse();
+    }
+    throw error;
   }
 
   const messages = await getAllMessagesByUserId({ userId: session.user.id });
