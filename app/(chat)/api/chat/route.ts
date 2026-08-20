@@ -13,10 +13,7 @@ import { z } from "zod";
 import { auth } from "@/app/(auth)/auth";
 import { decrypt } from "@/lib/ai/encryption";
 import { getEntitlements } from "@/lib/ai/entitlements";
-import {
-  getCustomCapabilitiesForUser,
-  isAllowedModelId,
-} from "@/lib/ai/models";
+import { getCustomCapabilitiesForUser } from "@/lib/ai/models";
 import { calculateUsageCost, getModelPricing } from "@/lib/ai/pricing";
 import { type RequestHints, systemPrompt } from "@/lib/ai/prompts";
 import {
@@ -158,30 +155,49 @@ export async function POST(request: Request) {
       return new ChatbotError("unauthorized:chat").toResponse();
     }
 
-    const isAllowed = await isAllowedModelId(selectedChatModel);
-    if (!isAllowed) {
-      console.error("Model not allowed:", selectedChatModel);
-      return new ChatbotError("bad_request:chat").toResponse();
-    }
-
     const chatModel = selectedChatModel;
     const providerId = chatModel.split("/")[0].slice(7);
-    const provider = await getCustomProviderById({ id: providerId });
+    const modelIdPart = chatModel.split("/").slice(1).join("/");
+
+    const [
+      provider,
+      providerModels,
+      messageCount,
+      chat,
+      modelCapabilities,
+      userSettings,
+      modelPricing,
+    ] = await Promise.all([
+      getCustomProviderById({ id: providerId }),
+      getCustomModelsByProviderId({ providerId }),
+      getMessageCountByUserId({
+        differenceInHours: 1,
+        id: session.user.id,
+      }),
+      getChatById({ id }),
+      getCustomCapabilitiesForUser(session.user.id),
+      getUserSettings({ userId: session.user.id }),
+      getModelPricing(chatModel),
+    ]);
+
     if (!provider || provider.userId !== session.user.id) {
       return new ChatbotError("forbidden:chat").toResponse();
     }
-    const selectedModelName =
-      (await getCustomModelsByProviderId({ providerId })).find(
-        (model) => model.modelId === chatModel.split("/").slice(1).join("/")
-      )?.name ?? chatModel;
+    const selectedModel = providerModels.find(
+      (model) => model.modelId === modelIdPart
+    );
+    if (!selectedModel) {
+      console.error("Model not allowed:", selectedChatModel, {
+        availableModels: providerModels.map((m) => m.modelId),
+        modelIdPart,
+        providerId,
+      });
+      return new ChatbotError("bad_request:chat").toResponse();
+    }
+    const selectedModelName = selectedModel.name;
 
     await checkIpRateLimit(getClientIp(request), {
       userId: session.user.id,
-    });
-
-    const messageCount = await getMessageCountByUserId({
-      differenceInHours: 1,
-      id: session.user.id,
     });
 
     const entitlements = getEntitlements();
@@ -194,7 +210,6 @@ export async function POST(request: Request) {
 
     const isToolApprovalFlow = Boolean(messages);
 
-    const chat = await getChatById({ id });
     let messagesFromDb: DBMessage[] = [];
     let titlePromise: Promise<string> | null = null;
 
@@ -281,9 +296,6 @@ export async function POST(request: Request) {
       });
     }
 
-    const modelCapabilities = await getCustomCapabilitiesForUser(
-      session.user.id
-    );
     const capabilities = modelCapabilities[chatModel];
     const isReasoningModel = capabilities?.reasoning === true;
     const supportsTools = capabilities?.tools === true;
@@ -351,13 +363,9 @@ export async function POST(request: Request) {
       modelName: selectedModelName,
       reasoningEffort: isReasoningModel ? reasoningEffort : undefined,
     };
-    const modelPricing = await getModelPricing(chatModel);
-
     const modelMessages = await convertToModelMessages(
       await resolveAttachmentParts(uiMessages)
     );
-
-    const userSettings = await getUserSettings({ userId: session.user.id });
     const userAiContext = userSettings
       ? {
           aiAbout: userSettings.aiAbout,

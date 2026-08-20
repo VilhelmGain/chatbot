@@ -49,73 +49,88 @@ export async function isAllowedModelId(modelId: string): Promise<boolean> {
 export async function getCustomModelsForUser(
   userId: string
 ): Promise<ChatModel[]> {
-  const { getCustomModelsByProviderId, getCustomProvidersByUserId } =
+  const { getCustomModelsByProviderIds, getCustomProvidersByUserId } =
     await import("../db/queries");
-  const { syncCatalogPricingForUser } = await import("./catalog");
-  await syncCatalogPricingForUser(userId);
   const providers = await getCustomProvidersByUserId({ userId });
-  const allModels = await Promise.all(
-    providers.map(async (provider) => {
-      const models = await getCustomModelsByProviderId({
-        providerId: provider.id,
-      });
-      return models.map((model) => ({
-        description: `${provider.name} (${provider.type})`,
-        id: `custom-${provider.id}/${model.modelId}`,
+  if (providers.length === 0) {
+    return [];
+  }
+  const providerIds = providers.map((p) => p.id);
+  const models = await getCustomModelsByProviderIds({ providerIds });
+  const providerById = new Map(providers.map((p) => [p.id, p]));
+  return models.map((model) => {
+    const provider = providerById.get(model.providerId);
+    if (!provider) {
+      return {
+        description: "",
+        id: `custom-${model.providerId}/${model.modelId}`,
         name: model.name,
-        provider: `custom-${provider.id}`,
-        providerKey: provider.providerKey,
-      }));
-    })
-  );
-
-  return allModels.flat();
+        provider: `custom-${model.providerId}`,
+        providerKey: null,
+      };
+    }
+    return {
+      description: `${provider.name} (${provider.type})`,
+      id: `custom-${provider.id}/${model.modelId}`,
+      name: model.name,
+      provider: `custom-${provider.id}`,
+      providerKey: provider.providerKey,
+    };
+  });
 }
 
 export async function getCustomCapabilitiesForUser(
   userId: string
 ): Promise<Record<string, ModelCapabilities>> {
   const { getCatalogModelsForProvider } = await import("./catalog");
-  const { getCustomModelsByProviderId, getCustomProvidersByUserId } =
+  const { getCustomModelsByProviderIds, getCustomProvidersByUserId } =
     await import("../db/queries");
   const providers = await getCustomProvidersByUserId({ userId });
-  const allEntries = await Promise.all(
-    providers.map(async (provider) => {
-      const catalogCapabilities = provider.providerKey
-        ? new Map(
-            getCatalogModelsForProvider(provider.providerKey).map((m) => [
-              m.modelId,
-              m.capabilities,
-            ])
-          )
-        : null;
+  if (providers.length === 0) {
+    return {};
+  }
+  const providerIds = providers.map((p) => p.id);
+  const models = await getCustomModelsByProviderIds({ providerIds });
+  const modelsByProvider = new Map<string, typeof models>();
+  for (const model of models) {
+    const arr = modelsByProvider.get(model.providerId);
+    if (arr) {
+      arr.push(model);
+    } else {
+      modelsByProvider.set(model.providerId, [model]);
+    }
+  }
+  const allEntries = providers.flatMap((provider) => {
+    const catalogCapabilities = provider.providerKey
+      ? new Map(
+          getCatalogModelsForProvider(provider.providerKey).map((m) => [
+            m.modelId,
+            m.capabilities,
+          ])
+        )
+      : null;
 
-      const models = await getCustomModelsByProviderId({
-        providerId: provider.id,
-      });
-      return models.map((model) => {
-        const capabilities = model.capabilities as ModelCapabilities;
-        const catalogEntry = catalogCapabilities?.get(model.modelId);
-        if (catalogEntry?.reasoningEfforts && !capabilities.reasoningEfforts) {
-          return {
-            key: `custom-${provider.id}/${model.modelId}`,
-            value: {
-              ...capabilities,
-              reasoningEfforts: catalogEntry.reasoningEfforts,
-            },
-          };
-        }
+    const providerModels = modelsByProvider.get(provider.id) ?? [];
+    return providerModels.map((model) => {
+      const capabilities = model.capabilities as ModelCapabilities;
+      const catalogEntry = catalogCapabilities?.get(model.modelId);
+      if (catalogEntry?.reasoningEfforts && !capabilities.reasoningEfforts) {
         return {
           key: `custom-${provider.id}/${model.modelId}`,
-          value: capabilities,
+          value: {
+            ...capabilities,
+            reasoningEfforts: catalogEntry.reasoningEfforts,
+          },
         };
-      });
-    })
-  );
+      }
+      return {
+        key: `custom-${provider.id}/${model.modelId}`,
+        value: capabilities,
+      };
+    });
+  });
 
-  return Object.fromEntries(
-    allEntries.flat().map(({ key, value }) => [key, value])
-  );
+  return Object.fromEntries(allEntries.map(({ key, value }) => [key, value]));
 }
 
 export async function getProviderNamesForUser(

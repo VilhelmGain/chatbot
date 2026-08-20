@@ -1,3 +1,4 @@
+import { after } from "next/server";
 import { auth } from "@/app/(auth)/auth";
 import { getLiveCatalogModelsForProvider } from "@/lib/ai/catalog";
 import type { ModelCapabilities } from "@/lib/ai/models.client";
@@ -123,6 +124,15 @@ export async function POST(
           providerId: id,
         })
       : [];
+
+  after(async () => {
+    try {
+      const { syncCatalogPricingForUser } = await import("@/lib/ai/catalog");
+      await syncCatalogPricingForUser(session.user.id);
+    } catch {
+      // ignore background sync errors
+    }
+  });
 
   return Response.json({
     imported: created.length,
