@@ -10,7 +10,8 @@ describe("ratelimit", () => {
     delete process.env.PLAYWRIGHT;
     delete process.env.PLAYWRIGHT_TEST_BASE_URL;
     delete process.env.CI_PLAYWRIGHT;
-    process.env.NODE_ENV = "development";
+    (process.env as Record<string, string | undefined>).NODE_ENV =
+      "development";
     process.env.REDIS_URL = "redis://localhost:6379";
   });
 

@@ -1,6 +1,7 @@
 import { ClerkProvider } from "@clerk/nextjs";
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
+import { headers } from "next/headers";
 import { ThemeProvider } from "@/components/theme-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { isTestEnvironment } from "@/lib/constants";
@@ -241,11 +242,12 @@ const FONT_SCRIPT = `\
   }
 })();`;
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
   return (
     <html
       className={`${sora.variable} ${montserrat.variable} ${manrope.variable} ${inter.variable} ${interTight.variable} ${geist.variable} ${spaceGrotesk.variable} ${dmSans.variable} ${roboto.variable} ${robotoMono.variable} ${cascadiaCode.variable} ${geistMono.variable} ${jetbrainsMono.variable} ${firaCode.variable} ${ibmPlexMono.variable} ${spaceMono.variable} ${notoSansMath.variable} ${stixTwoMath.variable}`}
@@ -258,12 +260,14 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{
             __html: THEME_COLOR_SCRIPT,
           }}
+          nonce={nonce}
         />
         <script
           // biome-ignore lint/security/noDangerouslySetInnerHtml: "Required"
           dangerouslySetInnerHTML={{
             __html: FONT_SCRIPT,
           }}
+          nonce={nonce}
         />
       </head>
       <body className="antialiased">
