@@ -1,6 +1,6 @@
 "use client";
 
-import DOMPurify from "dompurify";
+import DOMPurify from "isomorphic-dompurify";
 import { defaultMarkdownSerializer } from "prosemirror-markdown";
 import { DOMParser, type Node } from "prosemirror-model";
 import { Decoration, DecorationSet, type EditorView } from "prosemirror-view";

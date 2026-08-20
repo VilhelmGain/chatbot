@@ -12,6 +12,21 @@ import { getClientIp } from "@/lib/server/request-utils";
 
 const UPLOAD_DIR = process.env.UPLOAD_DIR ?? "./uploads";
 
+const ALLOWED_FILE_EXTS = new Set([
+  ".csv",
+  ".gif",
+  ".jpeg",
+  ".jpg",
+  ".json",
+  ".md",
+  ".pdf",
+  ".png",
+  ".txt",
+  ".webp",
+  ".yaml",
+  ".yml",
+]);
+
 const FileSchema = z.object({
   file: z
     .instanceof(Blob)
@@ -63,7 +78,8 @@ export async function POST(request: Request) {
 
     const filename = (formData.get("file") as File).name;
     const sanitized = filename.replace(/[^a-zA-Z0-9._-]/g, "_");
-    const ext = extname(sanitized);
+    const rawExt = extname(sanitized).toLowerCase();
+    const ext = ALLOWED_FILE_EXTS.has(rawExt) ? rawExt : ".bin";
     const safeName = `${randomUUID()}${ext}`;
     const fileBuffer = Buffer.from(await file.arrayBuffer());
 

@@ -2,7 +2,11 @@ import { z } from "zod";
 import { auth } from "@/app/(auth)/auth";
 import { getChatById, getMessagesByChatId } from "@/lib/db/queries";
 import { ChatbotError } from "@/lib/errors";
-import { checkMessagesRateLimit } from "@/lib/ratelimit";
+import {
+  checkMessagesRateLimit,
+  RATE_LIMITS,
+  rateLimit,
+} from "@/lib/ratelimit";
 import { getClientIp } from "@/lib/server/request-utils";
 import { convertToUIMessages } from "@/lib/utils";
 
@@ -19,15 +23,24 @@ export async function GET(request: Request) {
   }
 
   const session = await auth();
-  if (session?.user) {
-    try {
+  try {
+    if (session?.user) {
       await checkMessagesRateLimit(getClientIp(request), session.user.id);
-    } catch (error) {
-      if (error instanceof ChatbotError) {
-        return error.toResponse();
+    } else {
+      const anonIp = getClientIp(request);
+      if (anonIp) {
+        await rateLimit(
+          `messages-anon:${anonIp}`,
+          RATE_LIMITS.messages.limit,
+          RATE_LIMITS.messages.windowSeconds
+        );
       }
-      throw error;
     }
+  } catch (error) {
+    if (error instanceof ChatbotError) {
+      return error.toResponse();
+    }
+    throw error;
   }
   const [chat, messages] = await Promise.all([
     getChatById({ id: chatId }),

@@ -57,6 +57,7 @@
     "fflate": "^0.8.3",
     "framer-motion": "^12.42.2",
     "ipaddr.js": "^2.5.0",
+    "isomorphic-dompurify": "^3.22.0",
     "katex": "^0.17.0",
     "lucide-react": "^0.446.0",
     "nanoid": "^5.1.16",

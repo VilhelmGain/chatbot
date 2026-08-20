@@ -130,7 +130,7 @@ export function isValidAttachmentUrl(url: string): boolean {
 export async function localFileUrlToDataUrl(
   url: string | undefined,
   mediaType: string,
-  ownerUserId?: string
+  ownerUserId: string
 ): Promise<string | null> {
   if (!isLocalFileUrl(url)) {
     return null;
@@ -152,16 +152,14 @@ export async function localFileUrlToDataUrl(
     if (rel.startsWith("..") || isAbsolute(rel)) {
       return null;
     }
-    // Ownership check when caller provides user context.
-    if (ownerUserId) {
-      const owned = await isFileOwnedByUser(filename, ownerUserId, uploadDir);
-      if (!owned) {
-        console.warn("Blocked cross-user file read attempt:", {
-          filename,
-          ownerUserId,
-        });
-        return null;
-      }
+    // Ownership check — required to prevent cross-user read.
+    const owned = await isFileOwnedByUser(filename, ownerUserId, uploadDir);
+    if (!owned) {
+      console.warn("Blocked cross-user file read attempt:", {
+        filename,
+        ownerUserId,
+      });
+      return null;
     }
     const buffer = await readFile(filePath);
     return `data:${mediaType};base64,${buffer.toString("base64")}`;
@@ -247,7 +245,7 @@ type FilePart = {
  */
 export async function resolveAttachmentParts(
   messages: ChatMessage[],
-  ownerUserId?: string
+  ownerUserId: string
 ): Promise<ChatMessage[]> {
   return await Promise.all(
     messages.map(async (message) => {

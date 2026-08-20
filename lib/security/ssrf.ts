@@ -162,7 +162,10 @@ export async function assertPublicUrl(rawUrl: string): Promise<URL> {
 
   let addresses: Array<{ address: string }>;
   try {
-    addresses = await lookup(url.hostname, { all: true });
+    addresses = await lookup(url.hostname, {
+      all: true,
+      verbatim: true,
+    } as unknown as { all: true });
   } catch (error) {
     throw new Error(
       "This URL points to a local or reserved address and cannot be fetched.",

@@ -20,16 +20,48 @@ export const RATE_LIMITS = {
 } as const;
 
 // In-memory fallback when REDIS_URL is not configured (default local dev)
-const memoryStore = new Map<string, { count: number; resetAt: number }>();
+// Bounded LRU-style store backed by globalThis to survive HMR
+const MAX_MEMORY_KEYS = 5000;
+type MemoryEntry = { count: number; resetAt: number };
+const memoryStore: Map<string, MemoryEntry> =
+  (
+    globalThis as unknown as {
+      __ratelimitMemoryStore?: Map<string, MemoryEntry>;
+    }
+  ).__ratelimitMemoryStore ?? new Map<string, MemoryEntry>();
+(
+  globalThis as unknown as { __ratelimitMemoryStore?: Map<string, MemoryEntry> }
+).__ratelimitMemoryStore = memoryStore;
+
+function pruneMemoryStore(): void {
+  const now = Date.now();
+  for (const [k, v] of memoryStore) {
+    if (v.resetAt <= now) {
+      memoryStore.delete(k);
+    }
+  }
+  if (memoryStore.size > MAX_MEMORY_KEYS) {
+    const toDelete = memoryStore.size - MAX_MEMORY_KEYS;
+    let i = 0;
+    for (const k of memoryStore.keys()) {
+      if (i++ >= toDelete) {
+        break;
+      }
+      memoryStore.delete(k);
+    }
+  }
+}
+
 function memoryRateLimit(
-  key: string,
-  limit: number,
+  _key: string,
+  _limit: number,
   windowSeconds: number
 ): number {
+  pruneMemoryStore();
   const now = Date.now();
-  const entry = memoryStore.get(key);
+  const entry = memoryStore.get(_key);
   if (!entry || entry.resetAt <= now) {
-    memoryStore.set(key, { count: 1, resetAt: now + windowSeconds * 1000 });
+    memoryStore.set(_key, { count: 1, resetAt: now + windowSeconds * 1000 });
     return 1;
   }
   entry.count += 1;
@@ -86,46 +118,48 @@ export async function rateLimit(
   }
 
   try {
-    // Fixed-window Lua: INCR and EXPIRE only when count==1
-    // exec returns Array<[error, reply]> per redis client
     let count: number | undefined;
-    // Try eval-based fixed window if available
-    const maybeEval = (redis as unknown as { eval?: unknown }).eval;
-    if (typeof maybeEval === "function") {
-      const script =
-        "local c = redis.call('INCR', KEYS[1]) if c == 1 then redis.call('EXPIRE', KEYS[1], ARGV[1]) end return c";
-      const res = await (
-        redis as unknown as {
-          eval: (
-            s: string,
-            o: { keys: string[]; arguments: string[] }
-          ) => Promise<number>;
-        }
-      ).eval(script, {
+    const script =
+      "local c = redis.call('INCR', KEYS[1]) if c == 1 then redis.call('EXPIRE', KEYS[1], ARGV[1]) end return c";
+    // Prefer EVAL, then sendCommand EVAL, then fixed-window SET NX path
+    const redisAny = redis as unknown as {
+      eval?: (
+        s: string,
+        o: { keys: string[]; arguments: string[] }
+      ) => Promise<number>;
+      sendCommand?: (args: string[]) => Promise<unknown>;
+    };
+    if (typeof redisAny.eval === "function") {
+      const res = await redisAny.eval(script, {
         arguments: [String(windowSeconds)],
         keys: [key],
       });
       count = typeof res === "number" ? res : Number(res);
+    } else if (typeof redisAny.sendCommand === "function") {
+      const res = (await redisAny.sendCommand([
+        "EVAL",
+        script,
+        "1",
+        key,
+        String(windowSeconds),
+      ])) as number;
+      count = typeof res === "number" ? res : Number(res);
     } else {
-      const results = (await redis
-        .multi()
-        .incr(key)
-        .expire(key, windowSeconds)
-        .exec()) as unknown as Array<[Error | null, number]> | null;
-      // Correct extraction: exec returns [[null,count],[null,1]]
-      const first = results?.[0];
-      count = Array.isArray(first)
-        ? (first[1] as number)
-        : (first as unknown as number);
-      // If using multi+expire we still refresh TTL incorrectly, but fallback path above is preferred.
-      // For legacy compat, check if count is number
-      if (
-        typeof count !== "number" &&
-        results &&
-        typeof (results[0] as unknown as number) === "number"
-      ) {
-        count = results[0] as unknown as number;
+      // Fallback fixed-window without TTL refresh: SET NX EX then INCR
+      const setRes = await (
+        redis as unknown as {
+          set: (k: string, v: string, o: unknown) => Promise<string | null>;
+        }
+      ).set(key, "0", { EX: windowSeconds, NX: true });
+      // If key was new, INCR will be 1; else existing counter
+      const incrRes = await (
+        redis as unknown as { incr: (k: string) => Promise<number> }
+      ).incr(key);
+      // If we just created key, ensure expire is set (SET already did EX)
+      if (setRes === "OK" && incrRes === 1) {
+        // already has TTL from SET
       }
+      count = incrRes;
     }
 
     if (typeof count === "number" && count > limit) {

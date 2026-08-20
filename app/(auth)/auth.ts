@@ -11,13 +11,41 @@ import {
 
 const emailSchema = z.string().email();
 
-// Simple in-memory rate limiter for test-user creation (fail-closed is not
-// needed here because this path is only active in non-production).
+// In-memory limiter for test-user creation — bounded to avoid DoS via email rotation.
+// Uses globalThis to survive HMR in dev.
 const TEST_USER_RATE_WINDOW_MS = 60_000;
 const TEST_USER_RATE_LIMIT = 30;
-const testUserHits = new Map<string, { count: number; resetAt: number }>();
+const MAX_TEST_USER_KEYS = 5000;
+type RateEntry = { count: number; resetAt: number };
+const testUserHits: Map<string, RateEntry> =
+  (globalThis as unknown as { __testUserHits?: Map<string, RateEntry> })
+    .__testUserHits ?? new Map<string, RateEntry>();
+(
+  globalThis as unknown as { __testUserHits?: Map<string, RateEntry> }
+).__testUserHits = testUserHits;
+
+function pruneTestUserHits(): void {
+  const now = Date.now();
+  for (const [k, v] of testUserHits) {
+    if (v.resetAt <= now) {
+      testUserHits.delete(k);
+    }
+  }
+  if (testUserHits.size > MAX_TEST_USER_KEYS) {
+    // evict oldest entries
+    const toDelete = testUserHits.size - MAX_TEST_USER_KEYS;
+    let i = 0;
+    for (const k of testUserHits.keys()) {
+      if (i++ >= toDelete) {
+        break;
+      }
+      testUserHits.delete(k);
+    }
+  }
+}
 
 function checkTestUserRateLimit(key: string): boolean {
+  pruneTestUserHits();
   const now = Date.now();
   const entry = testUserHits.get(key);
   if (!entry || entry.resetAt <= now) {
@@ -35,19 +63,25 @@ function checkTestUserRateLimit(key: string): boolean {
 }
 
 function verifySignedTestUserCookie(raw: string): string | null {
-  // Format: email|hmac — legacy plain email is accepted in test env for
-  // backward compat with existing Playwright helpers (they set raw email).
-  const parsedEmail = emailSchema.safeParse(raw);
-  if (parsedEmail.success) {
-    // Plain email — allow but log. Signed variant is preferred.
-    return parsedEmail.data;
+  // Strict: require email|hmac, exactly one pipe. Plain email only when
+  // ALLOW_PLAIN_TEST_COOKIE=1 in non-production for local dev.
+  if (
+    process.env.ALLOW_PLAIN_TEST_COOKIE === "1" &&
+    process.env.NODE_ENV !== "production"
+  ) {
+    const plain = emailSchema.safeParse(raw);
+    if (plain.success) {
+      return plain.data;
+    }
   }
-  const sepIdx = raw.lastIndexOf("|");
-  if (sepIdx === -1) {
+  const parts = raw.split("|");
+  if (parts.length !== 2) {
     return null;
   }
-  const email = raw.slice(0, sepIdx);
-  const sig = raw.slice(sepIdx + 1);
+  const [email, sig] = parts;
+  if (!email || !sig) {
+    return null;
+  }
   const emailValid = emailSchema.safeParse(email);
   if (!emailValid.success) {
     return null;
@@ -56,11 +90,14 @@ function verifySignedTestUserCookie(raw: string): string | null {
   if (!secret) {
     return null;
   }
+  // sig must be hex 64 chars (sha256)
+  if (!/^[0-9a-f]{64}$/i.test(sig)) {
+    return null;
+  }
   const expected = crypto
     .createHmac("sha256", secret)
     .update(email, "utf8")
     .digest("hex");
-  // timingSafeEqual
   try {
     const a = Buffer.from(sig, "hex");
     const b = Buffer.from(expected, "hex");
@@ -116,32 +153,17 @@ export async function auth(): Promise<Session | null> {
         return null;
       }
     } else if (isDemoMode) {
-      // Per-session demo user: use a dedicated cookie so each browser gets
-      // an isolated demo identity instead of sharing demo@example.com.
+      // Per-session demo user is minted in middleware (see middleware.ts).
+      // Here we only accept an existing signed demo-session cookie.
       const demoCookie = cookieStore.get("demo-session")?.value;
-      let demoEmail: string | undefined;
-      if (demoCookie) {
-        const v = verifySignedTestUserCookie(demoCookie);
-        if (v) {
-          demoEmail = v;
-        }
+      if (!demoCookie) {
+        return null;
       }
-      if (!demoEmail) {
-        demoEmail = `demo-${crypto.randomUUID()}@demo.local`;
-        // Best-effort set cookie — ignore errors in edge/test contexts.
-        try {
-          const signed = signTestUserCookie(demoEmail);
-          cookieStore.set("demo-session", signed, {
-            httpOnly: true,
-            path: "/",
-            sameSite: "lax",
-            secure: process.env.NODE_ENV === "production",
-          });
-        } catch {
-          // ignore
-        }
+      const v = verifySignedTestUserCookie(demoCookie);
+      if (!v) {
+        return null;
       }
-      email = demoEmail;
+      email = v;
       if (!checkTestUserRateLimit(`demo:${email}`)) {
         return null;
       }
