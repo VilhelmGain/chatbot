@@ -26,7 +26,7 @@ const nextConfig: NextConfig = {
     appNewScrollHandler: true,
     cachedNavigations: true,
     inlineCss: true,
-    optimizePackageImports: ["framer-motion", "motion", "shiki", "streamdown"],
+    optimizePackageImports: ["framer-motion", "shiki", "streamdown"],
     prefetchInlining: true,
     turbopackFileSystemCacheForDev: true,
   },

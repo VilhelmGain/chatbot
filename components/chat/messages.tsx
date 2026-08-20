@@ -23,6 +23,10 @@ type MessagesProps = {
   onForkMessage?: (message: ChatMessage) => void;
 };
 
+// Fixed estimate: lightweight heuristic for 500+ message windowing.
+// It drifts for variable-height content (code blocks, images, tool outputs).
+// For precise virtualization, replace with dynamic measurement
+// (ResizeObserver per row or @tanstack/react-virtual).
 const VIRTUALIZATION_THRESHOLD = 100;
 const ESTIMATED_ROW_HEIGHT = 320;
 const OVERSCAN = 10;
@@ -78,18 +82,28 @@ function PureMessages({
     if (!container) {
       return;
     }
+    let rafId: number | null = null;
     const handleScroll = () => {
-      setScrollTop(container.scrollTop);
+      if (rafId !== null) {
+        return;
+      }
+      rafId = requestAnimationFrame(() => {
+        rafId = null;
+        setScrollTop(container.scrollTop);
+      });
     };
     const handleResize = () => {
       setViewportHeight(container.clientHeight);
     };
     handleResize();
-    handleScroll();
+    setScrollTop(container.scrollTop);
     container.addEventListener("scroll", handleScroll, { passive: true });
     const resizeObserver = new ResizeObserver(handleResize);
     resizeObserver.observe(container);
     return () => {
+      if (rafId !== null) {
+        cancelAnimationFrame(rafId);
+      }
       container.removeEventListener("scroll", handleScroll);
       resizeObserver.disconnect();
     };
@@ -116,13 +130,16 @@ function PureMessages({
       };
     }
     return { endIndex: end, startIndex: start };
-  }, [shouldVirtualize, scrollTop, viewportHeight, messages.length, isAtBottom]);
+  }, [
+    shouldVirtualize,
+    scrollTop,
+    viewportHeight,
+    messages.length,
+    isAtBottom,
+  ]);
 
   const visibleMessages = useMemo(
-    () =>
-      shouldVirtualize
-        ? messages.slice(startIndex, endIndex)
-        : messages,
+    () => (shouldVirtualize ? messages.slice(startIndex, endIndex) : messages),
     [shouldVirtualize, messages, startIndex, endIndex]
   );
 
