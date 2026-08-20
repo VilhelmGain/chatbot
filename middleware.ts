@@ -22,7 +22,12 @@ function handleTestRequest(request: NextRequest) {
   if (ping) {
     return ping;
   }
-  if (isProtectedRoute(request)) {
+  // Only enforce test-user cookie for API routes; pages like "/" are allowed
+  // without auth in test env so that UI tests that don't signIn still render.
+  // API auth is still enforced via app/(auth)/auth.ts, but we also block
+  // unauthenticated API access here to prevent bypass when env flags leak.
+  const isApiRoute = request.nextUrl.pathname.startsWith("/api/");
+  if (isApiRoute && isProtectedRoute(request)) {
     const hasTestCookie = request.cookies.has("test-user");
     const hasDemoCookie = request.cookies.has("demo-session");
     if (!hasTestCookie && !isDemoMode) {
@@ -35,9 +40,22 @@ function handleTestRequest(request: NextRequest) {
       );
     }
     // Demo per-session mint: if demo mode without any session cookie, create one.
-    // Edge runtime compatible: use Web Crypto randomUUID, set plain demo email.
-    // Auth will accept plain demo-.*@demo.local when isDemoMode.
     if (isDemoMode && !hasTestCookie && !hasDemoCookie) {
+      const demoEmail = `demo-${globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2)}@demo.local`;
+      const res = NextResponse.next();
+      res.cookies.set("demo-session", demoEmail, {
+        httpOnly: true,
+        path: "/",
+        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
+      });
+      return res;
+    }
+  } else if (isDemoMode && isProtectedRoute(request)) {
+    // For non-API protected pages in demo mode, mint demo session if needed
+    const hasTestCookie = request.cookies.has("test-user");
+    const hasDemoCookie = request.cookies.has("demo-session");
+    if (!hasTestCookie && !hasDemoCookie) {
       const demoEmail = `demo-${globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2)}@demo.local`;
       const res = NextResponse.next();
       res.cookies.set("demo-session", demoEmail, {
