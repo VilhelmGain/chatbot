@@ -54,6 +54,7 @@ RUN chown -R nextjs:nodejs ./lib/db/migrations
 
 COPY docker-entrypoint.sh ./docker-entrypoint.sh
 RUN chmod 755 docker-entrypoint.sh
+RUN apk add --no-cache wget
 
 USER nextjs
 EXPOSE 3000

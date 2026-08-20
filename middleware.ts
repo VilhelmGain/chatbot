@@ -55,7 +55,7 @@ function applySecurityHeaders(response: NextResponse, nonce: string): void {
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "img-src 'self' data: blob: https://img.clerk.com https://*.clerk.com",
     "font-src 'self' data:",
-    "connect-src 'self' https://*.clerk.com https://*.clerk.accounts.dev https://cdn.jsdelivr.net wss: ws:",
+    "connect-src 'self' https://*.clerk.com https://*.clerk.accounts.dev https://cdn.jsdelivr.net",
     "frame-ancestors 'none'",
     "object-src 'none'",
     "base-uri 'self'",
