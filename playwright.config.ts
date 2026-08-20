@@ -24,7 +24,7 @@ const baseURL = `http://localhost:${PORT}`;
  */
 export default defineConfig({
   expect: {
-    timeout: 240 * 1000,
+    timeout: 10 * 1000,
   },
   /* Fail the build on CI if you accidentally left test.only in the source code. */
   forbidOnly: !!process.env.CI,
@@ -43,17 +43,19 @@ export default defineConfig({
 
     {
       name: "firefox",
+      testMatch: /e2e\/.*.test.ts/,
       use: { ...devices["Desktop Firefox"] },
     },
 
     {
       name: "webkit",
+      testMatch: /e2e\/.*.test.ts/,
       use: { ...devices["Desktop Safari"] },
     },
 
-    /* Test against mobile viewports. */
     {
       name: "Mobile Chrome",
+      testMatch: /e2e\/.*.test.ts/,
       use: { ...devices["Pixel 5"] },
     },
     // {
@@ -78,7 +80,7 @@ export default defineConfig({
   testDir: "./tests",
 
   /* Configure global timeout for each test */
-  timeout: 240 * 1000, // 120 seconds
+  timeout: 30 * 1000,
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
@@ -96,6 +98,6 @@ export default defineConfig({
     timeout: 120 * 1000,
     url: `${baseURL}/ping`,
   },
-  /* Limit workers to prevent browser crashes */
-  workers: process.env.CI ? 2 : 2,
+  /* Limit workers to prevent browser crashes; higher on CI for sharded matrix */
+  workers: process.env.CI ? 4 : 2,
 });
