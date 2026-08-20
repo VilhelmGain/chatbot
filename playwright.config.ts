@@ -24,14 +24,18 @@ const baseURL = `http://localhost:${PORT}`;
  */
 export default defineConfig({
   expect: {
-    timeout: 240 * 1000,
+    timeout: 10 * 1000,
   },
   /* Fail the build on CI if you accidentally left test.only in the source code. */
   forbidOnly: !!process.env.CI,
   /* Run tests in files in parallel */
   fullyParallel: true,
 
-  /* Configure projects */
+  /* Configure projects
+   * Cross-browser projects are re-enabled for local verification (`--project=firefox|webkit|mobile-chrome`).
+   * CI runs only `e2e` (Chromium) via `e2e.yml --project=e2e` to keep PR runtime ~4m;
+   * full cross-browser matrix is available locally and can be added to CI via the workflow matrix if needed.
+   */
   projects: [
     {
       name: "e2e",
@@ -41,21 +45,23 @@ export default defineConfig({
       },
     },
 
-    // {
-    //   name: 'firefox',
-    //   use: { ...devices['Desktop Firefox'] },
-    // },
+    {
+      name: "firefox",
+      testMatch: /e2e\/.*.test.ts/,
+      use: { ...devices["Desktop Firefox"] },
+    },
 
-    // {
-    //   name: 'webkit',
-    //   use: { ...devices['Desktop Safari'] },
-    // },
+    {
+      name: "webkit",
+      testMatch: /e2e\/.*.test.ts/,
+      use: { ...devices["Desktop Safari"] },
+    },
 
-    /* Test against mobile viewports. */
-    // {
-    //   name: 'Mobile Chrome',
-    //   use: { ...devices['Pixel 5'] },
-    // },
+    {
+      name: "mobile-chrome",
+      testMatch: /e2e\/.*.test.ts/,
+      use: { ...devices["Pixel 5"] },
+    },
     // {
     //   name: 'Mobile Safari',
     //   use: { ...devices['iPhone 12'] },
@@ -74,15 +80,16 @@ export default defineConfig({
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: "html",
   /* Retry on CI only */
-  retries: 0,
+  retries: process.env.CI ? 2 : 0,
   testDir: "./tests",
 
   /* Configure global timeout for each test */
-  timeout: 240 * 1000, // 120 seconds
+  timeout: 60 * 1000,
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
     baseURL,
+    screenshot: "only-on-failure",
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: "retain-on-failure",

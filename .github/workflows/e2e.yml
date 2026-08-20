@@ -2,13 +2,14 @@ name: E2E Tests
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
 
 jobs:
   e2e:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -31,7 +32,9 @@ jobs:
         run: pnpm exec playwright install --with-deps chromium
 
       - name: Run Playwright tests
-        run: pnpm test
+        run: pnpm exec playwright test --project=e2e
+        env:
+          PLAYWRIGHT: "True"
 
       - name: Upload Playwright report
         if: always()
