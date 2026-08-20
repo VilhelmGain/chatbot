@@ -3,6 +3,7 @@ import {
   boolean,
   doublePrecision,
   foreignKey,
+  index,
   integer,
   json,
   pgTable,
@@ -27,32 +28,48 @@ export const user = pgTable("User", {
 
 export type User = InferSelectModel<typeof user>;
 
-export const chat = pgTable("Chat", {
-  createdAt: timestamp("createdAt").notNull(),
-  id: uuid("id").primaryKey().notNull().defaultRandom(),
-  title: text("title").notNull(),
-  updatedAt: timestamp("updatedAt").notNull().defaultNow(),
-  userId: uuid("userId")
-    .notNull()
-    .references(() => user.id),
-  visibility: varchar("visibility", { enum: ["public", "private"] })
-    .notNull()
-    .default("private"),
-});
+export const chat = pgTable(
+  "Chat",
+  {
+    createdAt: timestamp("createdAt").notNull(),
+    id: uuid("id").primaryKey().notNull().defaultRandom(),
+    title: text("title").notNull(),
+    updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+    userId: uuid("userId")
+      .notNull()
+      .references(() => user.id),
+    visibility: varchar("visibility", { enum: ["public", "private"] })
+      .notNull()
+      .default("private"),
+  },
+  (table) => [index("Chat_userId_idx").on(table.userId)]
+);
 
 export type Chat = InferSelectModel<typeof chat>;
 
-export const message = pgTable("Message_v2", {
-  attachments: json("attachments").notNull(),
-  chatId: uuid("chatId")
-    .notNull()
-    .references(() => chat.id),
-  createdAt: timestamp("createdAt").notNull(),
-  id: uuid("id").primaryKey().notNull().defaultRandom(),
-  metadata: json("metadata").notNull().default({}),
-  parts: json("parts").notNull(),
-  role: varchar("role").notNull(),
-});
+export const message = pgTable(
+  "Message_v2",
+  {
+    attachments: json("attachments")
+      .$type<Array<{ name: string; url: string; contentType: string }>>()
+      .notNull(),
+    chatId: uuid("chatId")
+      .notNull()
+      .references(() => chat.id),
+    createdAt: timestamp("createdAt").notNull(),
+    id: uuid("id").primaryKey().notNull().defaultRandom(),
+    metadata: json("metadata")
+      .$type<Record<string, unknown>>()
+      .notNull()
+      .default({}),
+    parts: json("parts").$type<Record<string, unknown>[]>().notNull(),
+    role: varchar("role").notNull(),
+  },
+  (table) => [
+    index("Message_chatId_idx").on(table.chatId),
+    index("Message_chatId_createdAt_idx").on(table.chatId, table.createdAt),
+  ]
+);
 
 export type DBMessage = InferSelectModel<typeof message>;
 
@@ -71,6 +88,7 @@ export const document = pgTable(
       .references(() => user.id),
   },
   (table) => ({
+    documentIdIdx: index("Document_id_idx").on(table.id),
     pk: primaryKey({ columns: [table.id, table.createdAt] }),
   })
 );
@@ -116,26 +134,33 @@ export const stream = pgTable(
       foreignColumns: [chat.id],
     }),
     pk: primaryKey({ columns: [table.id] }),
+    streamChatIdIdx: index("Stream_chatId_idx").on(table.chatId),
   })
 );
 
 export type Stream = InferSelectModel<typeof stream>;
 
-export const customProvider = pgTable("CustomProvider", {
-  baseURL: varchar("baseURL", { length: 512 }).notNull(),
-  createdAt: timestamp("createdAt").notNull().defaultNow(),
-  defaultConfig: json("defaultConfig").$type<ProviderDefaultConfig>(),
-  encryptedApiKey: text("encryptedApiKey").notNull(),
-  id: uuid("id").primaryKey().notNull().defaultRandom(),
-  iv: varchar("iv", { length: 32 }).notNull(),
-  name: varchar("name", { length: 128 }).notNull(),
-  providerKey: varchar("providerKey", { length: 128 }),
-  type: varchar("type", { enum: ["openai", "anthropic"] }).notNull(),
-  updatedAt: timestamp("updatedAt").notNull().defaultNow(),
-  userId: uuid("userId")
-    .notNull()
-    .references(() => user.id, { onDelete: "cascade" }),
-});
+export const customProvider = pgTable(
+  "CustomProvider",
+  {
+    baseURL: varchar("baseURL", { length: 512 }).notNull(),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+    defaultConfig: json("defaultConfig").$type<ProviderDefaultConfig>(),
+    encryptedApiKey: text("encryptedApiKey").notNull(),
+    id: uuid("id").primaryKey().notNull().defaultRandom(),
+    iv: varchar("iv", { length: 32 }).notNull(),
+    keyVersion: integer("keyVersion").notNull().default(1),
+    name: varchar("name", { length: 128 }).notNull(),
+    providerKey: varchar("providerKey", { length: 128 }),
+    salt: varchar("salt", { length: 64 }),
+    type: varchar("type", { enum: ["openai", "anthropic"] }).notNull(),
+    updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+    userId: uuid("userId")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+  },
+  (table) => [index("CustomProvider_userId_idx").on(table.userId)]
+);
 
 export type CustomProvider = InferSelectModel<typeof customProvider>;
 
@@ -160,25 +185,36 @@ export type ModelPricing = {
   cachedOutput: number | null;
 };
 
-export const customModel = pgTable("CustomModel", {
-  cachedInput: doublePrecision("cachedInput"),
-  cachedOutput: doublePrecision("cachedOutput"),
-  capabilities: json("capabilities").notNull(),
-  capabilitiesIsCustom: boolean("capabilitiesIsCustom")
-    .notNull()
-    .default(false),
-  createdAt: timestamp("createdAt").notNull().defaultNow(),
-  id: uuid("id").primaryKey().notNull().defaultRandom(),
-  input: doublePrecision("input"),
-  modelId: varchar("modelId", { length: 256 }).notNull(),
-  name: varchar("name", { length: 256 }).notNull(),
-  nameIsCustom: boolean("nameIsCustom").notNull().default(false),
-  output: doublePrecision("output"),
-  pricingIsCustom: boolean("pricingIsCustom").notNull().default(false),
-  providerId: uuid("providerId")
-    .notNull()
-    .references(() => customProvider.id, { onDelete: "cascade" }),
-});
+export const customModel = pgTable(
+  "CustomModel",
+  {
+    cachedInput: doublePrecision("cachedInput"),
+    cachedOutput: doublePrecision("cachedOutput"),
+    capabilities: json("capabilities")
+      .$type<{
+        tools: boolean;
+        vision: boolean;
+        reasoning: boolean;
+        reasoningEfforts?: string[];
+      }>()
+      .notNull(),
+    capabilitiesIsCustom: boolean("capabilitiesIsCustom")
+      .notNull()
+      .default(false),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+    id: uuid("id").primaryKey().notNull().defaultRandom(),
+    input: doublePrecision("input"),
+    modelId: varchar("modelId", { length: 256 }).notNull(),
+    name: varchar("name", { length: 256 }).notNull(),
+    nameIsCustom: boolean("nameIsCustom").notNull().default(false),
+    output: doublePrecision("output"),
+    pricingIsCustom: boolean("pricingIsCustom").notNull().default(false),
+    providerId: uuid("providerId")
+      .notNull()
+      .references(() => customProvider.id, { onDelete: "cascade" }),
+  },
+  (table) => [index("CustomModel_providerId_idx").on(table.providerId)]
+);
 
 export type CustomModel = InferSelectModel<typeof customModel>;
 
@@ -198,7 +234,9 @@ export const toolConfig = pgTable(
     encryptedApiKey: text("encryptedApiKey").notNull(),
     id: uuid("id").primaryKey().notNull().defaultRandom(),
     iv: varchar("iv", { length: 32 }).notNull(),
+    keyVersion: integer("keyVersion").notNull().default(1),
     provider: varchar("provider", { length: 64 }).notNull(),
+    salt: varchar("salt", { length: 64 }),
     toolId: varchar("toolId", { length: 64 }).notNull(),
     updatedAt: timestamp("updatedAt").notNull().defaultNow(),
     userId: uuid("userId")
@@ -227,7 +265,7 @@ export const userSettings = pgTable(
     aiUserName: varchar("aiUserName", { length: 128 }),
     chatModelId: varchar("chatModelId", { length: 512 }),
     createdAt: timestamp("createdAt").notNull().defaultNow(),
-    enabledTools: json("enabledTools"),
+    enabledTools: json("enabledTools").$type<string[] | null>(),
     enterBehavior: varchar("enterBehavior", { length: 32 }),
     fontBody: varchar("fontBody", { length: 64 }),
     fontHeading: varchar("fontHeading", { length: 64 }),

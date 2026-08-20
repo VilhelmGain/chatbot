@@ -2,22 +2,113 @@ import "server-only";
 
 import { isTestEnvironment } from "@/lib/constants";
 import { inMemoryQueries } from "./in-memory";
-// biome-ignore lint/performance/noNamespaceImport: dispatcher needs the full namespace to pick an impl at runtime
-import * as pgQueries from "./queries.pg";
+import {
+  createCustomModel as pgCreateCustomModel,
+  createCustomModels as pgCreateCustomModels,
+  createCustomProvider as pgCreateCustomProvider,
+  createStreamId as pgCreateStreamId,
+  createUserFromClerk as pgCreateUserFromClerk,
+  deleteAllChatsByUserId as pgDeleteAllChatsByUserId,
+  deleteChatById as pgDeleteChatById,
+  deleteCustomModel as pgDeleteCustomModel,
+  deleteCustomProvider as pgDeleteCustomProvider,
+  deleteDocumentsByIdAfterTimestamp as pgDeleteDocumentsByIdAfterTimestamp,
+  deleteMessagesByChatIdAfterTimestamp as pgDeleteMessagesByChatIdAfterTimestamp,
+  deleteToolConfig as pgDeleteToolConfig,
+  getAllChatsByUserId as pgGetAllChatsByUserId,
+  getAllMessagesByUserId as pgGetAllMessagesByUserId,
+  getCatalogSync as pgGetCatalogSync,
+  getChatById as pgGetChatById,
+  getChatsByUserId as pgGetChatsByUserId,
+  getCustomModelsByProviderId as pgGetCustomModelsByProviderId,
+  getCustomModelsForUser as pgGetCustomModelsForUser,
+  getCustomProviderById as pgGetCustomProviderById,
+  getCustomProviderByModelId as pgGetCustomProviderByModelId,
+  getCustomProvidersByUserId as pgGetCustomProvidersByUserId,
+  getDecryptedApiKey as pgGetDecryptedApiKey,
+  getDocumentById as pgGetDocumentById,
+  getDocumentsById as pgGetDocumentsById,
+  getMessageById as pgGetMessageById,
+  getMessageCountByUserId as pgGetMessageCountByUserId,
+  getMessagesByChatId as pgGetMessagesByChatId,
+  getOrCreateUserByEmail as pgGetOrCreateUserByEmail,
+  getStreamIdsByChatId as pgGetStreamIdsByChatId,
+  getSuggestionsByDocumentId as pgGetSuggestionsByDocumentId,
+  getToolConfigByUserId as pgGetToolConfigByUserId,
+  getToolConfigsByUserId as pgGetToolConfigsByUserId,
+  getUserByClerkId as pgGetUserByClerkId,
+  getUserSettings as pgGetUserSettings,
+  saveChat as pgSaveChat,
+  saveDocument as pgSaveDocument,
+  saveMessages as pgSaveMessages,
+  saveSuggestions as pgSaveSuggestions,
+  updateCatalogSync as pgUpdateCatalogSync,
+  updateChatTitleById as pgUpdateChatTitleById,
+  updateChatVisibilityById as pgUpdateChatVisibilityById,
+  updateCustomModel as pgUpdateCustomModel,
+  updateCustomProvider as pgUpdateCustomProvider,
+  updateDocumentContent as pgUpdateDocumentContent,
+  updateMessage as pgUpdateMessage,
+  upsertToolConfig as pgUpsertToolConfig,
+  upsertUserSettings as pgUpsertUserSettings,
+} from "./queries.pg";
 
-type Queries = typeof import("./queries.pg");
-
-type Relaxed<T> = T extends (...args: infer A) => unknown
-  ? (...args: A) => unknown
-  : never;
-
-const memQueries = inMemoryQueries satisfies {
-  [K in keyof Queries]: Relaxed<Queries[K]>;
+const pgQueries = {
+  createCustomModel: pgCreateCustomModel,
+  createCustomModels: pgCreateCustomModels,
+  createCustomProvider: pgCreateCustomProvider,
+  createStreamId: pgCreateStreamId,
+  createUserFromClerk: pgCreateUserFromClerk,
+  deleteAllChatsByUserId: pgDeleteAllChatsByUserId,
+  deleteChatById: pgDeleteChatById,
+  deleteCustomModel: pgDeleteCustomModel,
+  deleteCustomProvider: pgDeleteCustomProvider,
+  deleteDocumentsByIdAfterTimestamp: pgDeleteDocumentsByIdAfterTimestamp,
+  deleteMessagesByChatIdAfterTimestamp: pgDeleteMessagesByChatIdAfterTimestamp,
+  deleteToolConfig: pgDeleteToolConfig,
+  getAllChatsByUserId: pgGetAllChatsByUserId,
+  getAllMessagesByUserId: pgGetAllMessagesByUserId,
+  getCatalogSync: pgGetCatalogSync,
+  getChatById: pgGetChatById,
+  getChatsByUserId: pgGetChatsByUserId,
+  getCustomModelsByProviderId: pgGetCustomModelsByProviderId,
+  getCustomModelsForUser: pgGetCustomModelsForUser,
+  getCustomProviderById: pgGetCustomProviderById,
+  getCustomProviderByModelId: pgGetCustomProviderByModelId,
+  getCustomProvidersByUserId: pgGetCustomProvidersByUserId,
+  getDecryptedApiKey: pgGetDecryptedApiKey,
+  getDocumentById: pgGetDocumentById,
+  getDocumentsById: pgGetDocumentsById,
+  getMessageById: pgGetMessageById,
+  getMessageCountByUserId: pgGetMessageCountByUserId,
+  getMessagesByChatId: pgGetMessagesByChatId,
+  getOrCreateUserByEmail: pgGetOrCreateUserByEmail,
+  getStreamIdsByChatId: pgGetStreamIdsByChatId,
+  getSuggestionsByDocumentId: pgGetSuggestionsByDocumentId,
+  getToolConfigByUserId: pgGetToolConfigByUserId,
+  getToolConfigsByUserId: pgGetToolConfigsByUserId,
+  getUserByClerkId: pgGetUserByClerkId,
+  getUserSettings: pgGetUserSettings,
+  saveChat: pgSaveChat,
+  saveDocument: pgSaveDocument,
+  saveMessages: pgSaveMessages,
+  saveSuggestions: pgSaveSuggestions,
+  updateCatalogSync: pgUpdateCatalogSync,
+  updateChatTitleById: pgUpdateChatTitleById,
+  updateChatVisibilityById: pgUpdateChatVisibilityById,
+  updateCustomModel: pgUpdateCustomModel,
+  updateCustomProvider: pgUpdateCustomProvider,
+  updateDocumentContent: pgUpdateDocumentContent,
+  updateMessage: pgUpdateMessage,
+  upsertToolConfig: pgUpsertToolConfig,
+  upsertUserSettings: pgUpsertUserSettings,
 };
 
-const impl: Queries = isTestEnvironment
-  ? (memQueries as unknown as Queries)
-  : pgQueries;
+type Queries = typeof pgQueries;
+
+const memQueries = inMemoryQueries as unknown as Queries satisfies Queries;
+
+const impl: Queries = isTestEnvironment ? memQueries : pgQueries;
 
 export const {
   createCustomModel,

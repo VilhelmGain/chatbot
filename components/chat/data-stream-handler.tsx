@@ -31,11 +31,10 @@ export function DataStreamHandler() {
         (currentArtifactDefinition) =>
           currentArtifactDefinition.kind === artifact.kind
       );
-
       if (artifactDefinition?.onStreamPart) {
         artifactDefinition.onStreamPart({
           setArtifact,
-          setMetadata,
+          setMetadata: setMetadata as unknown as never,
           streamPart: delta,
         });
       }

@@ -26,6 +26,7 @@ export const myProvider = isTestEnvironment
   : null;
 
 const CACHE_TTL_MS = 5 * 60 * 1000;
+const CACHE_MAX = 500;
 
 type CachedProvider = {
   apiKey: string;
@@ -36,7 +37,88 @@ type CachedProvider = {
   name: string;
 };
 
-const providerCache = new Map<string, CachedProvider>();
+function zeroizeCached(entry: CachedProvider): void {
+  // Note: JS strings are immutable – Buffer.from copies the string, so
+  // filling the buffer does not zero the original string allocation.
+  // The real mitigation is overwriting the reference; the buffer fill
+  // is best-effort for any copied bytes that remain in the heap.
+  try {
+    const buf = Buffer.from(entry.apiKey, "utf8");
+    buf.fill(0);
+  } catch {
+    // ignore
+  }
+  entry.apiKey = "";
+}
+
+class LRUCache<K, V extends { expiresAt: number }> {
+  private readonly max: number;
+  private readonly ttl: number;
+  private readonly map: Map<K, V>;
+  private readonly dispose?: (value: V, key: K) => void;
+
+  constructor(opts: {
+    max: number;
+    ttl: number;
+    dispose?: (value: V, key: K) => void;
+  }) {
+    this.max = opts.max;
+    this.ttl = opts.ttl;
+    this.map = new Map();
+    this.dispose = opts.dispose;
+  }
+
+  get(key: K): V | undefined {
+    const entry = this.map.get(key);
+    if (!entry) {
+      return;
+    }
+    if (entry.expiresAt <= Date.now()) {
+      this.map.delete(key);
+      this.dispose?.(entry, key);
+      return;
+    }
+    // refresh LRU order
+    this.map.delete(key);
+    this.map.set(key, entry);
+    return entry;
+  }
+
+  set(key: K, value: V): void {
+    if (this.map.has(key)) {
+      const old = this.map.get(key);
+      if (old) {
+        this.dispose?.(old, key);
+      }
+      this.map.delete(key);
+    } else if (this.map.size >= this.max) {
+      const firstKey = this.map.keys().next().value as K;
+      const firstVal = this.map.get(firstKey);
+      if (firstVal) {
+        this.dispose?.(firstVal, firstKey);
+      }
+      this.map.delete(firstKey);
+    }
+    this.map.set(key, value);
+    // TTL is enforced lazily on get(); no per-entry timer to avoid leaks
+    // when keys are hot-updated before expiry.
+  }
+
+  delete(key: K): boolean {
+    const val = this.map.get(key);
+    if (val) {
+      this.dispose?.(val, key);
+    }
+    return this.map.delete(key);
+  }
+}
+
+// LRU max 500 ttl 5m and zeroize on eviction/expiry
+const providerCache = new LRUCache<string, CachedProvider>({
+  dispose: (value) => zeroizeCached(value),
+  max: CACHE_MAX,
+  ttl: CACHE_TTL_MS,
+});
 
 export function getCustomProviderOptionsKey(
   provider: Pick<CustomProvider, "providerKey" | "name">
@@ -113,7 +195,7 @@ function createModelFromProvider(
 
 async function resolveCustomProvider(providerId: string, modelName: string) {
   const cached = providerCache.get(providerId);
-  if (cached && cached.expiresAt > Date.now()) {
+  if (cached) {
     return createModelFromProvider(
       {
         baseURL: cached.baseURL,
@@ -133,7 +215,11 @@ async function resolveCustomProvider(providerId: string, modelName: string) {
 
   let apiKey: string;
   try {
-    apiKey = decrypt(provider.encryptedApiKey, provider.iv);
+    apiKey = decrypt(
+      provider.encryptedApiKey,
+      provider.iv,
+      provider.salt ?? null
+    );
   } catch (error) {
     throw new ChatbotError("bad_request:provider", { cause: error });
   }

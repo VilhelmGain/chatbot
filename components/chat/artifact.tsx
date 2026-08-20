@@ -297,7 +297,7 @@ function PureArtifact({
     if (artifact.documentId !== "init" && artifactDefinition.initialize) {
       artifactDefinition.initialize({
         documentId: artifact.documentId,
-        setMetadata,
+        setMetadata: setMetadata as unknown as never,
       });
     }
   }, [artifact.documentId, artifactDefinition, setMetadata]);
@@ -316,9 +316,19 @@ function PureArtifact({
   }
 
   const consoleError =
-    metadata?.outputs
+    (
+      metadata as
+        | (Record<string, unknown> & {
+            outputs?: Array<{
+              status: string;
+              contents: Array<{ type: string; value: string }>;
+            }>;
+          })
+        | null
+        | undefined
+    )?.outputs
       ?.filter((o: { status: string }) => o.status === "failed")
-      .flatMap((o: { contents: { type: string; value: string }[] }) =>
+      .flatMap((o: { contents: Array<{ type: string; value: string }> }) =>
         o.contents.filter((c) => c.type === "text").map((c) => c.value)
       )
       .join("\n") || undefined;
@@ -380,10 +390,10 @@ function PureArtifact({
           isCurrentVersion={isCurrentVersion}
           isInline={false}
           isLoading={isDocumentsFetching && !artifact.content}
-          metadata={metadata}
+          metadata={metadata as unknown as never}
           mode={mode}
           onSaveContent={saveContent}
-          setMetadata={setMetadata}
+          setMetadata={setMetadata as unknown as never}
           status={artifact.status}
           suggestions={[]}
           title={artifact.title}
@@ -397,9 +407,9 @@ function PureArtifact({
                   currentVersionIndex={currentVersionIndex}
                   handleVersionChange={handleVersionChange}
                   isCurrentVersion={isCurrentVersion}
-                  metadata={metadata}
+                  metadata={metadata as unknown as never}
                   mode={mode}
-                  setMetadata={setMetadata}
+                  setMetadata={setMetadata as unknown as never}
                 />
               }
               artifactKind={artifact.kind}
