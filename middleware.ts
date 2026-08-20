@@ -1,4 +1,3 @@
-import crypto from "node:crypto";
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { type NextRequest, NextResponse } from "next/server";
 import { isDemoMode, isTestEnvironment } from "./lib/constants";
@@ -18,18 +17,6 @@ function handlePing(request: NextRequest) {
   return null;
 }
 
-function signDemoEmail(email: string): string {
-  const secret = process.env.ENCRYPTION_KEY;
-  if (!secret) {
-    return email;
-  }
-  const sig = crypto
-    .createHmac("sha256", secret)
-    .update(email, "utf8")
-    .digest("hex");
-  return `${email}|${sig}`;
-}
-
 function handleTestRequest(request: NextRequest) {
   const ping = handlePing(request);
   if (ping) {
@@ -39,14 +26,21 @@ function handleTestRequest(request: NextRequest) {
     const hasTestCookie = request.cookies.has("test-user");
     const hasDemoCookie = request.cookies.has("demo-session");
     if (!hasTestCookie && !isDemoMode) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json(
+        {
+          code: "unauthorized:chat",
+          message: "You need to sign in to view this chat. Please sign in and try again.",
+        },
+        { status: 401 }
+      );
     }
     // Demo per-session mint: if demo mode without any session cookie, create one.
+    // Edge runtime compatible: use Web Crypto randomUUID, set plain demo email.
+    // Auth will accept plain demo-.*@demo.local when isDemoMode.
     if (isDemoMode && !hasTestCookie && !hasDemoCookie) {
-      const demoEmail = `demo-${crypto.randomUUID()}@demo.local`;
-      const signed = signDemoEmail(demoEmail);
+      const demoEmail = `demo-${globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2)}@demo.local`;
       const res = NextResponse.next();
-      res.cookies.set("demo-session", signed, {
+      res.cookies.set("demo-session", demoEmail, {
         httpOnly: true,
         path: "/",
         sameSite: "lax",

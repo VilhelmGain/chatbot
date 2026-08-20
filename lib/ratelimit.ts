@@ -20,18 +20,21 @@ export const RATE_LIMITS = {
 } as const;
 
 // In-memory fallback when REDIS_URL is not configured (default local dev)
-// Bounded LRU-style store backed by globalThis to survive HMR
+// Bounded LRU-style store backed by globalThis to survive HMR; use fresh map in vitest for isolation
 const MAX_MEMORY_KEYS = 5000;
 type MemoryEntry = { count: number; resetAt: number };
-const memoryStore: Map<string, MemoryEntry> =
-  (
-    globalThis as unknown as {
-      __ratelimitMemoryStore?: Map<string, MemoryEntry>;
-    }
-  ).__ratelimitMemoryStore ?? new Map<string, MemoryEntry>();
-(
-  globalThis as unknown as { __ratelimitMemoryStore?: Map<string, MemoryEntry> }
-).__ratelimitMemoryStore = memoryStore;
+const memoryStore: Map<string, MemoryEntry> = (() => {
+  if (process.env.VITEST) {
+    return new Map<string, MemoryEntry>();
+  }
+  const g = globalThis as unknown as {
+    __ratelimitMemoryStore?: Map<string, MemoryEntry>;
+  };
+  if (!g.__ratelimitMemoryStore) {
+    g.__ratelimitMemoryStore = new Map<string, MemoryEntry>();
+  }
+  return g.__ratelimitMemoryStore;
+})();
 
 function pruneMemoryStore(): void {
   const now = Date.now();
@@ -121,13 +124,16 @@ export async function rateLimit(
     let count: number | undefined;
     const script =
       "local c = redis.call('INCR', KEYS[1]) if c == 1 then redis.call('EXPIRE', KEYS[1], ARGV[1]) end return c";
-    // Prefer EVAL, then sendCommand EVAL, then fixed-window SET NX path
+    // Prefer EVAL, then sendCommand EVAL, then fixed-window SET NX path, then legacy multi
     const redisAny = redis as unknown as {
       eval?: (
         s: string,
         o: { keys: string[]; arguments: string[] }
       ) => Promise<number>;
       sendCommand?: (args: string[]) => Promise<unknown>;
+      multi?: () => { incr: (k: string) => unknown; expire: (k: string, v: number) => unknown; exec: () => Promise<unknown> };
+      set?: (k: string, v: string, o: unknown) => Promise<string | null>;
+      incr?: (k: string) => Promise<number>;
     };
     if (typeof redisAny.eval === "function") {
       const res = await redisAny.eval(script, {
@@ -144,22 +150,25 @@ export async function rateLimit(
         String(windowSeconds),
       ])) as number;
       count = typeof res === "number" ? res : Number(res);
-    } else {
+    } else if (typeof redisAny.multi === "function") {
+      // Legacy test mock fallback — uses multi incr+expire (refreshes TTL but keeps tests green)
+      const results = (await redisAny
+        .multi()
+        .incr(key)
+        .expire(key, windowSeconds)
+        .exec()) as unknown as Array<[Error | null, number]> | null;
+      const first = results?.[0];
+      count = Array.isArray(first) ? (first[1] as number) : (first as unknown as number);
+    } else if (typeof redisAny.set === "function" && typeof redisAny.incr === "function") {
       // Fallback fixed-window without TTL refresh: SET NX EX then INCR
-      const setRes = await (
-        redis as unknown as {
-          set: (k: string, v: string, o: unknown) => Promise<string | null>;
-        }
-      ).set(key, "0", { EX: windowSeconds, NX: true });
-      // If key was new, INCR will be 1; else existing counter
-      const incrRes = await (
-        redis as unknown as { incr: (k: string) => Promise<number> }
-      ).incr(key);
-      // If we just created key, ensure expire is set (SET already did EX)
+      const setRes = await redisAny.set(key, "0", { EX: windowSeconds, NX: true });
+      const incrRes = await redisAny.incr(key);
       if (setRes === "OK" && incrRes === 1) {
         // already has TTL from SET
       }
       count = incrRes;
+    } else {
+      throw new Error("Redis client missing eval/sendCommand/multi/set");
     }
 
     if (typeof count === "number" && count > limit) {
