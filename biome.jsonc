@@ -12,7 +12,6 @@
   "files": {
     "includes": [
       "**/*",
-      "!components/elements",
       "!components/ui",
       "!lib/db/migrations"
     ]
@@ -22,7 +21,15 @@
       "suspicious": {
         "noExplicitAny": "warn",
         "noUnknownAtRules": "off",
-        "noConsole": "warn",
+        "noConsole": {
+          "level": "warn",
+          "options": {
+            "allow": [
+              "warn",
+              "error"
+            ]
+          }
+        },
         "noBitwiseOperators": "off",
         "noUnnecessaryConditions": "off"
       },
