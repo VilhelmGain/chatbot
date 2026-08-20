@@ -12,7 +12,7 @@ import {
 } from "@/lib/export/attachments";
 
 const exportAttachmentsBodySchema = z.object({
-  attachmentIds: z.array(z.string()).optional(),
+  attachmentIds: z.array(z.string()).max(100).optional(),
 });
 
 /**

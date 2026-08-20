@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { auth } from "@/app/(auth)/auth";
 import { getSuggestionsByDocumentId } from "@/lib/db/queries";
 import { ChatbotError } from "@/lib/errors";
@@ -10,6 +11,13 @@ export async function GET(request: Request) {
     return new ChatbotError(
       "bad_request:api",
       "Parameter documentId is required."
+    ).toResponse();
+  }
+
+  if (!z.string().uuid().safeParse(documentId).success) {
+    return new ChatbotError(
+      "bad_request:api",
+      "Parameter documentId must be a valid UUID"
     ).toResponse();
   }
 

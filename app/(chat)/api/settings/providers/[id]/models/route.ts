@@ -29,27 +29,29 @@ const createModelSchema = z.object({
 });
 
 const bulkCreateModelsSchema = z.object({
-  models: z.array(
-    z.object({
-      capabilities: z.object({
-        reasoning: z.boolean(),
-        reasoningEfforts: z.array(z.string()).optional(),
-        tools: z.boolean(),
-        vision: z.boolean(),
-      }),
-      modelId: z.string().min(1).max(256),
-      name: z.string().min(1).max(256),
-      pricing: z
-        .object({
-          cachedInput: z.number().nonnegative().nullable(),
-          cachedOutput: z.number().nonnegative().nullable(),
-          input: z.number().nonnegative().nullable(),
-          output: z.number().nonnegative().nullable(),
-        })
-        .nullable()
-        .optional(),
-    })
-  ),
+  models: z
+    .array(
+      z.object({
+        capabilities: z.object({
+          reasoning: z.boolean(),
+          reasoningEfforts: z.array(z.string()).optional(),
+          tools: z.boolean(),
+          vision: z.boolean(),
+        }),
+        modelId: z.string().min(1).max(256),
+        name: z.string().min(1).max(256),
+        pricing: z
+          .object({
+            cachedInput: z.number().nonnegative().nullable(),
+            cachedOutput: z.number().nonnegative().nullable(),
+            input: z.number().nonnegative().nullable(),
+            output: z.number().nonnegative().nullable(),
+          })
+          .nullable()
+          .optional(),
+      })
+    )
+    .max(100),
 });
 
 export async function GET(
