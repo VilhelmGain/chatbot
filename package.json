@@ -20,7 +20,7 @@
     "test": "export PLAYWRIGHT=True && pnpm exec playwright test"
   },
   "lint-staged": {
-    "*": "pnpm run fix --"
+    "*.{ts,tsx,js,jsx,jsonc}": "pnpm run fix --"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^4.0.0",

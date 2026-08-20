@@ -12,20 +12,17 @@
   "files": {
     "includes": [
       "**/*",
-      "!components/ai-elements",
       "!components/elements",
       "!components/ui",
-      "!lib/utils.ts",
-      "!lib/db/migrations",
-      "!hooks/use-mobile.ts"
+      "!lib/db/migrations"
     ]
   },
   "linter": {
     "rules": {
       "suspicious": {
-        "noExplicitAny": "off",
+        "noExplicitAny": "warn",
         "noUnknownAtRules": "off",
-        "noConsole": "off",
+        "noConsole": "warn",
         "noBitwiseOperators": "off",
         "noUnnecessaryConditions": "off"
       },
@@ -42,7 +39,7 @@
         "useSimplifiedLogicExpression": "off"
       },
       "a11y": {
-        "noSvgWithoutTitle": "off"
+        "noSvgWithoutTitle": "warn"
       },
       "correctness": {
         "useUniqueElementIds": "off",
