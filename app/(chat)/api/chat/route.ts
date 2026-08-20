@@ -13,10 +13,7 @@ import { z } from "zod";
 import { auth } from "@/app/(auth)/auth";
 import { decrypt } from "@/lib/ai/encryption";
 import { getEntitlements } from "@/lib/ai/entitlements";
-import {
-  getCustomCapabilitiesForUser,
-  isAllowedModelId,
-} from "@/lib/ai/models";
+import { getCustomCapabilitiesForUser } from "@/lib/ai/models";
 import { calculateUsageCost, getModelPricing } from "@/lib/ai/pricing";
 import { type RequestHints, systemPrompt } from "@/lib/ai/prompts";
 import {
@@ -163,7 +160,6 @@ export async function POST(request: Request) {
     const modelIdPart = chatModel.split("/").slice(1).join("/");
 
     const [
-      isAllowed,
       provider,
       providerModels,
       messageCount,
@@ -172,7 +168,6 @@ export async function POST(request: Request) {
       userSettings,
       modelPricing,
     ] = await Promise.all([
-      isAllowedModelId(selectedChatModel),
       getCustomProviderById({ id: providerId }),
       getCustomModelsByProviderId({ providerId }),
       getMessageCountByUserId({
@@ -185,17 +180,21 @@ export async function POST(request: Request) {
       getModelPricing(chatModel),
     ]);
 
-    if (!isAllowed) {
-      console.error("Model not allowed:", selectedChatModel);
-      return new ChatbotError("bad_request:chat").toResponse();
-    }
-
     if (!provider || provider.userId !== session.user.id) {
       return new ChatbotError("forbidden:chat").toResponse();
     }
-    const selectedModelName =
-      providerModels.find((model) => model.modelId === modelIdPart)?.name ??
-      chatModel;
+    const selectedModel = providerModels.find(
+      (model) => model.modelId === modelIdPart
+    );
+    if (!selectedModel) {
+      console.error("Model not allowed:", selectedChatModel, {
+        availableModels: providerModels.map((m) => m.modelId),
+        modelIdPart,
+        providerId,
+      });
+      return new ChatbotError("bad_request:chat").toResponse();
+    }
+    const selectedModelName = selectedModel.name;
 
     await checkIpRateLimit(getClientIp(request), {
       userId: session.user.id,

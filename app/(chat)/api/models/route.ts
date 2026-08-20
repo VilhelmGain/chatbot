@@ -1,3 +1,4 @@
+import { after } from "next/server";
 import { auth } from "@/app/(auth)/auth";
 import {
   getCustomCapabilitiesForUser,
@@ -18,6 +19,15 @@ export async function GET() {
     getCustomCapabilitiesForUser(session.user.id),
     getProviderNamesForUser(session.user.id),
   ]);
+
+  after(async () => {
+    try {
+      const { syncCatalogPricingForUser } = await import("@/lib/ai/catalog");
+      await syncCatalogPricingForUser(session.user.id);
+    } catch {
+      // ignore background sync errors
+    }
+  });
 
   return Response.json(
     {

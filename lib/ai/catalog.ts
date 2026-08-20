@@ -162,7 +162,7 @@ export async function getLiveCatalogModel(
 export async function syncCatalogPricingForUser(userId: string) {
   const {
     getCatalogSync,
-    getCustomModelsByProviderId,
+    getCustomModelsByProviderIds,
     getCustomProvidersByUserId,
     updateCatalogSync,
     updateCustomModel,
@@ -177,39 +177,54 @@ export async function syncCatalogPricingForUser(userId: string) {
   }
 
   const configuredProviders = await getCustomProvidersByUserId({ userId });
+  const relevantProviders = configuredProviders.filter(
+    (p) => p.providerKey && live[p.providerKey]
+  );
+  if (relevantProviders.length === 0) {
+    if (isStale) {
+      await updateCatalogSync({ syncedAt: new Date() });
+    }
+    return;
+  }
+  const providerIds = relevantProviders.map((p) => p.id);
+  const allModels = await getCustomModelsByProviderIds({ providerIds });
+  const modelsByProvider = new Map<string, typeof allModels>();
+  for (const m of allModels) {
+    const arr = modelsByProvider.get(m.providerId);
+    if (arr) {
+      arr.push(m);
+    } else {
+      modelsByProvider.set(m.providerId, [m]);
+    }
+  }
   await Promise.all(
-    configuredProviders.flatMap((configuredProvider) => {
-      if (
-        !configuredProvider.providerKey ||
-        !live[configuredProvider.providerKey]
-      ) {
+    relevantProviders.flatMap((configuredProvider) => {
+      const providerKey = configuredProvider.providerKey as string;
+      const liveProvider = live[providerKey];
+      if (!liveProvider) {
         return [];
       }
       const catalogModels = new Map(
-        providerToCatalogModels(live[configuredProvider.providerKey]).map(
-          (model) => [model.modelId, model]
-        )
+        providerToCatalogModels(liveProvider).map((model) => [
+          model.modelId,
+          model,
+        ])
       );
-      return getCustomModelsByProviderId({
-        providerId: configuredProvider.id,
-      }).then((models) =>
-        Promise.all(
-          models
-            .filter((model) => !model.pricingIsCustom)
-            .flatMap((model) => {
-              const catalogModel = catalogModels.get(model.modelId);
-              if (!catalogModel) {
-                return [];
-              }
-              return updateCustomModel({
-                id: model.id,
-                pricing: catalogModel.pricing ?? null,
-                pricingIsCustom: false,
-                providerId: configuredProvider.id,
-              });
-            })
-        )
-      );
+      const models = modelsByProvider.get(configuredProvider.id) ?? [];
+      return models
+        .filter((model) => !model.pricingIsCustom)
+        .flatMap((model) => {
+          const catalogModel = catalogModels.get(model.modelId);
+          if (!catalogModel) {
+            return [];
+          }
+          return updateCustomModel({
+            id: model.id,
+            pricing: catalogModel.pricing ?? null,
+            pricingIsCustom: false,
+            providerId: configuredProvider.id,
+          });
+        });
     })
   );
   if (isStale) {
