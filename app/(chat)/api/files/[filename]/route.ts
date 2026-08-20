@@ -4,7 +4,9 @@ import { NextResponse } from "next/server";
 
 import { auth } from "@/app/(auth)/auth";
 
-const UPLOAD_DIR = process.env.UPLOAD_DIR ?? "./uploads";
+function getUploadDir(): string {
+  return process.env.UPLOAD_DIR ?? "./uploads";
+}
 
 // Only safe types are served with their native Content-Type.
 // Dangerous types (html/js/xml/svg) are forced to a safe type and served as attachment.
@@ -51,7 +53,7 @@ export async function GET(
     return NextResponse.json({ error: "File not found" }, { status: 404 });
   }
 
-  const uploadDir = join(process.cwd(), UPLOAD_DIR);
+  const uploadDir = join(process.cwd(), getUploadDir());
   const filePath = join(uploadDir, safeName);
 
   // Prevent path traversal: filePath must stay inside uploadDir

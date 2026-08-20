@@ -8,9 +8,12 @@ export const CURRENT_KEY_VERSION = 1;
 
 function warnIfWeakKey(secret: string): void {
   if (Buffer.byteLength(secret, "utf8") < 32) {
-    console.warn(
-      "[encryption] ENCRYPTION_KEY is shorter than 32 bytes – use a high-entropy random key (e.g. `openssl rand -hex 32`)."
-    );
+    const msg =
+      "[encryption] ENCRYPTION_KEY is shorter than 32 bytes – use a high-entropy random key (e.g. `openssl rand -base64 32`).";
+    if (process.env.NODE_ENV === "production") {
+      throw new Error(msg);
+    }
+    console.warn(msg);
   }
 }
 

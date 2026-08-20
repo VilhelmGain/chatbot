@@ -59,9 +59,23 @@ export function Console({ consoleOutputs, setConsoleOutputs }: ConsoleProps) {
 
   const handleResizeKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === "ArrowUp") {
+      e.preventDefault();
       setHeight((prev) => Math.min(prev + 10, maxHeight));
     } else if (e.key === "ArrowDown") {
+      e.preventDefault();
       setHeight((prev) => Math.max(prev - 10, minHeight));
+    } else if (e.key === "Home") {
+      e.preventDefault();
+      setHeight(minHeight);
+    } else if (e.key === "End") {
+      e.preventDefault();
+      setHeight(maxHeight);
+    } else if (e.key === "PageUp") {
+      e.preventDefault();
+      setHeight((prev) => Math.min(prev + 50, maxHeight));
+    } else if (e.key === "PageDown") {
+      e.preventDefault();
+      setHeight((prev) => Math.max(prev - 50, minHeight));
     }
   }, []);
 
@@ -95,11 +109,13 @@ export function Console({ consoleOutputs, setConsoleOutputs }: ConsoleProps) {
   return consoleOutputs.length > 0 ? (
     <>
       <div
+        aria-controls="console-panel"
         aria-label="Resize console"
         aria-orientation="horizontal"
         aria-valuemax={maxHeight}
         aria-valuemin={minHeight}
         aria-valuenow={height}
+        aria-valuetext={`${height} pixels`}
         className="fixed z-50 h-2 w-full cursor-ns-resize"
         onKeyDown={handleResizeKeyDown}
         onMouseDown={startResizing}
@@ -109,11 +125,14 @@ export function Console({ consoleOutputs, setConsoleOutputs }: ConsoleProps) {
       />
 
       <div
+        aria-live="polite"
         className={cn(
           "fixed bottom-0 z-40 flex w-full flex-col overflow-x-hidden overflow-y-auto border-t border-border bg-transparent",
           { "select-none": isResizing }
         )}
+        id="console-panel"
         ref={consoleContainerRef}
+        role="log"
         style={{ height }}
       >
         <div className="sticky top-0 z-50 flex h-10 w-full items-center justify-between border-b border-border bg-transparent px-3">
@@ -122,12 +141,13 @@ export function Console({ consoleOutputs, setConsoleOutputs }: ConsoleProps) {
             <span>Console</span>
           </div>
           <Button
+            aria-label="Clear console"
             className="size-7 text-muted-foreground/50 hover:text-foreground"
             onClick={handleClearConsoleOutputs}
             size="icon-sm"
             variant="ghost"
           >
-            <CrossSmallIcon />
+            <CrossSmallIcon aria-hidden="true" />
           </Button>
         </div>
 

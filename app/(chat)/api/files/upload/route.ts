@@ -9,7 +9,9 @@ import { ChatbotError } from "@/lib/errors";
 import { checkUploadRateLimit } from "@/lib/ratelimit";
 import { getClientIp } from "@/lib/server/request-utils";
 
-const UPLOAD_DIR = process.env.UPLOAD_DIR ?? "./uploads";
+function getUploadDir(): string {
+  return process.env.UPLOAD_DIR ?? "./uploads";
+}
 
 const FileSchema = z.object({
   file: z
@@ -65,7 +67,7 @@ export async function POST(request: Request) {
     const fileBuffer = Buffer.from(await file.arrayBuffer());
 
     try {
-      const uploadDir = join(process.cwd(), UPLOAD_DIR);
+      const uploadDir = join(process.cwd(), getUploadDir());
       await mkdir(uploadDir, { recursive: true });
       const filePath = join(uploadDir, safeName);
       await writeFile(filePath, fileBuffer);

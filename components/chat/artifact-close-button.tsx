@@ -17,12 +17,13 @@ function PureArtifactCloseButton() {
 
   return (
     <button
+      aria-label="Close artifact"
       className="group flex size-8 items-center justify-center rounded-xl border border-transparent text-muted-foreground transition-all duration-150 hover:border-border hover:bg-foreground/5 hover:text-foreground active:scale-95"
       data-testid="artifact-close-button"
       onClick={handleClick}
       type="button"
     >
-      <CrossIcon size={16} />
+      <CrossIcon aria-hidden="true" size={16} />
     </button>
   );
 }
