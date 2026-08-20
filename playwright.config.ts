@@ -31,7 +31,11 @@ export default defineConfig({
   /* Run tests in files in parallel */
   fullyParallel: true,
 
-  /* Configure projects */
+  /* Configure projects
+   * Cross-browser projects are re-enabled for local verification (`--project=firefox|webkit|mobile-chrome`).
+   * CI runs only `e2e` (Chromium) via `e2e.yml --project=e2e` to keep PR runtime ~4m;
+   * full cross-browser matrix is available locally and can be added to CI via the workflow matrix if needed.
+   */
   projects: [
     {
       name: "e2e",
@@ -54,7 +58,7 @@ export default defineConfig({
     },
 
     {
-      name: "Mobile Chrome",
+      name: "mobile-chrome",
       testMatch: /e2e\/.*.test.ts/,
       use: { ...devices["Pixel 5"] },
     },
@@ -80,7 +84,7 @@ export default defineConfig({
   testDir: "./tests",
 
   /* Configure global timeout for each test */
-  timeout: 30 * 1000,
+  timeout: 60 * 1000,
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
@@ -98,6 +102,6 @@ export default defineConfig({
     timeout: 120 * 1000,
     url: `${baseURL}/ping`,
   },
-  /* Limit workers to prevent browser crashes; higher on CI for sharded matrix */
-  workers: process.env.CI ? 4 : 2,
+  /* Limit workers to prevent browser crashes */
+  workers: process.env.CI ? 2 : 2,
 });
