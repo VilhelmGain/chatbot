@@ -67,7 +67,7 @@ Optional:
 | Variable | Description |
 |---|---|
 | `REDIS_URL` | Enables rate limiting and stream resumption |
-| `MAX_MESSAGES_PER_HOUR` | Rate limit for logged-in users (0 or unset = unlimited) |
+| `MAX_MESSAGES_PER_HOUR` | Rate limit for logged-in users (default 100, clamped 1–10000) |
 | `DEMO_MODE` | Set to `1` for zero-dependency demo mode (no Postgres, Redis, Clerk, or API keys needed) |
 
 ### 3. Run database migrations
