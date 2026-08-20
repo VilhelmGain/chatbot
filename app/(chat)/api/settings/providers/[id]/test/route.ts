@@ -2,7 +2,10 @@ import { auth } from "@/app/(auth)/auth";
 import { getCustomProviderById, getDecryptedApiKey } from "@/lib/db/queries";
 import { ChatbotError } from "@/lib/errors";
 import { checkProviderTestRateLimit } from "@/lib/ratelimit";
+import { assertPublicUrl } from "@/lib/security/ssrf";
 import { getClientIp } from "@/lib/server/request-utils";
+
+const FETCH_TIMEOUT_MS = 5000;
 
 export async function POST(
   request: Request,
@@ -35,11 +38,14 @@ export async function POST(
 
   try {
     if (provider.type === "openai") {
-      const response = await fetch(`${normalizedBaseURL}/models`, {
+      const targetUrl = `${normalizedBaseURL}/models`;
+      await assertPublicUrl(targetUrl);
+      const response = await fetch(targetUrl, {
         headers: {
           Authorization: `Bearer ${apiKey}`,
           "Content-Type": "application/json",
         },
+        signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
       });
 
       if (!response.ok) {
@@ -63,7 +69,9 @@ export async function POST(
     }
 
     if (provider.type === "anthropic") {
-      const response = await fetch(`${normalizedBaseURL}/messages`, {
+      const targetUrl = `${normalizedBaseURL}/messages`;
+      await assertPublicUrl(targetUrl);
+      const response = await fetch(targetUrl, {
         body: JSON.stringify({
           max_tokens: 1,
           messages: [{ content: "Hi", role: "user" }],
@@ -75,6 +83,7 @@ export async function POST(
           "x-api-key": apiKey,
         },
         method: "POST",
+        signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
       });
 
       if (!response.ok) {

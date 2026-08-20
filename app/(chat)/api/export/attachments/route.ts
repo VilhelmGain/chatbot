@@ -14,7 +14,7 @@ import { checkExportRateLimit } from "@/lib/ratelimit";
 import { getClientIp } from "@/lib/server/request-utils";
 
 const exportAttachmentsBodySchema = z.object({
-  attachmentIds: z.array(z.string()).optional(),
+  attachmentIds: z.array(z.string()).max(100).optional(),
 });
 
 /**

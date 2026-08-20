@@ -27,6 +27,13 @@ export async function GET(request: Request) {
     ).toResponse();
   }
 
+  if (!z.string().uuid().safeParse(id).success) {
+    return new ChatbotError(
+      "bad_request:api",
+      "Parameter id must be a valid UUID"
+    ).toResponse();
+  }
+
   const session = await auth();
 
   if (!session?.user) {
@@ -56,6 +63,13 @@ export async function POST(request: Request) {
     return new ChatbotError(
       "bad_request:api",
       "Parameter id is required."
+    ).toResponse();
+  }
+
+  if (!z.string().uuid().safeParse(id).success) {
+    return new ChatbotError(
+      "bad_request:api",
+      "Parameter id must be a valid UUID"
     ).toResponse();
   }
 
@@ -119,6 +133,13 @@ export async function DELETE(request: Request) {
     ).toResponse();
   }
 
+  if (!z.string().uuid().safeParse(id).success) {
+    return new ChatbotError(
+      "bad_request:api",
+      "Parameter id must be a valid UUID"
+    ).toResponse();
+  }
+
   if (!timestamp) {
     return new ChatbotError(
       "bad_request:api",
@@ -135,6 +156,10 @@ export async function DELETE(request: Request) {
   const documents = await getDocumentsById({ id });
 
   const [document] = documents;
+
+  if (!document) {
+    return new ChatbotError("not_found:document").toResponse();
+  }
 
   if (document.userId !== session.user.id) {
     return new ChatbotError("forbidden:document").toResponse();

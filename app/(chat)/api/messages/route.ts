@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { auth } from "@/app/(auth)/auth";
 import { getChatById, getMessagesByChatId } from "@/lib/db/queries";
 import { convertToUIMessages } from "@/lib/utils";
@@ -8,6 +9,10 @@ export async function GET(request: Request) {
 
   if (!chatId) {
     return Response.json({ error: "chatId required" }, { status: 400 });
+  }
+
+  if (!z.string().uuid().safeParse(chatId).success) {
+    return Response.json({ error: "invalid chatId" }, { status: 400 });
   }
 
   const [session, chat, messages] = await Promise.all([

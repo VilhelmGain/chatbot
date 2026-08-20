@@ -123,6 +123,11 @@ function createUserFromClerk({
   image?: string | null;
   name?: string | null;
 }): User {
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    throw new ChatbotError("bad_request:database", {
+      cause: new Error(`Invalid email: ${email}`),
+    });
+  }
   const now = new Date();
   const user: User = {
     clerkId,
@@ -140,6 +145,11 @@ function createUserFromClerk({
 }
 
 function getOrCreateUserByEmail(email: string): User {
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    throw new ChatbotError("bad_request:database", {
+      cause: new Error(`Invalid email: ${email}`),
+    });
+  }
   for (const user of store.users.values()) {
     if (user.email === email) {
       return user;

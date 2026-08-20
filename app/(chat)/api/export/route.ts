@@ -12,7 +12,7 @@ import { checkExportRateLimit } from "@/lib/ratelimit";
 import { getClientIp } from "@/lib/server/request-utils";
 
 const exportRequestBodySchema = z.object({
-  chatIds: z.array(z.uuid()).optional(),
+  chatIds: z.array(z.uuid()).max(100).optional(),
 });
 
 /**
