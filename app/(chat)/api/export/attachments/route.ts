@@ -76,6 +76,7 @@ export async function POST(request: Request) {
     ? attachments.filter((attachment) => attachmentIds.includes(attachment.id))
     : attachments;
 
+  const totalSelected = selected.length;
   const capped = selected.slice(0, MAX_FILES);
 
   const files: Record<string, Uint8Array> = {};
@@ -86,6 +87,15 @@ export async function POST(request: Request) {
     path: string;
   }> = [];
   const excluded: Array<{ name: string; reason: string; url: string }> = [];
+  if (selected.length > MAX_FILES) {
+    for (const attachment of selected.slice(MAX_FILES)) {
+      excluded.push({
+        name: sanitizeFilename(attachment.name),
+        reason: "exceeds file count limit",
+        url: attachment.url,
+      });
+    }
+  }
 
   let totalBytes = 0;
   for (const attachment of capped) {
@@ -126,7 +136,7 @@ export async function POST(request: Request) {
       excluded,
       exportedAt,
       files: included,
-      totalSelected: capped.length,
+      totalSelected,
     })
   );
 

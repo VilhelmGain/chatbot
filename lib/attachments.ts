@@ -50,6 +50,13 @@ export const ALLOWED_MEDIA_TYPES: readonly string[] = [
 
 export const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
 
+export function isBlockedMediaType(mediaType: string | undefined): boolean {
+  return (
+    mediaType !== undefined &&
+    (BLOCKED_MEDIA_TYPES as readonly string[]).includes(mediaType)
+  );
+}
+
 export function isImageMediaType(mediaType: string | undefined): boolean {
   return (
     mediaType !== undefined &&
@@ -70,9 +77,10 @@ export function isTextMediaType(mediaType: string | undefined): boolean {
 
 export function isAllowedMediaType(mediaType: string | undefined): boolean {
   return (
-    isImageMediaType(mediaType) ||
-    isPdfMediaType(mediaType) ||
-    isTextMediaType(mediaType)
+    !isBlockedMediaType(mediaType) &&
+    (isImageMediaType(mediaType) ||
+      isPdfMediaType(mediaType) ||
+      isTextMediaType(mediaType))
   );
 }
 

@@ -344,8 +344,10 @@ export async function POST(request: Request) {
 
     const effectiveToolNames = new Set([
       ...enabledToolSet,
-      ...[...approvalToolNames].filter((name) =>
-        TOOL_IDS_SET.has(name as (typeof TOOL_IDS)[number])
+      ...[...approvalToolNames].filter(
+        (name) =>
+          TOOL_IDS_SET.has(name as (typeof TOOL_IDS)[number]) &&
+          enabledToolSet.has(name as (typeof TOOL_IDS)[number])
       ),
     ]);
 

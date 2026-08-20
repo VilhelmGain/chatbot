@@ -37,11 +37,12 @@ export const getWeather = tool({
     let latitude: number;
     let longitude: number;
 
-    if (input.city) {
-      const coords = await geocodeCity(input.city);
+    if (typeof input.city === "string" && input.city.trim().length > 0) {
+      const trimmedCity = input.city.trim();
+      const coords = await geocodeCity(trimmedCity);
       if (!coords) {
         return {
-          error: `Could not find coordinates for "${input.city}". Please check the city name.`,
+          error: `Could not find coordinates for "${trimmedCity}". Please check the city name.`,
         };
       }
       ({ latitude, longitude } = coords);
@@ -76,6 +77,8 @@ export const getWeather = tool({
   inputSchema: z.object({
     city: z
       .string()
+      .trim()
+      .min(1)
       .max(100)
       .describe("City name (e.g., 'San Francisco', 'New York', 'London')")
       .optional(),

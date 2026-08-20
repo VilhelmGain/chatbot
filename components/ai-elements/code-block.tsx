@@ -134,6 +134,8 @@ const subscribers = new Map<string, Set<(result: TokenizedCode) => void>>();
 const MAX_TOKENS_CACHE_SIZE = 100;
 const MAX_HIGHLIGHTER_CACHE_SIZE = 5;
 
+// DJB2 non-cryptographic hash for cache keys — fast full-code hash, not for security
+// biome-ignore lint/suspicious/noBitwiseOperators: DJB2 intentionally uses bitwise ops
 function hashString(value: string): string {
   let hash = 5381;
   for (let i = 0; i < value.length; i += 1) {

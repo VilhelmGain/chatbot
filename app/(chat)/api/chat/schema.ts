@@ -53,9 +53,12 @@ export const postRequestBodySchema = z.object({
     .string()
     .min(1)
     .max(200)
-    .regex(/^([a-z0-9_-]+\/[a-z0-9._-]+|custom-[a-f0-9-]{36}\/.+)$/i, {
-      message: "Invalid model id format",
-    }),
+    .regex(
+      /^([a-z0-9_-]+\/[a-z0-9._-]+|custom-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/[a-z0-9._-]+)$/i,
+      {
+        message: "Invalid model id format",
+      }
+    ),
   selectedVisibilityType: z.enum(["public", "private"]),
 });
 
