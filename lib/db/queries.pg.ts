@@ -74,6 +74,11 @@ export async function createUserFromClerk({
   image?: string | null;
   name?: string | null;
 }): Promise<User> {
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    throw new ChatbotError("bad_request:database", {
+      cause: new Error(`Invalid email: ${email}`),
+    });
+  }
   try {
     const [createdUser] = await db
       .insert(user)
@@ -93,6 +98,11 @@ export async function createUserFromClerk({
 }
 
 export async function getOrCreateUserByEmail(email: string): Promise<User> {
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    throw new ChatbotError("bad_request:database", {
+      cause: new Error(`Invalid email: ${email}`),
+    });
+  }
   try {
     const [existingUser] = await db
       .select()
