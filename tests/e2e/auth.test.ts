@@ -6,20 +6,25 @@ import { expect, test } from "@playwright/test";
 // with 401/403. This covers the auth bypass gap noted in #116.
 
 test.describe("Auth paths without PLAYWRIGHT bypass", () => {
-  test("GET /api/models without auth returns 401", async ({ request }) => {
-    // Use a fresh request context without cookies – do not call signIn
-    const response = await request.get("/api/models");
+  test("GET /api/models without auth returns 401", async ({ page }) => {
+    // Use a fresh page context without cookies – do not call signIn
+    const response = await page.request.get("/api/models");
     expect(response.status()).toBe(401);
     const body = await response.json();
     expect(body.code).toBe("unauthorized:chat");
   });
 
-  test("POST /api/chat without auth returns 401", async ({ request }) => {
-    const response = await request.post("/api/chat", {
+  test("POST /api/chat without auth returns 401", async ({ page }) => {
+    const response = await page.request.post("/api/chat", {
       data: {
         id: "00000000-0000-4000-a000-000000000000",
-        message: { parts: [{ text: "hello", type: "text" }], role: "user" },
+        message: {
+          id: "00000000-0000-4000-a000-000000000001",
+          parts: [{ text: "hello", type: "text" }],
+          role: "user",
+        },
         selectedChatModel: "custom-unknown/model",
+        selectedVisibilityType: "private",
       },
     });
     expect(response.status()).toBe(401);
