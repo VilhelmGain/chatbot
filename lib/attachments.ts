@@ -73,9 +73,13 @@ export function isAllowedMediaType(mediaType: string | undefined): boolean {
 // Server-side resolver
 // ---------------------------------------------------------------------------
 
-const UPLOAD_DIR = process.env.UPLOAD_DIR ?? "./uploads";
+function getUploadDir(): string {
+  return process.env.UPLOAD_DIR ?? "./uploads";
+}
 
-const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+function getBasePath(): string {
+  return process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+}
 
 /**
  * Returns true when `url` points at this app's own file-serving route
@@ -84,15 +88,26 @@ const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
  * arbitrary external URLs) to data URLs.
  */
 export function isLocalFileUrl(url: string | undefined): boolean {
-  if (url === undefined) {
+  if (url === undefined || url === "") {
+    return false;
+  }
+  if (url.startsWith("//")) {
     return false;
   }
   try {
-    const { pathname } = new URL(url, "http://local.invalid");
-    return (
-      pathname.startsWith("/api/files/") ||
-      pathname.startsWith(`${BASE_PATH}/api/files/`)
-    );
+    const parsed = new URL(url, "http://local.invalid");
+    if (parsed.origin !== "http://local.invalid") {
+      return false;
+    }
+    const { pathname } = parsed;
+    const basePath = getBasePath();
+    if (pathname.startsWith("/api/files/")) {
+      return true;
+    }
+    if (basePath && pathname.startsWith(`${basePath}/api/files/`)) {
+      return true;
+    }
+    return false;
   } catch {
     return false;
   }
@@ -146,7 +161,7 @@ export async function localFileUrlToDataUrl(
   try {
     const { join, relative, isAbsolute, resolve } = await import("node:path");
     const { cwd } = await import("node:process");
-    const uploadDir = resolve(join(cwd(), UPLOAD_DIR));
+    const uploadDir = resolve(join(cwd(), getUploadDir()));
     const filePath = resolve(join(uploadDir, filename));
     const rel = relative(uploadDir, filePath);
     if (rel.startsWith("..") || isAbsolute(rel)) {
