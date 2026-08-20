@@ -1,15 +1,9 @@
 "use client";
 
-import type { ComponentProps, HTMLAttributes, ReactNode } from "react";
-import dynamic from "next/dynamic";
-
 import { useControllableState } from "@radix-ui/react-use-controllable-state";
-import {
-  Collapsible,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
-import { cn } from "@/lib/utils";
 import { ChevronDownIcon } from "lucide-react";
+import dynamic from "next/dynamic";
+import type { ComponentProps, HTMLAttributes, ReactNode } from "react";
 import {
   createContext,
   memo,
@@ -20,9 +14,10 @@ import {
   useRef,
   useState,
 } from "react";
-
-import { Shimmer } from "./shimmer";
+import { Collapsible, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { cn } from "@/lib/utils";
 import type { ReasoningMarkdownProps } from "./reasoning-markdown";
+import { Shimmer } from "./shimmer";
 
 const ReasoningMarkdown = dynamic<ReasoningMarkdownProps>(
   () => import("./reasoning-markdown").then((m) => m.ReasoningMarkdown),
@@ -30,10 +25,10 @@ const ReasoningMarkdown = dynamic<ReasoningMarkdownProps>(
 );
 
 interface ReasoningContextValue {
-  isStreaming: boolean;
-  isOpen: boolean;
-  setIsOpen: (open: boolean) => void;
   duration: number | undefined;
+  isOpen: boolean;
+  isStreaming: boolean;
+  setIsOpen: (open: boolean) => void;
 }
 
 const ReasoningContext = createContext<ReasoningContextValue | null>(null);
@@ -169,7 +164,11 @@ export type ReasoningTriggerProps = ComponentProps<
 
 const defaultGetThinkingMessage = (isStreaming: boolean, duration?: number) => {
   if (isStreaming || duration === 0) {
-    return <Shimmer className="font-medium" duration={1}>Thinking...</Shimmer>;
+    return (
+      <Shimmer className="font-medium" duration={1}>
+        Thinking...
+      </Shimmer>
+    );
   }
   if (duration === undefined) {
     return <p>Thought for a few seconds</p>;
@@ -230,7 +229,9 @@ export const ReasoningContent = memo(
       return () => cancelAnimationFrame(rafId);
     }, [children, isStreaming]);
 
-    if (!isOpen) return null;
+    if (!isOpen) {
+      return null;
+    }
 
     return (
       <div
@@ -242,7 +243,7 @@ export const ReasoningContent = memo(
         <div
           className="max-h-[200px] overflow-y-auto rounded-xl border border-border bg-muted/60 px-3 py-2 text-[11px] leading-relaxed"
           ref={scrollRef}
-          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+          style={{ msOverflowStyle: "none", scrollbarWidth: "none" }}
         >
           <ReasoningMarkdown {...props}>{children}</ReasoningMarkdown>
         </div>

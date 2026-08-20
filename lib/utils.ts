@@ -29,7 +29,9 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 function getErrorCode(code: unknown): ErrorCode {
-  if (isErrorCode(code)) return code;
+  if (isErrorCode(code)) {
+    return code;
+  }
   return "bad_request:api";
 }
 
@@ -98,9 +100,7 @@ export function sanitizeText(text: string) {
   return text.replace("<has_function_call>", "");
 }
 
-function isChatRole(
-  role: string
-): role is "user" | "assistant" | "system" {
+function isChatRole(role: string): role is "user" | "assistant" | "system" {
   return role === "user" || role === "assistant" || role === "system";
 }
 
@@ -110,9 +110,7 @@ function isUIMessagePart(
   return isRecord(part) && typeof part.type === "string";
 }
 
-function isTextPart(
-  part: unknown
-): part is { type: "text"; text: string } {
+function isTextPart(part: unknown): part is { type: "text"; text: string } {
   return (
     isRecord(part) && part.type === "text" && typeof part.text === "string"
   );
@@ -143,7 +141,9 @@ export function getTextFromMessage(message: ChatMessage | UIMessage): string {
   return message.parts
     .filter(isTextPart)
     .map((part) => {
-      if ("text" in part && typeof part.text === "string") return part.text;
+      if ("text" in part && typeof part.text === "string") {
+        return part.text;
+      }
       return "";
     })
     .join("");

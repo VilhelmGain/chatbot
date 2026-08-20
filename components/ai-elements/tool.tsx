@@ -1,17 +1,6 @@
 "use client";
 
 import type { DynamicToolUIPart, ToolUIPart } from "ai";
-import type { ComponentProps, ReactNode } from "react";
-import dynamic from "next/dynamic";
-
-import { useAutoCollapse } from "@/hooks/use-auto-collapse";
-import { Badge } from "@/components/ui/badge";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
-import { cn } from "@/lib/utils";
 import {
   CheckCircleIcon,
   ChevronDownIcon,
@@ -20,7 +9,17 @@ import {
   WrenchIcon,
   XCircleIcon,
 } from "lucide-react";
+import dynamic from "next/dynamic";
+import type { ComponentProps, ReactNode } from "react";
 import { isValidElement } from "react";
+import { Badge } from "@/components/ui/badge";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { useAutoCollapse } from "@/hooks/use-auto-collapse";
+import { cn } from "@/lib/utils";
 
 import type { CodeBlockProps } from "./code-block";
 
