@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 
 export function emailToHue(email: string): number {
@@ -22,12 +22,11 @@ export function UserAvatar({
   src?: string | null;
 }) {
   const [imageError, setImageError] = useState(false);
-  const lastSrc = useRef(src);
 
-  if (lastSrc.current !== src) {
-    lastSrc.current = src;
+  // biome-ignore lint/correctness/useExhaustiveDependencies: reset error when src prop changes
+  useEffect(() => {
     setImageError(false);
-  }
+  }, [src]);
 
   const handleImageError = useCallback(() => {
     setImageError(true);
@@ -63,6 +62,7 @@ export function UserAvatar({
         onError={handleImageError}
         sizes="20px"
         src={src}
+        unoptimized
       />
     </div>
   );

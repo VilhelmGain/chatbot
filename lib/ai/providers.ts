@@ -21,7 +21,7 @@ function getMockProvider() {
   if (
     !isTestEnvironmentNow() &&
     isClerkConfigured() &&
-    Boolean(process.env.POSTGRES_URL) &&
+    process.env.POSTGRES_URL &&
     process.env.VERCEL_ENV !== "preview"
   ) {
     return null;
