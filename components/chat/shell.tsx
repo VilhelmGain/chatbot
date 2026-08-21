@@ -153,7 +153,7 @@ export function ChatShell() {
               status={status}
             />
 
-            <div className="sticky bottom-0 z-10 mx-auto flex w-full max-w-4xl gap-2 px-3 pb-3 md:px-4 md:pb-4">
+            <div className="sticky bottom-0 z-10 mx-auto flex w-full max-w-4xl gap-2 bg-gradient-to-t from-background to-transparent px-4 pt-2 pb-3 md:px-6 md:pb-4 md:pt-3">
               {!isReadonly && (
                 <MultimodalInput
                   attachments={attachments}
