@@ -38,6 +38,30 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "../ui/alert-dialog";
+import { Button } from "../ui/button";
+
+function CollapsedSidebarToggle({ faviconHref }: { faviconHref: string }) {
+  const { toggleSidebar } = useSidebar();
+  return (
+    <Button
+      aria-label="Toggle Sidebar"
+      className="size-8 p-0 text-sidebar-foreground/70 hover:text-sidebar-foreground"
+      data-testid="sidebar-toggle-button"
+      onClick={toggleSidebar}
+      size="icon-sm"
+      variant="ghost"
+    >
+      <Image
+        alt="Visbyr Chat"
+        className="size-4 shrink-0"
+        height={16}
+        src={faviconHref}
+        unoptimized
+        width={16}
+      />
+    </Button>
+  );
+}
 
 export function AppSidebar({
   testEnvironment,
@@ -96,26 +120,28 @@ export function AppSidebar({
         <SidebarHeader className="pb-0 pt-3">
           <SidebarMenu>
             <SidebarMenuItem className="flex flex-row items-center justify-between">
-              <SidebarMenuButton
-                asChild
-                className="size-8 !px-0 items-center justify-center"
-                tooltip="Chatbot"
-              >
-                <Link href="/" onClick={closeMobile}>
-                  <Image
-                    alt="Visbyr Chat"
-                    className="size-5 shrink-0 transition-[width,height] duration-200 group-data-[collapsible=icon]:size-4"
-                    height={20}
-                    src={faviconHref}
-                    unoptimized
-                    width={20}
-                  />
-                </Link>
-              </SidebarMenuButton>
               <div className="group-data-[collapsible=icon]:hidden">
-                <SidebarTrigger className="text-sidebar-foreground/70 transition-colors duration-150 hover:text-sidebar-foreground" />
+                <SidebarMenuButton
+                  asChild
+                  className="size-8 !px-0 items-center justify-center"
+                  tooltip="Chatbot"
+                >
+                  <Link href="/" onClick={closeMobile}>
+                    <Image
+                      alt="Visbyr Chat"
+                      className="size-5 shrink-0"
+                      height={20}
+                      src={faviconHref}
+                      unoptimized
+                      width={20}
+                    />
+                  </Link>
+                </SidebarMenuButton>
               </div>
-              <div className="hidden group-data-[collapsible=icon]:block">
+              <div className="hidden size-8 items-center justify-center group-data-[collapsible=icon]:flex">
+                <CollapsedSidebarToggle faviconHref={faviconHref} />
+              </div>
+              <div className="group-data-[collapsible=icon]:hidden">
                 <SidebarTrigger className="text-sidebar-foreground/70 transition-colors duration-150 hover:text-sidebar-foreground" />
               </div>
             </SidebarMenuItem>

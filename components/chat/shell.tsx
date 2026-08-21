@@ -198,14 +198,14 @@ export function ChatShell() {
           status={status}
           stop={stop}
         />
-
-        {pathname?.includes("/chat/") ? (
-          <ConversationInfoDrawer
-            chatId={chatId}
-            messageCount={messages.length}
-          />
-        ) : null}
       </div>
+
+      {pathname?.includes("/chat/") ? (
+        <ConversationInfoDrawer
+          chatId={chatId}
+          messageCount={messages.length}
+        />
+      ) : null}
 
       <DataStreamHandler />
     </>
