@@ -28,7 +28,7 @@ type MessagesProps = {
 // For precise virtualization, replace with dynamic measurement
 // (ResizeObserver per row or @tanstack/react-virtual).
 const VIRTUALIZATION_THRESHOLD = 100;
-const ESTIMATED_ROW_HEIGHT = 320;
+const ESTIMATED_ROW_HEIGHT = 280;
 const OVERSCAN = 10;
 
 function PureMessages({
@@ -165,7 +165,7 @@ function PureMessages({
         ref={messagesContainerRef}
         style={isArtifactVisible ? { scrollbarWidth: "none" } : undefined}
       >
-        <div className="mx-auto flex min-h-full min-w-0 max-w-4xl flex-col gap-5 px-2 py-6 md:gap-7 md:px-4">
+        <div className="mx-auto flex min-h-full min-w-0 max-w-4xl flex-col gap-6 px-4 py-8 md:gap-7 md:px-6 md:py-10">
           {shouldVirtualize && topSpacerHeight > 0 ? (
             <div aria-hidden style={{ height: topSpacerHeight }} />
           ) : null}
