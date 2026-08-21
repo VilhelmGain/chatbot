@@ -35,6 +35,23 @@ export function isTestEnvironmentNow(): boolean {
     (demoNow && (!prodNow || allowNow || previewNow)) || (!prodNow && pwNow)
   );
 }
+export function isClerkConfiguredNow(): boolean {
+  return (
+    Boolean(process.env.CLERK_SECRET_KEY) &&
+    Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY)
+  );
+}
+// Single source of truth for "run on mock auth instead of Clerk". Must match
+// every consumer (middleware, auth(), ClerkProvider gate, UI branches) so the
+// session source and the rendered auth components can never disagree.
+export function usesMockAuthNow(): boolean {
+  return (
+    isTestEnvironmentNow() ||
+    !isClerkConfiguredNow() ||
+    !process.env.POSTGRES_URL ||
+    process.env.VERCEL_ENV === "preview"
+  );
+}
 
 const hasPlaywrightFlag = Boolean(
   process.env.PLAYWRIGHT_TEST_BASE_URL ||

@@ -1,18 +1,21 @@
 import { ClerkProvider } from "@clerk/nextjs";
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
+import { headers } from "next/headers";
 import { Suspense } from "react";
 import { NonceScripts } from "@/components/nonce-scripts";
 import { ThemeProvider } from "@/components/theme-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { isTestEnvironmentNow } from "@/lib/constants";
+import { usesMockAuthNow } from "@/lib/constants";
 import { getCanonicalUrl, getMetadataBase } from "@/lib/seo";
 
-function isClerkConfigured(): boolean {
-  return (
-    Boolean(process.env.CLERK_SECRET_KEY) &&
-    Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY)
-  );
+// Computed key on purpose: a dotted `process.env.NEXT_PUBLIC_*` read is
+// inlined at build time, which breaks images built without the var. A
+// variable-keyed lookup survives to runtime so the key is read at server start.
+const CLERK_PUBLISHABLE_KEY = "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY";
+
+function getClerkPublishableKey(): string | undefined {
+  return process.env[CLERK_PUBLISHABLE_KEY];
 }
 
 import "./globals.css";
@@ -203,11 +206,12 @@ const notoSansMath = localFont({
   weight: "400",
 });
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
   return (
     <html
       className={`${sora.variable} ${montserrat.variable} ${manrope.variable} ${geistMono.variable} ${inter.variable} ${geist.variable} ${spaceGrotesk.variable} ${dmSans.variable} ${interTight.variable} ${roboto.variable} ${jetbrainsMono.variable} ${firaCode.variable} ${ibmPlexMono.variable} ${spaceMono.variable} ${robotoMono.variable} ${cascadiaCode.variable} ${stixTwoMath.variable} ${notoSansMath.variable}`}
@@ -228,10 +232,13 @@ export default function RootLayout({
           disableTransitionOnChange
           enableSystem
         >
-          {isTestEnvironmentNow() || !isClerkConfigured() ? (
+          {usesMockAuthNow() ? (
             <TooltipProvider>{children}</TooltipProvider>
           ) : (
-            <ClerkProvider>
+            <ClerkProvider
+              nonce={nonce}
+              publishableKey={getClerkPublishableKey()}
+            >
               <TooltipProvider>{children}</TooltipProvider>
             </ClerkProvider>
           )}

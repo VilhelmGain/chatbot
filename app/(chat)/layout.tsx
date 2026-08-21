@@ -8,7 +8,7 @@ import { DataStreamProvider } from "@/components/chat/data-stream-provider";
 import { PreferencesSync } from "@/components/preferences-sync";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { ActiveChatProvider } from "@/hooks/use-active-chat";
-import { isTestEnvironment } from "@/lib/constants";
+import { usesMockAuthNow } from "@/lib/constants";
 import { auth } from "../(auth)/auth";
 
 export const metadata: Metadata = {
@@ -45,7 +45,7 @@ async function SidebarShell({ children }: { children: React.ReactNode }) {
 
   return (
     <SidebarProvider defaultOpen={!isCollapsed}>
-      <AppSidebar testEnvironment={isTestEnvironment} user={session?.user} />
+      <AppSidebar testEnvironment={usesMockAuthNow()} user={session?.user} />
       <SidebarInset>
         <Suspense fallback={<div className="flex h-dvh" />}>
           <ActiveChatProvider>
