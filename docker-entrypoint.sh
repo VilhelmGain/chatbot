@@ -2,15 +2,19 @@
 set -e
 trap 'rm -f /tmp/migrate.mjs' EXIT
 
-if [ -z "$ENCRYPTION_KEY" ]; then
+if [ -z "$ENCRYPTION_KEY" ] && [ "$DEMO_MODE" != "1" ]; then
   echo "ERROR: ENCRYPTION_KEY is not set. It is required to encrypt provider API keys."
   echo "Generate one with: openssl rand -base64 32"
+  echo "If running a demo without external services, set DEMO_MODE=1 (and ALLOW_DEMO_IN_PROD=1 in production)."
   exit 1
 fi
 
-echo "Running database migrations..."
-# Write migration script to a temp file to avoid shell quoting issues with POSTGRES_URL
-cat > /tmp/migrate.mjs <<'MIGRATE_EOF'
+if [ "$DEMO_MODE" = "1" ]; then
+  echo "DEMO_MODE=1, skipping database migrations..."
+else
+  echo "Running database migrations..."
+  # Write migration script to a temp file to avoid shell quoting issues with POSTGRES_URL
+  cat > /tmp/migrate.mjs <<'MIGRATE_EOF'
 import postgres from "postgres";
 import { drizzle } from "drizzle-orm/postgres-js";
 import { migrate } from "drizzle-orm/postgres-js/migrator";
@@ -57,6 +61,7 @@ try {
 }
 process.exit(0);
 MIGRATE_EOF
-node /tmp/migrate.mjs
+  node /tmp/migrate.mjs
+fi
 echo "Starting application..."
 exec node server.js

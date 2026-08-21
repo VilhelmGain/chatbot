@@ -7,8 +7,13 @@ export function generateTestUserEmail(prefix = "test") {
 
 function signEmail(email: string): string {
   const secret = process.env.ENCRYPTION_KEY;
-  if (!secret) return email;
-  const sig = crypto.createHmac("sha256", secret).update(email, "utf8").digest("hex");
+  if (!secret) {
+    return email;
+  }
+  const sig = crypto
+    .createHmac("sha256", secret)
+    .update(email, "utf8")
+    .digest("hex");
   return `${email}|${sig}`;
 }
 

@@ -111,7 +111,8 @@ function handleTestRequest(request: NextRequest): NextResponse | Response {
       return NextResponse.json(
         {
           code: "unauthorized:chat",
-          message: "You need to sign in to view this chat. Please sign in and try again.",
+          message:
+            "You need to sign in to view this chat. Please sign in and try again.",
         },
         { status: 401 }
       );
@@ -161,34 +162,79 @@ function handleTestRequest(request: NextRequest): NextResponse | Response {
 
 const testHandler = (request: NextRequest) => handleTestRequest(request);
 
-export default isTestEnvironment
-  ? testHandler
-  : clerkMiddleware(async (auth, request: NextRequest) => {
-      const pingResponse = handlePing(request);
-      if (pingResponse) {
-        const nonce = generateNonce();
-        applySecurityHeaders(pingResponse as unknown as NextResponse, nonce);
-        return pingResponse;
-      }
+// In production, demo mode without ALLOW_DEMO_IN_PROD would normally use Clerk
+// and crash when Clerk keys are absent (Vercel demo case). Fall back to demo
+// handler when Clerk is not configured to avoid MIDDLEWARE_INVOCATION_FAILED.
+const isClerkConfigured =
+  Boolean(process.env.CLERK_SECRET_KEY) &&
+  Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY);
+const useTestHandler = isTestEnvironment || (isDemoMode && !isClerkConfigured);
 
-      const csrfResponse = handleCsrf(request);
-      if (csrfResponse) {
-        return csrfResponse;
-      }
+const clerkHandler = clerkMiddleware(async (auth, request: NextRequest) => {
+  const pingResponse = handlePing(request);
+  if (pingResponse) {
+    const nonce = generateNonce();
+    applySecurityHeaders(pingResponse as unknown as NextResponse, nonce);
+    return pingResponse;
+  }
 
-      if (isProtectedRoute(request)) {
-        await auth.protect();
-      }
+  const csrfResponse = handleCsrf(request);
+  if (csrfResponse) {
+    return csrfResponse;
+  }
 
-      const nonce = generateNonce();
-      const requestHeaders = new Headers(request.headers);
-      requestHeaders.set("x-nonce", nonce);
-      const response = NextResponse.next({
-        request: { headers: requestHeaders },
-      });
-      applySecurityHeaders(response, nonce);
-      return response;
-    });
+  if (isProtectedRoute(request)) {
+    await auth.protect();
+  }
+
+  const nonce = generateNonce();
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-nonce", nonce);
+  const response = NextResponse.next({
+    request: { headers: requestHeaders },
+  });
+  applySecurityHeaders(response, nonce);
+  return response;
+});
+
+function withMiddlewareErrorHandling(
+  handler: (
+    request: NextRequest
+  ) => Promise<NextResponse | Response> | NextResponse | Response
+) {
+  return async (request: NextRequest) => {
+    try {
+      const result = await handler(request);
+      return result;
+    } catch (err) {
+      console.error("[middleware] handler failed", err);
+      if (isDemoMode) {
+        try {
+          return handleTestRequest(request);
+        } catch {}
+      }
+      // Return a response instead of throwing — throwing causes Vercel's
+      // MIDDLEWARE_INVOCATION_FAILED 500 page. 500 JSON keeps the edge
+      // function alive and surfaces the error in logs.
+      return new Response(
+        JSON.stringify({ code: "internal", message: "Middleware error" }),
+        { headers: { "content-type": "application/json" }, status: 500 }
+      );
+    }
+  };
+}
+
+export default useTestHandler
+  ? withMiddlewareErrorHandling(
+      testHandler as unknown as (
+        r: NextRequest
+      ) => Promise<NextResponse | Response>
+    )
+  : withMiddlewareErrorHandling(
+      clerkHandler as unknown as (
+        r: NextRequest
+      ) => Promise<NextResponse | Response>
+    );
 
 export const config = {
   matcher: [

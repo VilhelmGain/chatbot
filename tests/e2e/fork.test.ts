@@ -165,8 +165,12 @@ test.describe("Chat Forking", () => {
     );
     await page.waitForTimeout(1500);
 
-    expect(await page.locator("[data-testid='message-user']").count()).toBeGreaterThanOrEqual(1);
-    expect(await page.locator("[data-testid='message-assistant']").count()).toBeGreaterThanOrEqual(1);
+    expect(
+      await page.locator("[data-testid='message-user']").count()
+    ).toBeGreaterThanOrEqual(1);
+    expect(
+      await page.locator("[data-testid='message-assistant']").count()
+    ).toBeGreaterThanOrEqual(1);
     await expect(
       page.locator("[data-testid='message-user']").filter({ hasText: "cats" })
     ).toHaveCount(0);

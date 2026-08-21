@@ -158,10 +158,18 @@ export async function rateLimit(
         .expire(key, windowSeconds)
         .exec()) as unknown as Array<[Error | null, number]> | null;
       const first = results?.[0];
-      count = Array.isArray(first) ? (first[1] as number) : (first as unknown as number);
-    } else if (typeof redisAny.set === "function" && typeof redisAny.incr === "function") {
+      count = Array.isArray(first)
+        ? (first[1] as number)
+        : (first as unknown as number);
+    } else if (
+      typeof redisAny.set === "function" &&
+      typeof redisAny.incr === "function"
+    ) {
       // Fallback fixed-window without TTL refresh: SET NX EX then INCR
-      const setRes = await redisAny.set(key, "0", { EX: windowSeconds, NX: true });
+      const setRes = await redisAny.set(key, "0", {
+        EX: windowSeconds,
+        NX: true,
+      });
       const incrRes = await redisAny.incr(key);
       if (setRes === "OK" && incrRes === 1) {
         // already has TTL from SET
