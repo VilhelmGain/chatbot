@@ -1,6 +1,6 @@
 #!/bin/sh
 set -e
-trap 'rm -f /tmp/migrate.mjs' EXIT
+trap 'rm -f /app/migrate.mjs' EXIT
 
 if [ -z "$ENCRYPTION_KEY" ] && [ "$DEMO_MODE" != "1" ]; then
   echo "ERROR: ENCRYPTION_KEY is not set. It is required to encrypt provider API keys."
@@ -14,7 +14,7 @@ if [ "$DEMO_MODE" = "1" ]; then
 else
   echo "Running database migrations..."
   # Write migration script to a temp file to avoid shell quoting issues with POSTGRES_URL
-  cat > /tmp/migrate.mjs <<'MIGRATE_EOF'
+  cat > /app/migrate.mjs <<'MIGRATE_EOF'
 import postgres from "postgres";
 import { drizzle } from "drizzle-orm/postgres-js";
 import { migrate } from "drizzle-orm/postgres-js/migrator";
@@ -61,7 +61,7 @@ try {
 }
 process.exit(0);
 MIGRATE_EOF
-  node /tmp/migrate.mjs
+  node /app/migrate.mjs
 fi
 echo "Starting application..."
 exec node server.js
