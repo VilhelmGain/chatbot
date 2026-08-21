@@ -40,7 +40,7 @@ function TestSignOutItem() {
 function ClerkSignOutItem() {
   const { signOut: clerkSignOut } = useClerk();
   const handleSignOut = useCallback(
-    async (event: Event) => {
+    async (event) => {
       event.preventDefault();
       try {
         await clerkSignOut({ redirectUrl: "/" });
@@ -107,11 +107,11 @@ export function SidebarUserNav({
   const [showAccount, setShowAccount] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const identityDisplayMode = useIdentityDisplayMode();
-  const handleOpenAccount = useCallback((event: Event) => {
+  const handleOpenAccount = useCallback((event) => {
     event.preventDefault();
     setShowAccount(true);
   }, []);
-  const handleOpenSettings = useCallback((event: Event) => {
+  const handleOpenSettings = useCallback((event) => {
     event.preventDefault();
     setShowSettings(true);
   }, []);
