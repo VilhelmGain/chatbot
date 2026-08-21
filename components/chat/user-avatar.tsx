@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useState } from "react";
 import { cn } from "@/lib/utils";
 
 export function emailToHue(email: string): number {
@@ -21,19 +21,17 @@ export function UserAvatar({
   email: string;
   src?: string | null;
 }) {
-  const [imageError, setImageError] = useState(false);
-  const lastSrc = useRef(src);
-
-  if (lastSrc.current !== src) {
-    lastSrc.current = src;
-    setImageError(false);
-  }
+  const [failedSrc, setFailedSrc] = useState<string | null>(null);
 
   const handleImageError = useCallback(() => {
-    setImageError(true);
-  }, []);
+    if (src) {
+      setFailedSrc(src);
+    }
+  }, [src]);
 
-  if (!src || imageError) {
+  const isFailed = Boolean(src && failedSrc === src);
+
+  if (!src || isFailed) {
     return (
       <div
         className={cn(
@@ -63,6 +61,7 @@ export function UserAvatar({
         onError={handleImageError}
         sizes="20px"
         src={src}
+        unoptimized
       />
     </div>
   );

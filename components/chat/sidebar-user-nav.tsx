@@ -39,9 +39,18 @@ function TestSignOutItem() {
 
 function ClerkSignOutItem() {
   const { signOut: clerkSignOut } = useClerk();
-  const handleSignOut = useCallback(() => {
-    clerkSignOut({ redirectUrl: "/" });
-  }, [clerkSignOut]);
+  const handleSignOut = useCallback(
+    async (event: Event) => {
+      event.preventDefault();
+      try {
+        await clerkSignOut({ redirectUrl: "/" });
+      } catch {
+        // fallback: force navigation if Clerk sign-out fails
+        window.location.href = "/";
+      }
+    },
+    [clerkSignOut]
+  );
   return (
     <DropdownMenuItem data-testid="user-nav-item-auth" onSelect={handleSignOut}>
       <span className="w-full cursor-pointer text-[13px]">Sign out</span>
@@ -51,7 +60,7 @@ function ClerkSignOutItem() {
 
 function ClerkAvatar({ user }: { user: User }) {
   const { isLoaded, user: clerkUser } = useUser();
-  const src = isLoaded ? clerkUser?.imageUrl : user.image;
+  const src = isLoaded && clerkUser?.imageUrl ? clerkUser.imageUrl : user.image;
   return <UserAvatar email={user.email ?? ""} src={src} />;
 }
 
@@ -98,10 +107,12 @@ export function SidebarUserNav({
   const [showAccount, setShowAccount] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const identityDisplayMode = useIdentityDisplayMode();
-  const handleOpenAccount = useCallback(() => {
+  const handleOpenAccount = useCallback((event: Event) => {
+    event.preventDefault();
     setShowAccount(true);
   }, []);
-  const handleOpenSettings = useCallback(() => {
+  const handleOpenSettings = useCallback((event: Event) => {
+    event.preventDefault();
     setShowSettings(true);
   }, []);
 
