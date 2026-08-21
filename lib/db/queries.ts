@@ -1,6 +1,6 @@
 import "server-only";
 
-import { isTestEnvironment } from "@/lib/constants";
+import { isTestEnvironmentNow } from "@/lib/constants";
 import { inMemoryQueries } from "./in-memory";
 import {
   createCustomModel as pgCreateCustomModel,
@@ -114,7 +114,24 @@ type Queries = typeof pgQueries;
 
 const memQueries = inMemoryQueries as unknown as Queries satisfies Queries;
 
-const impl: Queries = isTestEnvironment ? memQueries : pgQueries;
+// Evaluate at call time so a Docker Hub image built without DEMO_MODE still
+// honors DEMO_MODE=1 set at `docker run` time. The static export above was
+// frozen at build-time and broke demo after Hub pull.
+function getImpl(): Queries {
+  return isTestEnvironmentNow() ? memQueries : pgQueries;
+}
+
+const queriesProxy = new Proxy({} as Queries, {
+  get(_target, prop: string | symbol) {
+    const impl = getImpl();
+    const value = (impl as unknown as Record<string | symbol, unknown>)[prop];
+    if (typeof value === "function") {
+      return (...args: unknown[]) =>
+        (value as (...a: unknown[]) => unknown)(...args);
+    }
+    return value;
+  },
+});
 
 export const {
   createCustomModel,
@@ -168,4 +185,4 @@ export const {
   deleteToolConfig,
   upsertToolConfig,
   upsertUserSettings,
-} = impl;
+} = queriesProxy;

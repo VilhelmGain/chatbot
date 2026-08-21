@@ -2,7 +2,7 @@ import crypto from "node:crypto";
 import { auth as clerkAuth, currentUser } from "@clerk/nextjs/server";
 import { cookies } from "next/headers";
 import { z } from "zod";
-import { isDemoMode, isTestEnvironment } from "@/lib/constants";
+import { isDemoModeNow, isTestEnvironmentNow } from "@/lib/constants";
 import {
   createUserFromClerk,
   getOrCreateUserByEmail,
@@ -78,7 +78,7 @@ function verifySignedTestUserCookie(raw: string): string | null {
   const secret = process.env.ENCRYPTION_KEY;
   if (!secret) {
     // No key configured (e.g. CI without .env) — accept plain for test env.
-    if (isTestEnvironment) {
+    if (isTestEnvironmentNow()) {
       const plain = emailSchema.safeParse(raw);
       if (plain.success) {
         return plain.data;
@@ -146,7 +146,7 @@ export type Session = {
 };
 
 export async function auth(): Promise<Session | null> {
-  if (isTestEnvironment) {
+  if (isTestEnvironmentNow()) {
     const cookieStore = await cookies();
     const rawCookie = cookieStore.get("test-user")?.value;
 
@@ -160,7 +160,7 @@ export async function auth(): Promise<Session | null> {
       if (!checkTestUserRateLimit(`test-user:${email}`)) {
         return null;
       }
-    } else if (isDemoMode) {
+    } else if (isDemoModeNow()) {
       // Per-session demo user is minted in middleware (see middleware.ts).
       // Middleware uses plain demo-.*@demo.local for Edge compatibility;
       // accept both signed and plain demo pattern when isDemoMode.

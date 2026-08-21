@@ -5,25 +5,43 @@ import type { LanguageModelV4 } from "@ai-sdk/provider";
 import { customProvider as aiCustomProvider } from "ai";
 import type { CustomProvider } from "@/lib/db/schema";
 import { ChatbotError } from "@/lib/errors";
-import { isTestEnvironment } from "../constants";
+import { isTestEnvironmentNow } from "../constants";
 import { getCustomProviderById } from "../db/queries";
 import { getCatalogProvider } from "./catalog";
 import { decrypt } from "./encryption";
 
-export const myProvider = isTestEnvironment
-  ? (() => {
-      const {
-        chatModel,
-        titleModel: mockTitleModel,
-      } = require("./models.mock");
-      return aiCustomProvider({
-        languageModels: {
-          "chat-model": chatModel,
-          "title-model": mockTitleModel,
-        },
-      });
-    })()
-  : null;
+function getMockProvider() {
+  if (!isTestEnvironmentNow()) {
+    return null;
+  }
+  const { chatModel, titleModel: mockTitleModel } = require("./models.mock");
+  return aiCustomProvider({
+    languageModels: {
+      "chat-model": chatModel,
+      "title-model": mockTitleModel,
+    },
+  });
+}
+
+// Lazily evaluated so `DEMO_MODE=1` at `docker run` time is honored even when
+// the Hub image was built without it. The previous static `isTestEnvironment`
+// value was frozen at build time.
+export const myProvider: ReturnType<typeof getMockProvider> = new Proxy(
+  {} as NonNullable<ReturnType<typeof getMockProvider>>,
+  {
+    get(_t, prop) {
+      const p = getMockProvider();
+      if (!p) {
+        return;
+      }
+      return (p as unknown as Record<string | symbol, unknown>)[prop];
+    },
+  }
+) as unknown as ReturnType<typeof getMockProvider>;
+
+function getActiveMockProvider() {
+  return isTestEnvironmentNow() ? getMockProvider() : null;
+}
 
 const CACHE_TTL_MS = 5 * 60 * 1000;
 const CACHE_MAX = 500;
@@ -249,14 +267,15 @@ function resolveModel(modelId: string) {
 }
 
 export function getLanguageModel(modelId: string) {
-  if (isTestEnvironment && myProvider) {
+  const activeMock = getActiveMockProvider();
+  if (activeMock) {
     // The mock provider registers models by bare id (e.g. "chat-model"),
     // but the client sends custom-provider ids ("custom-<uuid>/<modelId>").
     // Strip the provider prefix so the mock model can be resolved.
     const mockModelId = modelId.startsWith("custom-")
       ? modelId.split("/").slice(1).join("/")
       : modelId;
-    return myProvider.languageModel(mockModelId);
+    return activeMock.languageModel(mockModelId);
   }
 
   return resolveModel(modelId);

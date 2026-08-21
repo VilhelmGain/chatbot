@@ -1,10 +1,6 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { type NextRequest, NextResponse } from "next/server";
-import {
-  isDemoMode,
-  isProductionEnvironment,
-  isTestEnvironment,
-} from "./lib/constants";
+import { isDemoModeNow, isProductionEnvironmentNow } from "./lib/constants";
 import { isCsrfOriginAllowed } from "./lib/security/csrf";
 
 const isProtectedRoute = createRouteMatcher([
@@ -45,7 +41,7 @@ function applySecurityHeaders(response: NextResponse, nonce: string): void {
     "Permissions-Policy",
     "camera=(), microphone=(), geolocation=(), payment=()"
   );
-  if (isProductionEnvironment) {
+  if (isProductionEnvironmentNow()) {
     response.headers.set(
       "Strict-Transport-Security",
       "max-age=31536000; includeSubDomains; preload"
@@ -107,7 +103,7 @@ function handleTestRequest(request: NextRequest): NextResponse | Response {
   if (isApiRoute && isProtectedRoute(request)) {
     const hasTestCookie = request.cookies.has("test-user");
     const hasDemoCookie = request.cookies.has("demo-session");
-    if (!hasTestCookie && !isDemoMode) {
+    if (!hasTestCookie && !isDemoModeNow()) {
       return NextResponse.json(
         {
           code: "unauthorized:chat",
@@ -117,7 +113,7 @@ function handleTestRequest(request: NextRequest): NextResponse | Response {
         { status: 401 }
       );
     }
-    if (isDemoMode && !hasTestCookie && !hasDemoCookie) {
+    if (isDemoModeNow() && !hasTestCookie && !hasDemoCookie) {
       const demoEmail = `demo-${globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2)}@demo.local`;
       const nonce = generateNonce();
       const requestHeaders = new Headers(request.headers);
@@ -132,7 +128,7 @@ function handleTestRequest(request: NextRequest): NextResponse | Response {
       applySecurityHeaders(res, nonce);
       return res;
     }
-  } else if (isDemoMode && isProtectedRoute(request)) {
+  } else if (isDemoModeNow() && isProtectedRoute(request)) {
     const hasTestCookie = request.cookies.has("test-user");
     const hasDemoCookie = request.cookies.has("demo-session");
     if (!hasTestCookie && !hasDemoCookie) {
@@ -168,7 +164,10 @@ const testHandler = (request: NextRequest) => handleTestRequest(request);
 // Computed per-request so Hub image (build-time inlined NEXT_PUBLIC_* empty)
 // still respects runtime env.
 function isClerkConfiguredNow(): boolean {
-  return Boolean(process.env.CLERK_SECRET_KEY) && Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY);
+  return (
+    Boolean(process.env.CLERK_SECRET_KEY) &&
+    Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY)
+  );
 }
 function shouldUseTestHandler(): boolean {
   // Re-evaluate env at request time — not at import — so DEMO_MODE set at
@@ -178,7 +177,9 @@ function shouldUseTestHandler(): boolean {
   const prodNow = process.env.NODE_ENV === "production";
   const allowDemoNow = process.env.ALLOW_DEMO_IN_PROD === "1";
   const hasPlaywrightNow = Boolean(
-    process.env.PLAYWRIGHT_TEST_BASE_URL || process.env.PLAYWRIGHT || process.env.CI_PLAYWRIGHT
+    process.env.PLAYWRIGHT_TEST_BASE_URL ||
+      process.env.PLAYWRIGHT ||
+      process.env.CI_PLAYWRIGHT
   );
   const isTestNow =
     (demoNow && (!prodNow || allowDemoNow)) || (!prodNow && hasPlaywrightNow);
@@ -223,7 +224,7 @@ function withMiddlewareErrorHandling(
       return result;
     } catch (err) {
       console.error("[middleware] handler failed", err);
-      if (isDemoMode) {
+      if (isDemoModeNow()) {
         try {
           return handleTestRequest(request);
         } catch {}
@@ -243,7 +244,9 @@ const wrappedTest = withMiddlewareErrorHandling(
   testHandler as unknown as (r: NextRequest) => Promise<NextResponse | Response>
 );
 const wrappedClerk = withMiddlewareErrorHandling(
-  clerkHandler as unknown as (r: NextRequest) => Promise<NextResponse | Response>
+  clerkHandler as unknown as (
+    r: NextRequest
+  ) => Promise<NextResponse | Response>
 );
 
 export default function middleware(request: NextRequest) {

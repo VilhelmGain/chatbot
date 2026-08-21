@@ -74,7 +74,8 @@ function parseEnv(): Env {
     try {
       const u = new URL(env.NEXT_PUBLIC_APP_URL);
       const host = u.hostname.toLowerCase();
-      const isLocal = host === "localhost" || host === "127.0.0.1" || host === "::1";
+      const isLocal =
+        host === "localhost" || host === "127.0.0.1" || host === "::1";
       if (isLocal) {
         // Allow http for localhost in production (Docker self-hosted)
       } else {

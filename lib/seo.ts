@@ -1,5 +1,9 @@
 const DEV_FALLBACK_URL = "http://localhost:3000";
 
+function isBuildPhase(): boolean {
+  return process.env.NEXT_PHASE === "phase-production-build";
+}
+
 export function getSiteUrl(): string {
   const appUrl = (process.env.NEXT_PUBLIC_APP_URL ?? "").replace(/\/+$/, "");
   const basePath = (process.env.NEXT_PUBLIC_BASE_PATH ?? "").replace(
@@ -9,6 +13,19 @@ export function getSiteUrl(): string {
 
   if (appUrl) {
     return `${appUrl}${basePath}`;
+  }
+
+  // During `next build` the runtime env is not available (Docker/Vercel
+  // build-args may be empty). Never throw during build collection — fall
+  // back to localhost and let runtime validation handle missing public URL.
+  if (isBuildPhase()) {
+    return `${DEV_FALLBACK_URL}${basePath}`;
+  }
+
+  // Demo / test mode runs without a public URL — use fallback so the
+  // container and Vercel demo can start without NEXT_PUBLIC_APP_URL.
+  if (process.env.DEMO_MODE === "1") {
+    return `${DEV_FALLBACK_URL}${basePath}`;
   }
 
   if (process.env.NODE_ENV === "production") {
