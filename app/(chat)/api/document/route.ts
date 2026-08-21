@@ -8,6 +8,8 @@ import {
   updateDocumentContent,
 } from "@/lib/db/queries";
 import { ChatbotError } from "@/lib/errors";
+import { checkDocumentRateLimit } from "@/lib/ratelimit";
+import { getClientIp } from "@/lib/server/request-utils";
 
 const documentSchema = z.object({
   content: z.string().min(1).max(100_000),
@@ -38,6 +40,15 @@ export async function GET(request: Request) {
 
   if (!session?.user) {
     return new ChatbotError("unauthorized:document").toResponse();
+  }
+
+  try {
+    await checkDocumentRateLimit(getClientIp(request), session.user.id);
+  } catch (error) {
+    if (error instanceof ChatbotError) {
+      return error.toResponse();
+    }
+    throw error;
   }
 
   const documents = await getDocumentsById({ id });

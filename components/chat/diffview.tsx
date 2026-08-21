@@ -1,3 +1,4 @@
+import DOMPurify from "dompurify";
 import OrderedMap from "orderedmap";
 import {
   DOMParser,
@@ -59,12 +60,18 @@ export const DiffView = ({ oldContent, newContent }: DiffEditorProps) => {
     if (editorRef.current && !viewRef.current) {
       const parser = DOMParser.fromSchema(diffSchema);
 
-      const oldHtmlContent = renderToString(
-        <MessageResponse>{oldContent}</MessageResponse>
-      );
-      const newHtmlContent = renderToString(
-        <MessageResponse>{newContent}</MessageResponse>
-      );
+      const oldHtmlContent =
+        typeof window !== "undefined" && typeof DOMPurify.sanitize === "function"
+          ? DOMPurify.sanitize(
+              renderToString(<MessageResponse>{oldContent}</MessageResponse>)
+            )
+          : renderToString(<MessageResponse>{oldContent}</MessageResponse>);
+      const newHtmlContent =
+        typeof window !== "undefined" && typeof DOMPurify.sanitize === "function"
+          ? DOMPurify.sanitize(
+              renderToString(<MessageResponse>{newContent}</MessageResponse>)
+            )
+          : renderToString(<MessageResponse>{newContent}</MessageResponse>);
 
       const oldContainer = document.createElement("div");
       oldContainer.innerHTML = oldHtmlContent;

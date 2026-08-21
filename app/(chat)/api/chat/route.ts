@@ -393,7 +393,7 @@ export async function POST(request: Request) {
       reasoningEffort: isReasoningModel ? reasoningEffort : undefined,
     };
     const modelMessages = await convertToModelMessages(
-      await resolveAttachmentParts(uiMessages)
+      await resolveAttachmentParts(uiMessages, session.user.id)
     );
     const userAiContext = userSettings
       ? {

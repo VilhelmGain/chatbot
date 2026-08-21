@@ -9,6 +9,7 @@ import {
   updateCustomProvider,
 } from "@/lib/db/queries";
 import { ChatbotError } from "@/lib/errors";
+import { isTestEnvironment } from "@/lib/constants";
 import { assertPublicUrl } from "@/lib/security/ssrf";
 
 const createProviderSchema = z.object({
@@ -55,7 +56,9 @@ export async function POST(request: Request) {
   }
 
   try {
-    await assertPublicUrl(body.baseURL);
+    await assertPublicUrl(body.baseURL, {
+      allowPrivate: isTestEnvironment,
+    });
   } catch (error) {
     return new ChatbotError("bad_request:provider", {
       cause: error instanceof Error ? error.message : String(error),
