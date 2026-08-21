@@ -159,7 +159,8 @@ export function isValidAttachmentUrl(url: string): boolean {
  */
 export async function localFileUrlToDataUrl(
   url: string | undefined,
-  mediaType: string
+  mediaType: string,
+  ownerUserId: string
 ): Promise<string | null> {
   if (!isLocalFileUrl(url)) {
     return null;
@@ -181,11 +182,63 @@ export async function localFileUrlToDataUrl(
     if (isAbsolute(rel) || rel.startsWith("..")) {
       return null;
     }
+    // Ownership check — required to prevent cross-user read.
+    const owned = await isFileOwnedByUser(filename, ownerUserId, uploadDir);
+    if (!owned) {
+      console.warn("Blocked cross-user file read attempt:", {
+        filename,
+        ownerUserId,
+      });
+      return null;
+    }
     const buffer = await readFile(filePath);
     return `data:${mediaType};base64,${buffer.toString("base64")}`;
   } catch (error) {
     console.error("Failed to read attachment file:", { error, filename });
     return null;
+  }
+}
+
+async function isFileOwnedByUser(
+  safeName: string,
+  userId: string,
+  uploadDir: string
+): Promise<boolean> {
+  const { join } = await import("node:path");
+  const metaPath = join(uploadDir, ".meta", `${safeName}.json`);
+  try {
+    const raw = await readFile(metaPath, "utf8");
+    const meta = JSON.parse(raw) as { userId?: string };
+    return meta.userId === userId;
+  } catch {
+    // Fallback: legacy files without sidecar — check DB message ownership.
+    try {
+      const { getAllMessagesByUserId } = await import("@/lib/db/queries");
+      const messages = await getAllMessagesByUserId({ userId });
+      return messages.some((m) => {
+        const parts = m.parts as unknown[];
+        if (!Array.isArray(parts)) {
+          return false;
+        }
+        return parts.some((p) => {
+          if (typeof p !== "object" || p === null) {
+            return false;
+          }
+          const { url } = p as { url?: unknown };
+          if (typeof url !== "string") {
+            return false;
+          }
+          try {
+            const base = basename(new URL(url, "http://local").pathname);
+            return base === safeName;
+          } catch {
+            return false;
+          }
+        });
+      });
+    } catch {
+      return false;
+    }
   }
 }
 
@@ -221,7 +274,8 @@ type FilePart = {
  * this transform runs only on the in-memory messages sent to the model.
  */
 export async function resolveAttachmentParts(
-  messages: ChatMessage[]
+  messages: ChatMessage[],
+  ownerUserId: string
 ): Promise<ChatMessage[]> {
   return await Promise.all(
     messages.map(async (message) => {
@@ -242,7 +296,8 @@ export async function resolveAttachmentParts(
 
           const dataUrl = await localFileUrlToDataUrl(
             filePart.url,
-            filePart.mediaType
+            filePart.mediaType,
+            ownerUserId
           );
           if (dataUrl === null) {
             // Local file couldn't be read (e.g. deleted since upload). Don't

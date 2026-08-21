@@ -2,6 +2,8 @@ import { z } from "zod";
 import { auth } from "@/app/(auth)/auth";
 import { getSuggestionsByDocumentId } from "@/lib/db/queries";
 import { ChatbotError } from "@/lib/errors";
+import { checkSuggestionsRateLimit } from "@/lib/ratelimit";
+import { getClientIp } from "@/lib/server/request-utils";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -25,6 +27,15 @@ export async function GET(request: Request) {
 
   if (!session?.user) {
     return new ChatbotError("unauthorized:suggestions").toResponse();
+  }
+
+  try {
+    await checkSuggestionsRateLimit(getClientIp(request), session.user.id);
+  } catch (error) {
+    if (error instanceof ChatbotError) {
+      return error.toResponse();
+    }
+    throw error;
   }
 
   const suggestions = await getSuggestionsByDocumentId({

@@ -24,12 +24,9 @@ describe("ratelimit", () => {
   it("fail-open when REDIS_URL not configured (warns but does not throw)", async () => {
     delete process.env.REDIS_URL;
     vi.doMock("@/lib/constants", () => ({ isTestEnvironment: false }));
-    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
     const { rateLimit } = await import("./ratelimit");
+    // Now uses in-memory fallback without warning
     await expect(rateLimit("k", 5, 60)).resolves.toBeUndefined();
-    expect(warn).toHaveBeenCalledWith(
-      expect.stringContaining("REDIS_URL not configured")
-    );
   });
 
   it("fail-open when Redis not ready but REDIS_URL is set", async () => {
@@ -43,7 +40,7 @@ describe("ratelimit", () => {
     }));
     const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
     const { rateLimit } = await import("./ratelimit");
-    await expect(rateLimit("k2", 5, 60)).resolves.toBeUndefined();
+    await expect(rateLimit("k2", 5, 60)).rejects.toThrow();
     expect(warn).toHaveBeenCalledWith(
       expect.stringContaining("Redis not ready")
     );
@@ -119,7 +116,7 @@ describe("ratelimit", () => {
     }));
     const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
     const { rateLimit } = await import("./ratelimit");
-    await expect(rateLimit("k", 5, 60)).resolves.toBeUndefined();
+    await expect(rateLimit("k", 5, 60)).rejects.toThrow();
     expect(warn).toHaveBeenCalledWith(
       expect.stringContaining("failed"),
       expect.any(Error)

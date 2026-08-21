@@ -1,9 +1,12 @@
-import { readFile, stat, writeFile } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import { basename, isAbsolute, join, relative, resolve } from "node:path";
 import { NextResponse } from "next/server";
 
 import { auth } from "@/app/(auth)/auth";
 import { isBlockedMediaType } from "@/lib/attachments";
+import { ChatbotError } from "@/lib/errors";
+import { checkFilesGetRateLimit } from "@/lib/ratelimit";
+import { getClientIp } from "@/lib/server/request-utils";
 
 function getUploadDir(): string {
   return process.env.UPLOAD_DIR ?? "./uploads";
@@ -44,6 +47,15 @@ export async function GET(
   const session = await auth();
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  try {
+    await checkFilesGetRateLimit(getClientIp(_request), session.user.id);
+  } catch (error) {
+    if (error instanceof ChatbotError) {
+      return error.toResponse();
+    }
+    throw error;
   }
 
   const { filename } = await params;
@@ -114,39 +126,6 @@ export async function GET(
       }
     } catch {
       // ignore, will handle missing .meta below
-    }
-  }
-
-  // Handle missing .meta for owner before message exists:
-  // New uploads have a sidecar, but if the sidecar is missing (e.g. write
-  // race) the owner should still be able to fetch the file immediately after
-  // upload, before any message references it. Only allow this for recent
-  // files to avoid letting any user claim legacy files.
-  if (!isOwner && !metaExists) {
-    try {
-      const fileStat = await stat(filePath);
-      const ageMs = Date.now() - fileStat.mtimeMs;
-      const isRecent = ageMs < 10 * 60 * 1000;
-      if (!isRecent) {
-        return NextResponse.json({ error: "File not found" }, { status: 404 });
-      }
-      isOwner = true;
-      try {
-        const { mkdir } = await import("node:fs/promises");
-        await mkdir(join(uploadDir, ".meta"), { recursive: true });
-        await writeFile(
-          metaPath,
-          JSON.stringify({
-            createdAt: new Date().toISOString(),
-            safeName,
-            userId: session.user.id,
-          })
-        );
-      } catch {
-        // best-effort
-      }
-    } catch {
-      return NextResponse.json({ error: "File not found" }, { status: 404 });
     }
   }
 

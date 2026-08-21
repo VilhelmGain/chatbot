@@ -1,5 +1,6 @@
 "use client";
 
+import DOMPurify from "dompurify";
 import { defaultMarkdownSerializer } from "prosemirror-markdown";
 import { DOMParser, type Node } from "prosemirror-model";
 import { Decoration, DecorationSet, type EditorView } from "prosemirror-view";
@@ -15,8 +16,12 @@ export const buildDocumentFromContent = (content: string) => {
   const stringFromMarkdown = renderToString(
     <MessageResponse>{content}</MessageResponse>
   );
+  const sanitized =
+    typeof window !== "undefined" && typeof DOMPurify.sanitize === "function"
+      ? DOMPurify.sanitize(stringFromMarkdown)
+      : stringFromMarkdown;
   const tempContainer = document.createElement("div");
-  tempContainer.innerHTML = stringFromMarkdown;
+  tempContainer.innerHTML = sanitized;
   return parser.parse(tempContainer);
 };
 

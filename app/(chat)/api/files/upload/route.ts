@@ -1,5 +1,6 @@
+import { randomUUID } from "node:crypto";
 import { mkdir, writeFile } from "node:fs/promises";
-import { join } from "node:path";
+import { extname, join } from "node:path";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -16,6 +17,21 @@ import { getClientIp } from "@/lib/server/request-utils";
 function getUploadDir(): string {
   return process.env.UPLOAD_DIR ?? "./uploads";
 }
+
+const ALLOWED_FILE_EXTS = new Set([
+  ".csv",
+  ".gif",
+  ".jpeg",
+  ".jpg",
+  ".json",
+  ".md",
+  ".pdf",
+  ".png",
+  ".txt",
+  ".webp",
+  ".yaml",
+  ".yml",
+]);
 
 const FileSchema = z.object({
   file: z
@@ -70,7 +86,10 @@ export async function POST(request: Request) {
     }
 
     const filename = (formData.get("file") as File).name;
-    const safeName = `${Date.now()}-${filename.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
+    const sanitized = filename.replace(/[^a-zA-Z0-9._-]/g, "_");
+    const rawExt = extname(sanitized).toLowerCase();
+    const ext = ALLOWED_FILE_EXTS.has(rawExt) ? rawExt : ".bin";
+    const safeName = `${randomUUID()}${ext}`;
     const fileBuffer = Buffer.from(await file.arrayBuffer());
 
     try {
