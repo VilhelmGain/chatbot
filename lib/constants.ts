@@ -22,12 +22,18 @@ function hasPlaywrightFlagNow(): boolean {
 function allowDemoInProductionNow(): boolean {
   return process.env.ALLOW_DEMO_IN_PROD === "1";
 }
+function isVercelPreviewNow(): boolean {
+  return process.env.VERCEL_ENV === "preview";
+}
 export function isTestEnvironmentNow(): boolean {
   const demoNow = isDemoModeNow();
   const prodNow = isProductionEnvironmentNow();
   const allowNow = allowDemoInProductionNow();
   const pwNow = hasPlaywrightFlagNow();
-  return (demoNow && (!prodNow || allowNow)) || (!prodNow && pwNow);
+  const previewNow = isVercelPreviewNow();
+  return (
+    (demoNow && (!prodNow || allowNow || previewNow)) || (!prodNow && pwNow)
+  );
 }
 
 const hasPlaywrightFlag = Boolean(
@@ -49,7 +55,11 @@ export function assertProductionSecurity(): void {
   const demoNow = isDemoModeNow();
   const allowNow = allowDemoInProductionNow();
   const pwNow = hasPlaywrightFlagNow();
-  if (prodNow && demoNow && !allowNow) {
+  const previewNow = isVercelPreviewNow();
+  // Vercel preview (VERCEL_ENV=preview) is a production build (NODE_ENV=production)
+  // but is not the production deployment — allow DEMO_MODE there without
+  // ALLOW_DEMO_IN_PROD so PR previews don't need the prod flag.
+  if (prodNow && demoNow && !allowNow && !previewNow) {
     throw new Error(
       "[security] DEMO_MODE=1 is not allowed in production. Refusing to start. " +
         "Unset DEMO_MODE or set ALLOW_DEMO_IN_PROD=1 to explicitly allow demo bypass in production."
