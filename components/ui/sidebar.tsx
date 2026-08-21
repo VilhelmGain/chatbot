@@ -338,7 +338,7 @@ function MobileSidebarSheet({
         </motion.div>
         <motion.div
           animate={{ opacity: 1, y: 0 }}
-          className="flex min-h-0 flex-1 w-full flex-col overflow-y-auto pt-1 pb-2"
+          className="flex min-h-0 flex-1 w-full flex-col overflow-x-hidden overflow-y-auto pt-1 pb-2"
           initial={{ opacity: 0, y: 16 }}
           transition={{ delay: 0.05, duration: 0.3 }}
         >
@@ -420,7 +420,7 @@ function Sidebar({
         data-slot="sidebar-container"
         data-side={side}
         className={cn(
-          "fixed inset-y-0 z-10 hidden h-svh w-(--sidebar-width) transition-[left,right,width] duration-200 ease-smooth data-[side=left]:left-0 data-[side=left]:group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)] data-[side=right]:right-0 data-[side=right]:group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)] md:flex",
+          "fixed inset-y-0 z-10 hidden h-svh w-(--sidebar-width) overflow-hidden transition-[left,right,width] duration-200 ease-smooth data-[side=left]:left-0 data-[side=left]:group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)] data-[side=right]:right-0 data-[side=right]:group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)] md:flex",
           variant === "floating" || variant === "inset"
             ? "p-2 group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(4))+2px)]"
             : "group-data-[collapsible=icon]:w-(--sidebar-width-icon)",
@@ -431,7 +431,7 @@ function Sidebar({
         <div
           data-sidebar="sidebar"
           data-slot="sidebar-inner"
-          className="flex size-full flex-col glass-surface-static group-data-[variant=floating]:rounded-xl group-data-[variant=floating]:border-none group-data-[variant=floating]:shadow-[var(--shadow-float)]"
+          className="flex size-full min-w-0 max-w-full flex-col overflow-hidden glass-surface-static group-data-[variant=floating]:rounded-xl group-data-[variant=floating]:border-none group-data-[variant=floating]:shadow-[var(--shadow-float)]"
         >
           {children}
         </div>
@@ -568,7 +568,7 @@ function SidebarContent({ className, ...props }: React.ComponentProps<"div">) {
       data-slot="sidebar-content"
       data-sidebar="content"
       className={cn(
-        "flex min-h-0 flex-1 flex-col gap-2 overflow-auto supports-[scrollbar-gutter:stable]:[scrollbar-gutter:stable] [--radius:var(--radius-xl)] group-data-[collapsible=icon]:overflow-hidden",
+        "flex min-h-0 flex-1 flex-col gap-2 overflow-x-hidden overflow-y-auto supports-[scrollbar-gutter:stable]:[scrollbar-gutter:stable] [--radius:var(--radius-xl)] group-data-[collapsible=icon]:overflow-hidden",
         className
       )}
       {...props}
