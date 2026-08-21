@@ -26,6 +26,13 @@ function isBuildPhase(): boolean {
   return process.env.NEXT_PHASE === "phase-production-build";
 }
 
+function isClerkConfigured(): boolean {
+  return (
+    Boolean(process.env.CLERK_SECRET_KEY) &&
+    Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY)
+  );
+}
+
 function parseEnv(): Env {
   const parsed = envSchema.safeParse(process.env);
   if (!parsed.success) {
@@ -48,7 +55,9 @@ function parseEnv(): Env {
     }
     // Demo mode (and PLAYWRIGHT in non-prod) runs with no ENCRYPTION_KEY/DB.
     // Don't fail fast when DEMO_MODE is active — let assertProductionSecurity handle prod demo gating.
-    if (isProd && !isDemoActive()) {
+    // Also don't fail when Clerk isn't configured (Vercel preview without secrets) — the
+    // app falls back to demo/in-memory handling instead of crashing instrumentation with 500.
+    if (isProd && !isDemoActive() && isClerkConfigured()) {
       throw new Error(`[env] Invalid environment: ${issues}`);
     }
     // In dev/test, or demo in prod, allow missing ENCRYPTION_KEY / POSTGRES_URL
@@ -107,11 +116,13 @@ export function getEnv(): Env {
 }
 
 // Eager validation in production to fail fast on startup (import side-effect)
-// Never run during next build, and skip when DEMO_MODE is active.
+// Never run during next build, and skip when DEMO_MODE is active or when Clerk
+// is not configured (preview without secrets falls back to demo).
 if (
   !isBuildPhase() &&
   process.env.NODE_ENV === "production" &&
-  !isDemoActive()
+  !isDemoActive() &&
+  isClerkConfigured()
 ) {
   getEnv();
 }

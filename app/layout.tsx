@@ -8,6 +8,13 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { isTestEnvironmentNow } from "@/lib/constants";
 import { getCanonicalUrl, getMetadataBase } from "@/lib/seo";
 
+function isClerkConfigured(): boolean {
+  return (
+    Boolean(process.env.CLERK_SECRET_KEY) &&
+    Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY)
+  );
+}
+
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -103,7 +110,7 @@ export default function RootLayout({
           disableTransitionOnChange
           enableSystem
         >
-          {isTestEnvironmentNow() ? (
+          {isTestEnvironmentNow() || !isClerkConfigured() ? (
             <TooltipProvider>{children}</TooltipProvider>
           ) : (
             <ClerkProvider>

@@ -99,11 +99,13 @@ function handleTestRequest(request: NextRequest): NextResponse | Response {
   }
 
   // Demo/test auth handling (from PR134) — mint demo session if needed
+  // Treat missing Clerk config as demo so preview/Hub without secrets stays usable.
+  const useDemoAuth = isDemoModeNow() || !isClerkConfiguredNow();
   const isApiRoute = request.nextUrl.pathname.startsWith("/api/");
   if (isApiRoute && isProtectedRoute(request)) {
     const hasTestCookie = request.cookies.has("test-user");
     const hasDemoCookie = request.cookies.has("demo-session");
-    if (!hasTestCookie && !isDemoModeNow()) {
+    if (!hasTestCookie && !useDemoAuth) {
       return NextResponse.json(
         {
           code: "unauthorized:chat",
@@ -113,7 +115,7 @@ function handleTestRequest(request: NextRequest): NextResponse | Response {
         { status: 401 }
       );
     }
-    if (isDemoModeNow() && !hasTestCookie && !hasDemoCookie) {
+    if (useDemoAuth && !hasTestCookie && !hasDemoCookie) {
       const demoEmail = `demo-${globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2)}@demo.local`;
       const nonce = generateNonce();
       const requestHeaders = new Headers(request.headers);
@@ -128,7 +130,7 @@ function handleTestRequest(request: NextRequest): NextResponse | Response {
       applySecurityHeaders(res, nonce);
       return res;
     }
-  } else if (isDemoModeNow() && isProtectedRoute(request)) {
+  } else if (useDemoAuth && isProtectedRoute(request)) {
     const hasTestCookie = request.cookies.has("test-user");
     const hasDemoCookie = request.cookies.has("demo-session");
     if (!hasTestCookie && !hasDemoCookie) {
@@ -173,6 +175,12 @@ function shouldUseTestHandler(): boolean {
   // Re-evaluate env at request time — not at import — so DEMO_MODE set at
   // runtime (Docker compose env_file, Vercel runtime) is respected even when
   // the image was built without those env vars.
+  // Fall back to test handler whenever Clerk isn't configured — this keeps
+  // Vercel preview (no secrets) and Hub image (no build-args) alive instead
+  // of throwing MIDDLEWARE_INVOCATION_FAILED.
+  if (!isClerkConfiguredNow()) {
+    return true;
+  }
   const demoNow = process.env.DEMO_MODE === "1";
   const prodNow = process.env.NODE_ENV === "production";
   const allowDemoNow = process.env.ALLOW_DEMO_IN_PROD === "1";
@@ -183,7 +191,7 @@ function shouldUseTestHandler(): boolean {
   );
   const isTestNow =
     (demoNow && (!prodNow || allowDemoNow)) || (!prodNow && hasPlaywrightNow);
-  return isTestNow || (demoNow && !isClerkConfiguredNow());
+  return isTestNow;
 }
 
 const clerkHandler = clerkMiddleware(async (auth, request: NextRequest) => {
@@ -224,7 +232,7 @@ function withMiddlewareErrorHandling(
       return result;
     } catch (err) {
       console.error("[middleware] handler failed", err);
-      if (isDemoModeNow()) {
+      if (isDemoModeNow() || !isClerkConfiguredNow()) {
         try {
           return handleTestRequest(request);
         } catch {}

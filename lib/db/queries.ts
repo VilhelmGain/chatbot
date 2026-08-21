@@ -117,8 +117,20 @@ const memQueries = inMemoryQueries as unknown as Queries satisfies Queries;
 // Evaluate at call time so a Docker Hub image built without DEMO_MODE still
 // honors DEMO_MODE=1 set at `docker run` time. The static export above was
 // frozen at build-time and broke demo after Hub pull.
+function isClerkConfigured(): boolean {
+  return (
+    Boolean(process.env.CLERK_SECRET_KEY) &&
+    Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY)
+  );
+}
+
 function getImpl(): Queries {
-  return isTestEnvironmentNow() ? memQueries : pgQueries;
+  // Also fall back to in-memory when Clerk isn't configured (preview/Hub without
+  // secrets) so the app stays usable without DB instead of 500.
+  if (isTestEnvironmentNow() || !isClerkConfigured()) {
+    return memQueries;
+  }
+  return pgQueries;
 }
 
 const queriesProxy = new Proxy({} as Queries, {

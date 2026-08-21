@@ -145,8 +145,15 @@ export type Session = {
   user: User;
 };
 
+function isClerkConfigured(): boolean {
+  return (
+    Boolean(process.env.CLERK_SECRET_KEY) &&
+    Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY)
+  );
+}
+
 export async function auth(): Promise<Session | null> {
-  if (isTestEnvironmentNow()) {
+  if (isTestEnvironmentNow() || !isClerkConfigured()) {
     const cookieStore = await cookies();
     const rawCookie = cookieStore.get("test-user")?.value;
 

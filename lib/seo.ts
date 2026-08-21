@@ -24,7 +24,12 @@ export function getSiteUrl(): string {
 
   // Demo / test mode runs without a public URL — use fallback so the
   // container and Vercel demo can start without NEXT_PUBLIC_APP_URL.
-  if (process.env.DEMO_MODE === "1") {
+  // Also fallback when Clerk isn't configured (preview/Hub without secrets)
+  // so the preview stays usable instead of 500.
+  if (
+    process.env.DEMO_MODE === "1" ||
+    !process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+  ) {
     return `${DEV_FALLBACK_URL}${basePath}`;
   }
 

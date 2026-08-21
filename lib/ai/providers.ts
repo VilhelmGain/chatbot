@@ -10,8 +10,15 @@ import { getCustomProviderById } from "../db/queries";
 import { getCatalogProvider } from "./catalog";
 import { decrypt } from "./encryption";
 
+function isClerkConfigured(): boolean {
+  return (
+    Boolean(process.env.CLERK_SECRET_KEY) &&
+    Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY)
+  );
+}
+
 function getMockProvider() {
-  if (!isTestEnvironmentNow()) {
+  if (!isTestEnvironmentNow() && isClerkConfigured()) {
     return null;
   }
   const { chatModel, titleModel: mockTitleModel } = require("./models.mock");
@@ -40,7 +47,11 @@ export const myProvider: ReturnType<typeof getMockProvider> = new Proxy(
 ) as unknown as ReturnType<typeof getMockProvider>;
 
 function getActiveMockProvider() {
-  return isTestEnvironmentNow() ? getMockProvider() : null;
+  // Fall back to mock when Clerk isn't configured (preview/Hub without secrets)
+  if (isTestEnvironmentNow() || !isClerkConfigured()) {
+    return getMockProvider();
+  }
+  return null;
 }
 
 const CACHE_TTL_MS = 5 * 60 * 1000;
