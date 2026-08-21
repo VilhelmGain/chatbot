@@ -509,7 +509,7 @@ function PureMultimodalInput({
       </div>
 
       <PromptInput
-        className="[&>div]:rounded-lg [&>div]:border [&>div]:border-input [&>div]:bg-input/30 [&>div]:transition-all [&>div]:duration-300 dark:[&>div]:border-input dark:[&>div]:border-b-primary/20 dark:[&>div]:bg-foreground/4 dark:[&>div]:backdrop-blur-xl dark:[&>div]:focus-within:border-b-primary/50 dark:[&>div]:focus-within:bg-foreground/6"
+        className="[&>div]:rounded-lg [&>div]:border [&>div]:border-input [&>div]:bg-input/30 [&>div]:transition-all [&>div]:duration-300 dark:[&>div]:border-input dark:[&>div]:border-b-primary/20 dark:[&>div]:bg-foreground/4 dark:[&>div]:focus-within:border-b-primary/50 dark:[&>div]:focus-within:bg-foreground/6"
         onSubmit={handlePromptSubmit}
       >
         {(attachments.length > 0 || uploadQueue.length > 0) && (
@@ -540,7 +540,7 @@ function PureMultimodalInput({
           </div>
         )}
         <PromptInputTextarea
-          className="min-h-24 text-[13px] leading-relaxed px-4 pt-3.5 pb-1.5 placeholder:text-muted-foreground/55"
+          className="min-h-24 text-[14px] leading-relaxed px-4 pt-3.5 pb-1.5 placeholder:text-muted-foreground/55"
           data-testid="multimodal-input"
           onChange={handleInput}
           onKeyDown={handleTextareaKeyDown}
@@ -565,6 +565,9 @@ function PureMultimodalInput({
               />
               <ToolsMenu selectedModelId={selectedModelId} />
             </div>
+          </PromptInputTools>
+
+          <div className="ml-auto flex items-center gap-2">
             <ModelSelectorCompact
               onModelChange={onModelChange}
               preserveComposerFocus
@@ -572,26 +575,25 @@ function PureMultimodalInput({
               selectedModelId={selectedModelId}
               setReasoningEffort={setReasoningEffort}
             />
-          </PromptInputTools>
-
-          {status === "submitted" || status === "streaming" ? (
-            <StopButton setMessages={setMessages} stop={stop} />
-          ) : (
-            <PromptInputSubmit
-              className={cn(
-                "h-7 w-7 shrink-0 rounded-lg transition-all duration-200",
-                input.trim()
-                  ? "bg-foreground text-background hover:opacity-85 active:scale-95"
-                  : "bg-foreground/5 text-muted-foreground/25 cursor-not-allowed"
-              )}
-              data-testid="send-button"
-              disabled={!input.trim() || uploadQueue.length > 0}
-              status={status}
-              variant="secondary"
-            >
-              <ArrowUpIcon className="size-4" />
-            </PromptInputSubmit>
-          )}
+            {status === "submitted" || status === "streaming" ? (
+              <StopButton setMessages={setMessages} stop={stop} />
+            ) : (
+              <PromptInputSubmit
+                className={cn(
+                  "h-7 w-7 shrink-0 rounded-lg transition-all duration-200",
+                  input.trim()
+                    ? "bg-foreground text-background hover:opacity-85 active:scale-95"
+                    : "bg-foreground/5 text-muted-foreground/25 cursor-not-allowed"
+                )}
+                data-testid="send-button"
+                disabled={!input.trim() || uploadQueue.length > 0}
+                status={status}
+                variant="secondary"
+              >
+                <ArrowUpIcon className="size-4" />
+              </PromptInputSubmit>
+            )}
+          </div>
         </PromptInputFooter>
       </PromptInput>
     </div>

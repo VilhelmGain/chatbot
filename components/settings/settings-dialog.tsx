@@ -235,7 +235,7 @@ export function SettingsDialog({
             </div>
 
             <div
-              className="min-h-0 flex-1 overflow-y-auto overscroll-behavior-contain"
+              className="min-h-0 flex-1 overflow-y-auto overscroll-behavior-contain [scrollbar-gutter:stable]"
               ref={contentScrollRef}
             >
               <div className="mx-auto w-full max-w-3xl px-5 py-6 md:px-8 md:py-8">
@@ -310,9 +310,14 @@ function SettingsNavButton({
         />
       ) : null}
       <Icon className="relative size-4 shrink-0" />
-      <span className="relative min-w-0 flex-1">
-        <span className="relative block font-medium">{label}</span>
-        <span className="relative block truncate text-xs text-sidebar-foreground/60">
+      <span className="relative min-w-0 flex-1 truncate">
+        <span className="relative block truncate font-medium" title={label}>
+          {label}
+        </span>
+        <span
+          className="relative block truncate text-xs text-sidebar-foreground/60"
+          title={NAV_ITEMS.find((item) => item.id === id)?.description}
+        >
           {NAV_ITEMS.find((item) => item.id === id)?.description}
         </span>
       </span>

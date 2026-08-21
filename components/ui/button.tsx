@@ -7,20 +7,20 @@ import { Slot } from "radix-ui"
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
-  "group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding text-sm font-semibold whitespace-nowrap transition-all duration-200 outline-none select-none active:translate-y-px disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  "group/button inline-flex shrink-0 items-center justify-center rounded-lg border border-transparent bg-clip-padding text-sm font-semibold whitespace-nowrap transition-colors duration-150 outline-none select-none disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {
         default:
-          "bg-primary text-primary-foreground glow-primary transition-all duration-200 hover:glow-primary-strong hover:-translate-y-px hover:brightness-105 active:scale-[0.97]",
+          "bg-primary text-primary-foreground glow-primary hover:brightness-105",
         outline:
-          "border border-primary/40 bg-primary/5 text-primary backdrop-blur-md transition-all duration-200 hover:bg-primary/10 hover:border-primary/60 hover:-translate-y-px hover:glow-primary aria-expanded:bg-primary/10 aria-expanded:text-primary",
+          "border border-primary/40 bg-primary/5 text-primary backdrop-blur-md hover:bg-primary/10 hover:border-primary/60 aria-expanded:bg-primary/10 aria-expanded:text-primary",
         secondary:
-          "bg-secondary/15 text-secondary-foreground border border-secondary/30 backdrop-blur-md transition-all duration-200 hover:bg-secondary/25 hover:-translate-y-px hover:shadow-[0_0_16px_rgba(112,0,255,0.15)] aria-expanded:bg-secondary/20 aria-expanded:text-secondary-foreground",
+          "bg-secondary/15 text-secondary-foreground border border-secondary/30 backdrop-blur-md hover:bg-secondary/25 aria-expanded:bg-secondary/20 aria-expanded:text-secondary-foreground",
         ghost:
-          "transition-all duration-200 hover:bg-muted hover:text-foreground hover:-translate-y-px aria-expanded:bg-muted aria-expanded:text-foreground",
+          "hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground",
         destructive:
-          "bg-error/10 text-error border border-error/20 transition-all duration-200 hover:bg-error/20 hover:-translate-y-px focus-visible:border-error/40 focus-visible:ring-error/20",
+          "bg-error/10 text-error border border-error/20 hover:bg-error/20 focus-visible:border-error/40 focus-visible:ring-error/20",
         link: "text-primary underline-offset-4 hover:underline",
         glass:
           "glass-surface text-foreground transition-all duration-200 hover:glass-floating hover:-translate-y-px",

@@ -18,7 +18,6 @@ import { ConversationInfoDrawer } from "./conversation-info-drawer";
 import { DataStreamHandler } from "./data-stream-handler";
 import { submitEditedMessage } from "./message-editor";
 import { Messages } from "./messages";
-import { MobileSidebarToggle } from "./mobile-sidebar-toggle";
 import { MultimodalInput } from "./multimodal-input";
 
 export function ChatShell() {
@@ -134,8 +133,8 @@ export function ChatShell() {
       >
         <div
           className={cn(
-            "flex min-w-0 flex-col glass-surface-static transition-[width] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]",
-            isArtifactVisible ? "w-[40%]" : "w-full"
+            "flex min-w-0 flex-col glass-surface-static transition-[width] duration-200 ease-smooth max-md:w-full",
+            isArtifactVisible ? "md:w-[40%] max-md:hidden" : "w-full"
           )}
         >
           <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden bg-transparent md:border-l md:border-border">
@@ -154,9 +153,7 @@ export function ChatShell() {
               status={status}
             />
 
-            <MobileSidebarToggle className="absolute left-3 top-3 z-20" />
-
-            <div className="sticky bottom-0 z-10 mx-auto flex w-full max-w-4xl gap-2 px-2 pb-3 md:px-4 md:pb-4">
+            <div className="sticky bottom-0 z-10 mx-auto flex w-full max-w-4xl gap-2 px-3 pb-3 md:px-4 md:pb-4">
               {!isReadonly && (
                 <MultimodalInput
                   attachments={attachments}
