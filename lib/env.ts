@@ -18,6 +18,10 @@ type Env = z.infer<typeof envSchema>;
 
 let cachedEnv: Env | null = null;
 
+function isDemoActive(): boolean {
+  return process.env.DEMO_MODE === "1";
+}
+
 function parseEnv(): Env {
   const parsed = envSchema.safeParse(process.env);
   if (!parsed.success) {
@@ -26,11 +30,12 @@ function parseEnv(): Env {
     const issues = parsed.error.issues
       .map((i) => `${i.path.join(".")}: ${i.message}`)
       .join("; ");
-    if (isProd) {
+    // Demo mode (and PLAYWRIGHT in non-prod) runs with no ENCRYPTION_KEY/DB.
+    // Don't fail fast when DEMO_MODE is active — let assertProductionSecurity handle prod demo gating.
+    if (isProd && !isDemoActive()) {
       throw new Error(`[env] Invalid environment: ${issues}`);
     }
-    // In dev/test, allow missing POSTGRES_URL (demo mode) but still validate ENCRYPTION_KEY if present
-    // Fall back to raw env for non-critical fields
+    // In dev/test, or demo in prod, allow missing ENCRYPTION_KEY / POSTGRES_URL
     console.warn(`[env] Environment validation warning: ${issues}`);
     return {
       ENCRYPTION_KEY: process.env.ENCRYPTION_KEY ?? "",
@@ -45,6 +50,7 @@ function parseEnv(): Env {
 
   if (
     process.env.NODE_ENV === "production" &&
+    !isDemoActive() &&
     env.NEXT_PUBLIC_APP_URL &&
     !env.NEXT_PUBLIC_APP_URL.startsWith("https://")
   ) {
@@ -64,7 +70,8 @@ export function getEnv(): Env {
 }
 
 // Eager validation in production to fail fast on startup (import side-effect)
-if (process.env.NODE_ENV === "production") {
+// Skip when DEMO_MODE is active — demo runs without ENCRYPTION_KEY/POSTGRES_URL.
+if (process.env.NODE_ENV === "production" && !isDemoActive()) {
   getEnv();
 }
 

@@ -1,13 +1,13 @@
 import { z } from "zod";
 import { auth } from "@/app/(auth)/auth";
 import { CONFIGURABLE_TOOLS, SEARCH_PROVIDERS } from "@/lib/ai/tools/metadata";
+import { isTestEnvironment } from "@/lib/constants";
 import {
   deleteToolConfig,
   getToolConfigByUserId,
   upsertToolConfig,
 } from "@/lib/db/queries";
 import { ChatbotError } from "@/lib/errors";
-import { isTestEnvironment } from "@/lib/constants";
 import { assertPublicUrl } from "@/lib/security/ssrf";
 
 const normalizeBaseURL = (value: string) => {

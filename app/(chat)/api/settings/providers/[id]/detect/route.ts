@@ -1,5 +1,6 @@
 import { auth } from "@/app/(auth)/auth";
 import { getLiveCatalogModelsForProvider } from "@/lib/ai/catalog";
+import { isTestEnvironment } from "@/lib/constants";
 import {
   createCustomModels,
   getCustomModelsByProviderId,
@@ -8,7 +9,6 @@ import {
   updateCustomProvider,
 } from "@/lib/db/queries";
 import { ChatbotError } from "@/lib/errors";
-import { isTestEnvironment } from "@/lib/constants";
 import { checkDetectRateLimit } from "@/lib/ratelimit";
 import { assertPublicUrl } from "@/lib/security/ssrf";
 import { getClientIp } from "@/lib/server/request-utils";

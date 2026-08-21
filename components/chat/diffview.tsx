@@ -61,13 +61,15 @@ export const DiffView = ({ oldContent, newContent }: DiffEditorProps) => {
       const parser = DOMParser.fromSchema(diffSchema);
 
       const oldHtmlContent =
-        typeof window !== "undefined" && typeof DOMPurify.sanitize === "function"
+        typeof window !== "undefined" &&
+        typeof DOMPurify.sanitize === "function"
           ? DOMPurify.sanitize(
               renderToString(<MessageResponse>{oldContent}</MessageResponse>)
             )
           : renderToString(<MessageResponse>{oldContent}</MessageResponse>);
       const newHtmlContent =
-        typeof window !== "undefined" && typeof DOMPurify.sanitize === "function"
+        typeof window !== "undefined" &&
+        typeof DOMPurify.sanitize === "function"
           ? DOMPurify.sanitize(
               renderToString(<MessageResponse>{newContent}</MessageResponse>)
             )

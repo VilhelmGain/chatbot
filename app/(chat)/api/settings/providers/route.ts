@@ -2,6 +2,7 @@ import { after } from "next/server";
 import { z } from "zod";
 import { auth } from "@/app/(auth)/auth";
 import { getLiveCatalogModelsForProvider } from "@/lib/ai/catalog";
+import { isTestEnvironment } from "@/lib/constants";
 import {
   createCustomModels,
   createCustomProvider,
@@ -9,7 +10,6 @@ import {
   updateCustomProvider,
 } from "@/lib/db/queries";
 import { ChatbotError } from "@/lib/errors";
-import { isTestEnvironment } from "@/lib/constants";
 import { assertPublicUrl } from "@/lib/security/ssrf";
 
 const createProviderSchema = z.object({

@@ -1,13 +1,13 @@
 import { z } from "zod";
 import { auth } from "@/app/(auth)/auth";
 import { invalidateProviderCache } from "@/lib/ai/providers";
+import { isTestEnvironment } from "@/lib/constants";
 import {
   deleteCustomProvider,
   getCustomProviderById,
   updateCustomProvider,
 } from "@/lib/db/queries";
 import { ChatbotError } from "@/lib/errors";
-import { isTestEnvironment } from "@/lib/constants";
 import { assertPublicUrl } from "@/lib/security/ssrf";
 
 const updateProviderSchema = z.object({

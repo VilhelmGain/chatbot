@@ -8,7 +8,10 @@ export function useIsMobile() {
   );
 
   React.useEffect(() => {
-    if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
+    if (
+      typeof window === "undefined" ||
+      typeof window.matchMedia !== "function"
+    ) {
       return;
     }
     const mql = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`);
@@ -17,15 +20,25 @@ export function useIsMobile() {
     };
     if (typeof mql.addEventListener === "function") {
       mql.addEventListener("change", onChange);
-    } else if (typeof (mql as unknown as { addListener: (cb: () => void) => void }).addListener === "function") {
-      (mql as unknown as { addListener: (cb: () => void) => void }).addListener(onChange);
+    } else if (
+      typeof (mql as unknown as { addListener: (cb: () => void) => void })
+        .addListener === "function"
+    ) {
+      (mql as unknown as { addListener: (cb: () => void) => void }).addListener(
+        onChange
+      );
     }
     setIsMobile(window.innerWidth < MOBILE_BREAKPOINT);
     return () => {
       if (typeof mql.removeEventListener === "function") {
         mql.removeEventListener("change", onChange);
-      } else if (typeof (mql as unknown as { removeListener: (cb: () => void) => void }).removeListener === "function") {
-        (mql as unknown as { removeListener: (cb: () => void) => void }).removeListener(onChange);
+      } else if (
+        typeof (mql as unknown as { removeListener: (cb: () => void) => void })
+          .removeListener === "function"
+      ) {
+        (
+          mql as unknown as { removeListener: (cb: () => void) => void }
+        ).removeListener(onChange);
       }
     };
   }, []);
