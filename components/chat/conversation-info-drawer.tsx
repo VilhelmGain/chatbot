@@ -71,9 +71,9 @@ export function ConversationInfoDrawer({
             Details about this conversation and its model usage.
           </p>
         </SidebarHeader>
-        <SidebarContent className="overflow-y-auto">
-          <div className="grid gap-4 p-5">
-            <section className="rounded-xl border border-border bg-muted/40 p-4">
+        <SidebarContent className="overflow-x-hidden overflow-y-auto">
+          <div className="grid gap-4 p-5 min-w-0 max-w-full overflow-hidden">
+            <section className="rounded-xl border border-border bg-muted/40 p-4 min-w-0 max-w-full overflow-hidden">
               <div className="flex items-baseline justify-between gap-3">
                 <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                   Cost
@@ -107,13 +107,13 @@ export function ConversationInfoDrawer({
                 </div>
               ) : null}
               {data?.byModel?.length ? (
-                <div className="mt-4 space-y-2 border-t border-border/70 pt-3">
+                <div className="mt-4 space-y-2 border-t border-border/70 pt-3 min-w-0 overflow-hidden">
                   {data.byModel.map((entry) => (
                     <div
-                      className="flex items-center justify-between gap-3 text-xs"
+                      className="flex min-w-0 items-center justify-between gap-3 text-xs overflow-hidden"
                       key={entry.model}
                     >
-                      <span className="truncate text-muted-foreground">
+                      <span className="min-w-0 flex-1 truncate text-muted-foreground">
                         {entry.model}
                       </span>
                       <span className="shrink-0 tabular-nums">
@@ -211,7 +211,7 @@ function InfoSection({
   title: string;
 }) {
   return (
-    <section className="rounded-xl border border-border p-3">
+    <section className="rounded-xl border border-border p-3 min-w-0 max-w-full overflow-hidden">
       <div className="mb-2 flex items-center gap-2 text-sm font-medium">
         {icon}
         <span>{title}</span>

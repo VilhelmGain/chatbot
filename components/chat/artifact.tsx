@@ -370,7 +370,7 @@ function PureArtifact({
         </div>
       </div>
       <div
-        className="relative flex-1 overflow-y-auto bg-transparent pb-20"
+        className="relative flex-1 overflow-x-hidden overflow-y-auto bg-transparent pb-20"
         data-slot="artifact-content"
         onScroll={handleArtifactScroll}
         ref={artifactContentRef}
