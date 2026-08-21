@@ -23,7 +23,7 @@ function WaitingText() {
   const waitingText = waitingStatus?.message ?? "Waiting...";
 
   return (
-    <div className="flex min-h-[calc(13px*1.65)] min-w-0 items-center text-[13px] leading-[1.65]">
+    <div className="flex min-h-[calc(14px*1.5)] min-w-0 items-center text-[14px] leading-6">
       <Shimmer
         as="span"
         className="font-medium whitespace-normal break-words"
@@ -228,8 +228,8 @@ const PurePreviewMessage = ({
     if (type === "text") {
       return (
         <MessageContent
-          className={cn("text-[13px] leading-[1.65]", {
-            "w-fit max-w-[min(80%,56ch)] overflow-hidden break-words rounded-lg rounded-br-md border border-primary/20 bg-gradient-to-br from-primary/10 to-primary/5 px-4 py-2.5 text-foreground glow-primary message-slide-right":
+          className={cn("text-[14px] leading-6", {
+            "w-fit max-w-[min(80%,56ch)] overflow-hidden break-words rounded-2xl rounded-br-md border border-transparent bg-primary px-4 py-2.5 text-primary-foreground shadow-sm":
               message.role === "user",
           })}
           data-testid="message-content"
@@ -613,8 +613,8 @@ const PurePreviewMessage = ({
         )}
       >
         {isAssistant && (
-          <div className="flex h-[calc(13px*1.65)] shrink-0 items-center">
-            <div className="flex size-8 items-center justify-center rounded-lg bg-foreground/5 text-primary ring-1 ring-primary/20 glow-primary">
+          <div className="flex h-[calc(14px*1.5)] shrink-0 items-center">
+            <div className="flex size-7 items-center justify-center rounded-lg border bg-foreground/5 text-primary ring-1 ring-primary/20">
               <SparklesIcon size={13} />
             </div>
           </div>
@@ -638,8 +638,8 @@ export const ThinkingMessage = () => (
     data-testid="message-assistant-loading"
   >
     <div className="flex items-start gap-3">
-      <div className="flex h-[calc(13px*1.65)] shrink-0 items-center">
-        <div className="flex size-8 items-center justify-center rounded-lg bg-foreground/5 text-primary ring-1 ring-primary/20 glow-primary">
+      <div className="flex h-[calc(14px*1.5)] shrink-0 items-center">
+        <div className="flex size-7 items-center justify-center rounded-lg border bg-foreground/5 text-primary ring-1 ring-primary/20">
           <SparklesIcon size={13} />
         </div>
       </div>

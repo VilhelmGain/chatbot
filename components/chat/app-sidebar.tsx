@@ -1,6 +1,6 @@
 "use client";
 
-import { PanelLeftIcon, PenSquareIcon, TrashIcon } from "lucide-react";
+import { PenSquareIcon, TrashIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -38,7 +38,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "../ui/alert-dialog";
-import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 
 export function AppSidebar({
   testEnvironment,
@@ -48,7 +47,7 @@ export function AppSidebar({
   user: User | undefined;
 }) {
   const router = useRouter();
-  const { setOpenMobile, toggleSidebar } = useSidebar();
+  const { setOpenMobile } = useSidebar();
   const { mutate } = useSWRConfig();
   const [showDeleteAllDialog, setShowDeleteAllDialog] = useState(false);
   const [faviconHref, setFaviconHref] = useState(
@@ -67,10 +66,6 @@ export function AppSidebar({
   const closeMobile = useCallback(() => {
     setOpenMobile(false);
   }, [setOpenMobile]);
-
-  const handleToggleSidebar = useCallback(() => {
-    toggleSidebar();
-  }, [toggleSidebar]);
 
   const handleNewChat = useCallback(() => {
     setOpenMobile(false);
@@ -101,39 +96,27 @@ export function AppSidebar({
         <SidebarHeader className="pb-0 pt-3">
           <SidebarMenu>
             <SidebarMenuItem className="flex flex-row items-center justify-between">
-              <div className="group/logo relative flex items-center justify-center">
-                <SidebarMenuButton
-                  asChild
-                  className="size-8 !px-0 items-center justify-center group-data-[collapsible=icon]:group-hover/logo:opacity-0"
-                  tooltip="Chatbot"
-                >
-                  <Link href="/" onClick={closeMobile}>
-                    <Image
-                      alt="Visbyr Chat"
-                      className="size-5 shrink-0 transition-[width,height] duration-300 group-data-[collapsible=icon]:size-4"
-                      height={20}
-                      src={faviconHref}
-                      unoptimized
-                      width={20}
-                    />
-                  </Link>
-                </SidebarMenuButton>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <SidebarMenuButton
-                      className="pointer-events-none absolute inset-0 size-8 opacity-0 group-data-[collapsible=icon]:pointer-events-auto group-data-[collapsible=icon]:group-hover/logo:opacity-100"
-                      onClick={handleToggleSidebar}
-                    >
-                      <PanelLeftIcon className="size-4" />
-                    </SidebarMenuButton>
-                  </TooltipTrigger>
-                  <TooltipContent className="hidden md:block" side="right">
-                    Open sidebar
-                  </TooltipContent>
-                </Tooltip>
-              </div>
+              <SidebarMenuButton
+                asChild
+                className="size-8 !px-0 items-center justify-center"
+                tooltip="Chatbot"
+              >
+                <Link href="/" onClick={closeMobile}>
+                  <Image
+                    alt="Visbyr Chat"
+                    className="size-5 shrink-0 transition-[width,height] duration-200 group-data-[collapsible=icon]:size-4"
+                    height={20}
+                    src={faviconHref}
+                    unoptimized
+                    width={20}
+                  />
+                </Link>
+              </SidebarMenuButton>
               <div className="group-data-[collapsible=icon]:hidden">
-                <SidebarTrigger className="text-sidebar-foreground/60 transition-colors duration-150 hover:text-sidebar-foreground" />
+                <SidebarTrigger className="text-sidebar-foreground/70 transition-colors duration-150 hover:text-sidebar-foreground" />
+              </div>
+              <div className="hidden group-data-[collapsible=icon]:block">
+                <SidebarTrigger className="text-sidebar-foreground/70 transition-colors duration-150 hover:text-sidebar-foreground" />
               </div>
             </SidebarMenuItem>
           </SidebarMenu>
@@ -144,7 +127,7 @@ export function AppSidebar({
               <SidebarMenu>
                 <SidebarMenuItem>
                   <SidebarMenuButton
-                    className="h-9 rounded-md border border-input bg-foreground/5 text-[13px] text-sidebar-foreground/80 transition-all duration-200 hover:bg-primary/10 hover:border-primary/30 hover:text-sidebar-foreground"
+                    className="h-9 rounded-lg border border-input bg-foreground/5 text-[14px] text-sidebar-foreground/80 transition-colors duration-150 hover:bg-primary/10 hover:border-primary/30 hover:text-sidebar-foreground"
                     onClick={handleNewChat}
                     tooltip="New Chat"
                   >
@@ -155,12 +138,12 @@ export function AppSidebar({
                 {user ? (
                   <SidebarMenuItem>
                     <SidebarMenuButton
-                      className="rounded-md text-sidebar-foreground/60 transition-colors duration-200 hover:bg-error/10 hover:text-error"
+                      className="rounded-lg text-sidebar-foreground/60 transition-colors duration-150 hover:bg-error/10 hover:text-error"
                       onClick={handleShowDeleteAllDialog}
                       tooltip="Delete All Chats"
                     >
                       <TrashIcon className="size-4" />
-                      <span className="text-[13px]">Delete all</span>
+                      <span className="text-[14px]">Delete all</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 ) : null}

@@ -2,6 +2,7 @@
 
 import { isToday, isYesterday, subMonths, subWeeks } from "date-fns";
 import { motion } from "framer-motion";
+import { MessageSquare } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -17,6 +18,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
 import {
   SidebarGroup,
   SidebarGroupContent,
@@ -24,6 +26,7 @@ import {
   SidebarMenu,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { Chat } from "@/lib/db/schema";
 import { fetcher } from "@/lib/utils";
 import { LoaderIcon } from "./icons";
@@ -177,12 +180,27 @@ export function SidebarHistory({ user }: { user: User | undefined }) {
     }
   }, [hasReachedEnd, isValidating, setSize]);
 
+  const handleNewChat = useCallback(() => {
+    const base = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+    window.location.href = `${base}/`;
+  }, []);
+
   if (!user) {
     return (
       <SidebarGroup className="group-data-[collapsible=icon]:hidden">
         <SidebarGroupContent>
-          <div className="flex w-full flex-row items-center justify-center gap-2 px-2 text-[13px] text-sidebar-foreground/60">
-            Login to save and revisit previous chats!
+          <div className="flex flex-col items-center gap-3 px-4 py-6 text-center">
+            <div className="flex size-10 items-center justify-center rounded-full bg-muted">
+              <MessageSquare className="size-5 text-muted-foreground" />
+            </div>
+            <div className="flex flex-col gap-1">
+              <p className="text-[14px] font-medium text-sidebar-foreground">
+                Save your chats
+              </p>
+              <p className="text-[13px] leading-5 text-sidebar-foreground/60">
+                Login to save and revisit previous chats!
+              </p>
+            </div>
           </div>
         </SidebarGroupContent>
       </SidebarGroup>
@@ -196,21 +214,13 @@ export function SidebarHistory({ user }: { user: User | undefined }) {
           History
         </SidebarGroupLabel>
         <SidebarGroupContent>
-          <div className="flex flex-col gap-0.5 px-1">
+          <div className="flex flex-col gap-1.5 px-1">
             {[44, 32, 28, 64, 52].map((item) => (
-              <div
-                className="flex h-8 items-center gap-2 rounded-md px-2"
+              <Skeleton
+                className="h-8 rounded-lg"
                 key={item}
-              >
-                <div
-                  className="h-3 max-w-(--skeleton-width) flex-1 animate-pulse rounded-md bg-sidebar-foreground/[0.06]"
-                  style={
-                    {
-                      "--skeleton-width": `${item}%`,
-                    } as React.CSSProperties
-                  }
-                />
-              </div>
+                style={{ width: `${item}%` } as React.CSSProperties}
+              />
             ))}
           </div>
         </SidebarGroupContent>
@@ -225,8 +235,26 @@ export function SidebarHistory({ user }: { user: User | undefined }) {
           History
         </SidebarGroupLabel>
         <SidebarGroupContent>
-          <div className="flex w-full flex-row items-center justify-center gap-2 px-2 text-[13px] text-sidebar-foreground/60">
-            Your conversations will appear here once you start chatting!
+          <div className="flex flex-col items-center gap-3 px-4 py-6 text-center">
+            <div className="flex size-10 items-center justify-center rounded-full bg-muted">
+              <MessageSquare className="size-5 text-muted-foreground" />
+            </div>
+            <div className="flex flex-col gap-1">
+              <p className="text-[14px] font-medium text-sidebar-foreground">
+                No chats yet
+              </p>
+              <p className="text-[13px] leading-5 text-sidebar-foreground/60">
+                Your conversations will appear here once you start chatting!
+              </p>
+            </div>
+            <Button
+              className="mt-1"
+              onClick={handleNewChat}
+              size="sm"
+              variant="outline"
+            >
+              Start new chat
+            </Button>
           </div>
         </SidebarGroupContent>
       </SidebarGroup>

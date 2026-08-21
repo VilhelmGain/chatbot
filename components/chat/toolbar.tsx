@@ -141,8 +141,8 @@ const Tool = ({
           onKeyDown={handleKeyDown}
           role="button"
           tabIndex={0}
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.95 }}
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
         >
           {selectedTool === description ? (
             <ArrowUpIcon />
@@ -253,8 +253,8 @@ const ReadingLevelSelector = ({
               onDragStart={handleDragStart}
               style={{ y }}
               transition={{ duration: 0.1 }}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
             >
               {currentLevel === 2 ? <SummarizeIcon /> : <ArrowUpIcon />}
             </motion.div>
@@ -451,7 +451,7 @@ const PureToolbar = ({
     <TooltipProvider delayDuration={0}>
       <motion.div
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        className="fixed right-6 bottom-6 z-50 flex cursor-pointer flex-col items-center rounded-lg border bg-transparent py-1 shadow-lg"
+        className="fixed right-4 bottom-[calc(1rem+env(safe-area-inset-bottom))] z-50 flex max-h-[60vh] cursor-pointer flex-col items-center overflow-auto rounded-lg border bg-transparent py-1 shadow-lg"
         exit={{ opacity: 0, transition: { duration: 0.1 }, y: -20 }}
         initial={{ opacity: 0, scale: 1, y: -20 }}
         onAnimationComplete={handleAnimationComplete}

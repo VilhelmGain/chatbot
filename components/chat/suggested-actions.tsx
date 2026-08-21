@@ -32,7 +32,7 @@ function PureSuggestedActions({ chatId, sendMessage }: SuggestedActionsProps) {
 
   return (
     <div
-      className="flex w-full flex-col gap-2.5 sm:grid sm:grid-cols-2"
+      className="flex w-full flex-col gap-3 sm:grid sm:grid-cols-2"
       data-testid="suggested-actions"
     >
       {suggestedActions.map((suggestedAction, index) => (
@@ -49,7 +49,7 @@ function PureSuggestedActions({ chatId, sendMessage }: SuggestedActionsProps) {
           }}
         >
           <Suggestion
-            className="h-auto w-full rounded-lg border border-border bg-foreground/[0.03] px-4 py-3 text-left text-[13px] leading-relaxed text-muted-foreground backdrop-blur-md transition-all duration-200 hover:-translate-y-0.5 hover:border-border hover:bg-foreground/[0.06] hover:text-foreground hover:shadow-[var(--shadow-card)] sm:rounded-lg sm:text-center sm:text-[13px]"
+            className="h-auto w-full rounded-lg border border-border/60 bg-card px-4 py-3.5 text-left text-[14px] font-[450] leading-relaxed text-muted-foreground transition-colors duration-150 hover:border-border hover:bg-accent hover:text-foreground sm:rounded-lg sm:text-center"
             onClick={handleSuggestionClick}
             suggestion={suggestedAction}
           >
