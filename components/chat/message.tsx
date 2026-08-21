@@ -60,6 +60,7 @@ function ToolApprovalActions({
   return (
     <div className="flex items-center justify-end gap-2 border-t px-4 py-3">
       <button
+        aria-label="Deny tool execution"
         className="rounded-md border border-input bg-foreground/4 px-3 py-1.5 text-muted-foreground text-sm transition-all hover:bg-foreground/6 hover:text-foreground"
         onClick={handleDeny}
         type="button"
@@ -67,6 +68,7 @@ function ToolApprovalActions({
         Deny
       </button>
       <button
+        aria-label="Allow tool execution"
         className="rounded-md bg-primary px-4 py-1.5 text-primary-foreground text-sm font-semibold transition-all hover:brightness-110 glow-primary"
         onClick={handleAllow}
         type="button"

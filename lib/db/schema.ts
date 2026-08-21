@@ -37,7 +37,7 @@ export const chat = pgTable(
     updatedAt: timestamp("updatedAt").notNull().defaultNow(),
     userId: uuid("userId")
       .notNull()
-      .references(() => user.id),
+      .references(() => user.id, { onDelete: "cascade" }),
     visibility: varchar("visibility", { enum: ["public", "private"] })
       .notNull()
       .default("private"),
@@ -55,7 +55,7 @@ export const message = pgTable(
       .notNull(),
     chatId: uuid("chatId")
       .notNull()
-      .references(() => chat.id),
+      .references(() => chat.id, { onDelete: "cascade" }),
     createdAt: timestamp("createdAt").notNull(),
     id: uuid("id").primaryKey().notNull().defaultRandom(),
     metadata: json("metadata")
@@ -85,7 +85,7 @@ export const document = pgTable(
     title: text("title").notNull(),
     userId: uuid("userId")
       .notNull()
-      .references(() => user.id),
+      .references(() => user.id, { onDelete: "cascade" }),
   },
   (table) => ({
     documentIdIdx: index("Document_id_idx").on(table.id),
@@ -114,7 +114,7 @@ export const suggestion = pgTable(
     documentRef: foreignKey({
       columns: [table.documentId, table.documentCreatedAt],
       foreignColumns: [document.id, document.createdAt],
-    }),
+    }).onDelete("cascade"),
     pk: primaryKey({ columns: [table.id] }),
   })
 );
@@ -132,7 +132,7 @@ export const stream = pgTable(
     chatRef: foreignKey({
       columns: [table.chatId],
       foreignColumns: [chat.id],
-    }),
+    }).onDelete("cascade"),
     pk: primaryKey({ columns: [table.id] }),
     streamChatIdIdx: index("Stream_chatId_idx").on(table.chatId),
   })

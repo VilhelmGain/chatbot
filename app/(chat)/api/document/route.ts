@@ -12,10 +12,10 @@ import { checkDocumentRateLimit } from "@/lib/ratelimit";
 import { getClientIp } from "@/lib/server/request-utils";
 
 const documentSchema = z.object({
-  content: z.string(),
+  content: z.string().min(1).max(100_000),
   isManualEdit: z.boolean().optional(),
   kind: z.enum(["text", "code", "image", "sheet"]),
-  title: z.string(),
+  title: z.string().min(1).max(200),
 });
 
 export async function GET(request: Request) {

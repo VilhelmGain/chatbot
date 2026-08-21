@@ -208,7 +208,7 @@ export async function POST(request: Request) {
       return new ChatbotError("rate_limit:chat").toResponse();
     }
 
-    const isToolApprovalFlow = Boolean(messages);
+    const isToolApprovalFlow = Boolean(messages && messages.length > 0);
 
     let messagesFromDb: DBMessage[] = [];
     let titlePromise: Promise<string> | null = null;
@@ -237,29 +237,51 @@ export async function POST(request: Request) {
 
     if (isToolApprovalFlow && messages) {
       const dbMessages = convertToUIMessages(messagesFromDb);
-      const approvalStates = new Map(
-        messages.flatMap(
-          (m) =>
-            m.parts
-              ?.filter(
-                (p: Record<string, unknown>) =>
-                  p.state === "approval-responded" ||
-                  p.state === "output-denied"
-              )
-              .map((p: Record<string, unknown>) => [
-                String(p.toolCallId ?? ""),
-                p,
-              ]) ?? []
-        )
+      const validToolCallIds = new Set<string>(
+        messagesFromDb.flatMap((m) => {
+          const parts = Array.isArray(m.parts) ? m.parts : [];
+          return parts
+            .filter(
+              (p): p is Record<string, unknown> =>
+                typeof p === "object" && p !== null && "toolCallId" in p
+            )
+            .map((p) => String((p as { toolCallId: unknown }).toolCallId ?? ""))
+            .filter((tid) => tid.length > 0);
+        })
       );
+      const approvalStates = new Map<string, Record<string, unknown>>();
+      for (const m of messages) {
+        for (const p of (m.parts ?? []) as Record<string, unknown>[]) {
+          const { state, toolCallId: rawToolCallId } = p;
+          const toolCallId = String(rawToolCallId ?? "");
+          if (
+            (state === "approval-responded" || state === "output-denied") &&
+            toolCallId.length > 0 &&
+            validToolCallIds.has(toolCallId) &&
+            !approvalStates.has(toolCallId)
+          ) {
+            approvalStates.set(toolCallId, p);
+          }
+        }
+      }
       uiMessages = dbMessages.map((msg) => ({
         ...msg,
         parts: msg.parts.map((part) => {
           if (
             "toolCallId" in part &&
+            typeof (part as { toolCallId?: unknown }).toolCallId === "string" &&
             approvalStates.has(String(part.toolCallId))
           ) {
-            return { ...part, ...approvalStates.get(String(part.toolCallId)) };
+            const approval = approvalStates.get(
+              String((part as { toolCallId: string }).toolCallId)
+            );
+            const allowedState = approval?.state;
+            if (
+              allowedState === "approval-responded" ||
+              allowedState === "output-denied"
+            ) {
+              return { ...part, state: allowedState };
+            }
           }
           return part;
         }),
@@ -309,8 +331,11 @@ export async function POST(request: Request) {
     const approvalToolNames = new Set<string>();
     if (isToolApprovalFlow && messages) {
       for (const m of messages) {
-        for (const p of m.parts ?? []) {
-          if (typeof p.toolName === "string") {
+        for (const p of (m.parts ?? []) as Record<string, unknown>[]) {
+          if (
+            typeof p.toolName === "string" &&
+            TOOL_IDS_SET.has(p.toolName as (typeof TOOL_IDS)[number])
+          ) {
             approvalToolNames.add(p.toolName);
           }
         }
@@ -319,7 +344,11 @@ export async function POST(request: Request) {
 
     const effectiveToolNames = new Set([
       ...enabledToolSet,
-      ...approvalToolNames,
+      ...[...approvalToolNames].filter(
+        (name) =>
+          TOOL_IDS_SET.has(name as (typeof TOOL_IDS)[number]) &&
+          enabledToolSet.has(name as (typeof TOOL_IDS)[number])
+      ),
     ]);
 
     let searchWebConfig:

@@ -111,7 +111,8 @@ const Tool = ({
 
   const handleKeyDown = useCallback(
     (event: React.KeyboardEvent) => {
-      if (event.key === "Enter") {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
         handleSelect();
       }
     },
@@ -138,6 +139,8 @@ const Tool = ({
           onHoverEnd={handleHoverEnd}
           onHoverStart={handleHoverStart}
           onKeyDown={handleKeyDown}
+          role="button"
+          tabIndex={0}
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.95 }}
         >

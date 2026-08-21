@@ -78,7 +78,9 @@ export function collectAttachments(
   return [...entries.values()];
 }
 
-const UPLOAD_DIR = process.env.UPLOAD_DIR ?? "./uploads";
+function getUploadDir(): string {
+  return process.env.UPLOAD_DIR ?? "./uploads";
+}
 
 export type LocalAttachmentReadResult =
   | { status: "external" }
@@ -105,7 +107,13 @@ export async function readLocalAttachment(
   }
 
   try {
-    const data = await readFile(join(process.cwd(), UPLOAD_DIR, filename));
+    const { resolve } = await import("node:path");
+    const uploadDir = resolve(process.cwd(), getUploadDir());
+    const filePath = join(uploadDir, filename);
+    if (!filePath.startsWith(uploadDir)) {
+      return { status: "missing" };
+    }
+    const data = await readFile(filePath);
     return { data, status: "ok" };
   } catch {
     return { status: "missing" };

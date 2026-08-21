@@ -29,6 +29,8 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
           # Pushes to Docker Hub on 'push' events, but only builds/tests on 'pull_request'
           push: ${{ github.event_name != 'pull_request' }}
           # NEXT_PUBLIC_* vars are inlined at build time; inject the public URL and

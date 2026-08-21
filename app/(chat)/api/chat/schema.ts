@@ -3,7 +3,7 @@ import { TOOL_IDS } from "@/lib/ai/tools/metadata";
 import { ALLOWED_MEDIA_TYPES, isValidAttachmentUrl } from "@/lib/attachments";
 
 const textPartSchema = z.object({
-  text: z.string().min(1),
+  text: z.string().min(1).max(40_000),
   type: z.enum(["text"]),
 });
 
@@ -22,7 +22,7 @@ const partSchema = z.union([textPartSchema, filePartSchema]);
 
 const userMessageSchema = z.object({
   id: z.uuid(),
-  parts: z.array(partSchema),
+  parts: z.array(partSchema).max(32),
   role: z.enum(["user"]),
 });
 
@@ -36,7 +36,7 @@ export const postRequestBodySchema = z.object({
   enabledTools: z.array(z.enum(TOOL_IDS)).optional(),
   id: z.uuid(),
   message: userMessageSchema.optional(),
-  messages: z.array(toolApprovalMessageSchema).optional(),
+  messages: z.array(toolApprovalMessageSchema).max(32).optional(),
   reasoningEffort: z
     .enum([
       "default",
@@ -49,7 +49,16 @@ export const postRequestBodySchema = z.object({
       "max",
     ])
     .optional(),
-  selectedChatModel: z.string(),
+  selectedChatModel: z
+    .string()
+    .min(1)
+    .max(200)
+    .regex(
+      /^([a-z0-9_-]+\/[a-z0-9._-]+|custom-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/[a-z0-9._-]+)$/i,
+      {
+        message: "Invalid model id format",
+      }
+    ),
   selectedVisibilityType: z.enum(["public", "private"]),
 });
 

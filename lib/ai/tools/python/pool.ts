@@ -23,6 +23,7 @@ type PendingJob = {
   timer: NodeJS.Timeout | null;
   onAbort: () => void;
   resolve: (value: PythonRunResult) => void;
+  signal?: AbortSignal;
 };
 
 type PoolWorker = {
@@ -64,6 +65,12 @@ function clearJob(job: PendingJob) {
   if (job.timer) {
     clearTimeout(job.timer);
     job.timer = null;
+  }
+  if (job.signal && job.onAbort) {
+    try {
+      job.signal.removeEventListener("abort", job.onAbort);
+      // biome-ignore lint/suspicious/noEmptyBlockStatements: ignore
+    } catch {}
   }
 }
 
@@ -227,17 +234,26 @@ async function pump() {
 }
 
 function abortJob(job: PendingJob) {
-  if (!job.queued) {
+  if (job.queued) {
+    const index = queue.indexOf(job);
+    if (index !== -1) {
+      queue.splice(index, 1);
+      clearJob(job);
+      job.resolve(toErrorResult("Python execution cancelled."));
+      pump();
+    }
     return;
   }
-  const index = queue.indexOf(job);
-  if (index === -1) {
-    return;
+  const entry = pool.find((e) => e.current === job);
+  if (entry) {
+    entry.broken = true;
+    entry.current = null;
+    clearJob(job);
+    job.resolve(toErrorResult("Python execution cancelled."));
+    entry.worker.terminate().catch(() => undefined);
+    pruneBrokenWorkers();
+    pump();
   }
-  queue.splice(index, 1);
-  clearJob(job);
-  job.resolve(toErrorResult("Python execution cancelled."));
-  pump();
 }
 
 export function executePython(
@@ -257,15 +273,27 @@ export function executePython(
       return;
     }
 
-    const job: PendingJob = {
+    let job!: PendingJob;
+    const wrappedResolve = (value: PythonRunResult) => {
+      if (job?.signal && job.onAbort) {
+        try {
+          job.signal.removeEventListener("abort", job.onAbort);
+          // biome-ignore lint/suspicious/noEmptyBlockStatements: ignore
+        } catch {}
+      }
+      resolve(value);
+    };
+
+    job = {
       code,
       onAbort: () => abortJob(job),
       queued: true,
-      resolve,
+      resolve: wrappedResolve,
+      signal,
       timer: null,
     };
 
-    signal?.addEventListener("abort", job.onAbort);
+    signal?.addEventListener("abort", job.onAbort, { once: true });
     queue.push(job);
     pump().catch(() => undefined);
   });

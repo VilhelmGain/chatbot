@@ -119,23 +119,71 @@ const CodeBlockContext = createContext<CodeBlockContextType>({
   code: "",
 });
 
-// Highlighter cache (singleton per language)
+// Highlighter cache (singleton per language) with LRU eviction
 const highlighterCache = new Map<
   string,
   Promise<HighlighterGeneric<BundledLanguage, BundledTheme>>
 >();
 
-// Token cache
+// Token cache with LRU eviction
 const tokensCache = new Map<string, TokenizedCode>();
 
 // Subscribers for async token updates
 const subscribers = new Map<string, Set<(result: TokenizedCode) => void>>();
 
-const getTokensCacheKey = (code: string, language: BundledLanguage) => {
-  const start = code.slice(0, 100);
-  const end = code.length > 100 ? code.slice(-100) : "";
-  return `${language}:${code.length}:${start}:${end}`;
-};
+const MAX_TOKENS_CACHE_SIZE = 100;
+const MAX_HIGHLIGHTER_CACHE_SIZE = 5;
+
+// DJB2 non-cryptographic hash for cache keys — fast full-code hash, not for security
+// biome-ignore lint/suspicious/noBitwiseOperators: DJB2 intentionally uses bitwise ops
+function hashString(value: string): string {
+  let hash = 5381;
+  for (let i = 0; i < value.length; i += 1) {
+    hash = ((hash << 5) + hash) ^ value.charCodeAt(i);
+  }
+  return (hash >>> 0).toString(36);
+}
+
+const getTokensCacheKey = (code: string, language: BundledLanguage) =>
+  `${language}:${code.length}:${hashString(code)}`;
+
+function setWithCap<K, V>(map: Map<K, V>, key: K, value: V, max: number) {
+  if (map.has(key)) {
+    map.delete(key);
+  }
+  map.set(key, value);
+  if (map.size > max) {
+    const oldest = map.keys().next().value as K;
+    map.delete(oldest);
+  }
+}
+
+function setTokensCache(key: string, value: TokenizedCode) {
+  setWithCap(tokensCache, key, value, MAX_TOKENS_CACHE_SIZE);
+}
+
+function setHighlighterCache(
+  key: string,
+  value: Promise<HighlighterGeneric<BundledLanguage, BundledTheme>>
+) {
+  if (highlighterCache.has(key)) {
+    highlighterCache.delete(key);
+  }
+  highlighterCache.set(key, value);
+  if (highlighterCache.size > MAX_HIGHLIGHTER_CACHE_SIZE) {
+    const oldest = highlighterCache.keys().next().value as string;
+    const old = highlighterCache.get(oldest);
+    highlighterCache.delete(oldest);
+    old
+      ?.then((h) => {
+        try {
+          h.dispose();
+          // biome-ignore lint/suspicious/noEmptyBlockStatements: ignore dispose errors
+        } catch {}
+      })
+      .catch(() => undefined);
+  }
+}
 
 const getHighlighter = (
   language: BundledLanguage
@@ -150,7 +198,7 @@ const getHighlighter = (
     themes: ["github-light", "github-dark"],
   });
 
-  highlighterCache.set(language, highlighterPromise);
+  setHighlighterCache(language, highlighterPromise);
   return highlighterPromise;
 };
 
@@ -215,7 +263,7 @@ export const highlightCode = (
       };
 
       // Cache the result
-      tokensCache.set(tokensCacheKey, tokenized);
+      setTokensCache(tokensCacheKey, tokenized);
 
       // Notify all subscribers
       const subs = subscribers.get(tokensCacheKey);
@@ -398,15 +446,24 @@ export const CodeBlockContent = ({
     // Reset to raw tokens when code changes (shows current code, not stale tokens)
     setTokenized(highlightCode(code, language) ?? rawTokens);
 
-    // Subscribe to async highlighting result
-    highlightCode(code, language, (result) => {
+    const callback = (result: TokenizedCode) => {
       if (!cancelled) {
         setTokenized(result);
       }
-    });
+    };
+    // Subscribe to async highlighting result
+    highlightCode(code, language, callback);
 
     return () => {
       cancelled = true;
+      const key = getTokensCacheKey(code, language);
+      const set = subscribers.get(key);
+      if (set) {
+        set.delete(callback);
+        if (set.size === 0) {
+          subscribers.delete(key);
+        }
+      }
     };
   }, [code, language, rawTokens]);
 

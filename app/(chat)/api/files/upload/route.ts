@@ -5,12 +5,18 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { auth } from "@/app/(auth)/auth";
-import { ALLOWED_MEDIA_TYPES, MAX_FILE_SIZE } from "@/lib/attachments";
+import {
+  isAllowedMediaType,
+  isBlockedMediaType,
+  MAX_FILE_SIZE,
+} from "@/lib/attachments";
 import { ChatbotError } from "@/lib/errors";
 import { checkUploadRateLimit } from "@/lib/ratelimit";
 import { getClientIp } from "@/lib/server/request-utils";
 
-const UPLOAD_DIR = process.env.UPLOAD_DIR ?? "./uploads";
+function getUploadDir(): string {
+  return process.env.UPLOAD_DIR ?? "./uploads";
+}
 
 const ALLOWED_FILE_EXTS = new Set([
   ".csv",
@@ -33,7 +39,10 @@ const FileSchema = z.object({
     .refine((file) => file.size <= MAX_FILE_SIZE, {
       message: `File size should be less than ${Math.round(MAX_FILE_SIZE / 1024 / 1024)}MB`,
     })
-    .refine((file) => ALLOWED_MEDIA_TYPES.includes(file.type), {
+    .refine((file) => !isBlockedMediaType(file.type), {
+      message: "Blocked file type",
+    })
+    .refine((file) => isAllowedMediaType(file.type), {
       message: "File type should be an image, PDF, or text file",
     }),
 });
@@ -84,7 +93,7 @@ export async function POST(request: Request) {
     const fileBuffer = Buffer.from(await file.arrayBuffer());
 
     try {
-      const uploadDir = join(process.cwd(), UPLOAD_DIR);
+      const uploadDir = join(process.cwd(), getUploadDir());
       await mkdir(uploadDir, { recursive: true });
       const filePath = join(uploadDir, safeName);
       await writeFile(filePath, fileBuffer);
