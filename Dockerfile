@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-FROM node:20-alpine AS base
+FROM node:20.19.0-alpine@sha256:8bda036ddd59ea51a23bc1a1035d3b5c614e72c01366d989f4120e8adca196d4 AS base
 RUN corepack enable pnpm
 
 FROM base AS deps
@@ -54,9 +54,11 @@ RUN chown -R nextjs:nodejs ./lib/db/migrations
 
 COPY docker-entrypoint.sh ./docker-entrypoint.sh
 RUN chmod 755 docker-entrypoint.sh
+RUN apk add --no-cache wget
 
 USER nextjs
 EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
+HEALTHCHECK --interval=30s --timeout=5s --retries=3 --start-period=10s CMD wget -qO- http://localhost:3000/ping || exit 1
 ENTRYPOINT ["./docker-entrypoint.sh"]

@@ -1,10 +1,11 @@
 import { ClerkProvider } from "@clerk/nextjs";
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
+import { Suspense } from "react";
+import { NonceScripts } from "@/components/nonce-scripts";
 import { ThemeProvider } from "@/components/theme-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { isTestEnvironment } from "@/lib/constants";
-import { FONT_ROLES } from "@/lib/fonts";
 import { getCanonicalUrl, getMetadataBase } from "@/lib/seo";
 
 import "./globals.css";
@@ -196,51 +197,6 @@ const spaceMono = localFont({
   variable: "--font-space-mono",
 });
 
-const LIGHT_THEME_COLOR = "hsl(0 0% 100%)";
-const DARK_THEME_COLOR = "hsl(190deg 18% 8%)";
-const THEME_COLOR_SCRIPT = `\
-(function() {
-  var html = document.documentElement;
-  var meta = document.querySelector('meta[name="theme-color"]');
-  if (!meta) {
-    meta = document.createElement('meta');
-    meta.setAttribute('name', 'theme-color');
-    document.head.appendChild(meta);
-  }
-  function updateThemeColor() {
-    var isDark = html.classList.contains('dark');
-    meta.setAttribute('content', isDark ? '${DARK_THEME_COLOR}' : '${LIGHT_THEME_COLOR}');
-  }
-  var observer = new MutationObserver(updateThemeColor);
-  observer.observe(html, { attributes: true, attributeFilter: ['class'] });
-  updateThemeColor();
-})();`;
-
-const FONT_SCRIPT = `\
-(function() {
-  var roles = ${JSON.stringify(FONT_ROLES).replace(/</g, "\\u003c")};
-  function readCookie(name) {
-    var match = document.cookie.match(new RegExp('(?:^|; )' + name + '=([^;]*)'));
-    return match ? decodeURIComponent(match[1]) : undefined;
-  }
-  var html = document.documentElement;
-  for (var roleKey in roles) {
-    var role = roles[roleKey];
-    var id = readCookie(role.cookieName);
-    var font = null;
-    for (var i = 0; i < role.fonts.length; i++) {
-      if (role.fonts[i].id === id) font = role.fonts[i];
-      if (!font && role.fonts[i].id === role.defaultId) font = role.fonts[i];
-    }
-    if (font) {
-      html.style.setProperty(role.cssVar, font.stack);
-      if (role.cssVarItalic) {
-        html.style.setProperty(role.cssVarItalic, font.italicStack || font.stack);
-      }
-    }
-  }
-})();`;
-
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -253,18 +209,9 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <head>
-        <script
-          // biome-ignore lint/security/noDangerouslySetInnerHtml: "Required"
-          dangerouslySetInnerHTML={{
-            __html: THEME_COLOR_SCRIPT,
-          }}
-        />
-        <script
-          // biome-ignore lint/security/noDangerouslySetInnerHtml: "Required"
-          dangerouslySetInnerHTML={{
-            __html: FONT_SCRIPT,
-          }}
-        />
+        <Suspense fallback={null}>
+          <NonceScripts />
+        </Suspense>
       </head>
       <body className="antialiased">
         <div aria-hidden className="bg-aurora" />

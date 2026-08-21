@@ -1,8 +1,8 @@
 "use client";
 
 const PYODIDE_SCRIPT_URL =
-  "https://cdn.jsdelivr.net/pyodide/v0.23.4/full/pyodide.js";
-const PYODIDE_INDEX_URL = "https://cdn.jsdelivr.net/pyodide/v0.23.4/full/";
+  "https://cdn.jsdelivr.net/pyodide/v0.28.2/full/pyodide.js";
+const PYODIDE_INDEX_URL = "https://cdn.jsdelivr.net/pyodide/v0.28.2/full/";
 
 type PyodideInstance = {
   loadPackagesFromImports: (

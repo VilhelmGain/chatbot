@@ -351,15 +351,20 @@ const PureToolbar = ({
   onClose?: () => void;
 }) => {
   const toolbarRef = useRef<HTMLDivElement>(null);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(
+    undefined
+  );
 
   const [selectedTool, setSelectedTool] = useState<string | null>(null);
   const [isAnimating, setIsAnimating] = useState(false);
 
-  useOnClickOutside(toolbarRef, () => {
-    setIsToolbarVisible(false);
-    setSelectedTool(null);
-  });
+  useOnClickOutside(
+    toolbarRef as unknown as React.RefObject<HTMLElement>,
+    () => {
+      setIsToolbarVisible(false);
+      setSelectedTool(null);
+    }
+  );
 
   const startCloseTimer = useCallback(() => {
     if (timeoutRef.current) {
