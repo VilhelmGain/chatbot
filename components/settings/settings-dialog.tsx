@@ -235,7 +235,7 @@ export function SettingsDialog({
             </div>
 
             <div
-              className="min-h-0 flex-1 overflow-y-auto overscroll-behavior-contain [scrollbar-gutter:stable]"
+              className="min-h-0 flex-1 overflow-y-auto overscroll-behavior-contain supports-[scrollbar-gutter:stable]:[scrollbar-gutter:stable]"
               ref={contentScrollRef}
             >
               <div className="mx-auto w-full max-w-3xl px-5 py-6 md:px-8 md:py-8">

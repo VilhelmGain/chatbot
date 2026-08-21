@@ -258,7 +258,7 @@ function MobileSidebarSheet({
     <div className="fixed inset-0 z-50">
       <motion.div
         animate={{ opacity: 1 }}
-        className="absolute inset-0 bg-black/50 supports-backdrop-filter:backdrop-blur-sm"
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm supports-[backdrop-filter]:backdrop-blur-sm supports-[-webkit-backdrop-filter]:backdrop-blur-sm"
         initial={{ opacity: 0 }}
         onClick={requestDismiss}
         transition={{ duration: 0.25 }}
@@ -568,7 +568,7 @@ function SidebarContent({ className, ...props }: React.ComponentProps<"div">) {
       data-slot="sidebar-content"
       data-sidebar="content"
       className={cn(
-        "flex min-h-0 flex-1 flex-col gap-2 overflow-auto [scrollbar-gutter:stable] [--radius:var(--radius-xl)] group-data-[collapsible=icon]:overflow-hidden",
+        "flex min-h-0 flex-1 flex-col gap-2 overflow-auto supports-[scrollbar-gutter:stable]:[scrollbar-gutter:stable] [--radius:var(--radius-xl)] group-data-[collapsible=icon]:overflow-hidden",
         className
       )}
       {...props}
