@@ -1,4 +1,4 @@
-import Image from "next/image";
+// biome-ignore-all lint/performance/noImgElement: preview needs plain img for blob/data URLs
 import type { Attachment } from "@/lib/types";
 import { Button } from "../ui/button";
 import {
@@ -43,12 +43,12 @@ export const PreviewAttachment = ({
       data-testid="input-attachment-preview"
     >
       {contentType?.startsWith("image") ? (
-        <Image
+        // eslint-disable-next-line @next/next/no-img-element -- preview needs raw src
+        <img
           alt={name ?? "attachment"}
           className="size-full object-cover"
           height={96}
           src={src}
-          unoptimized
           width={96}
         />
       ) : (
