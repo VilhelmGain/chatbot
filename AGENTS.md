@@ -1,52 +1,47 @@
-This is a chatbot application built with Next.js, TypeScript, Tailwind CSS, and Drizzle ORM. It uses a Postgres database and optionally Redis for rate limiting and stream resumption. The application supports multiple AI providers and models, which can be managed through a catalog system.
+This is a chatbot app with Next.js 16 (App Router, React 19), TypeScript, Tailwind CSS v4, Drizzle ORM on Postgres, optional Redis, Clerk auth, and multi-provider AI via AI SDK.
 
-## Instructions from developer
-- do not run `build` after you are done with code changes. the code will be tested when commited to the repository. the build is only necessary if you are committing to the main branch. however, if you are committing to the main branch make sure it is intentional.
-- in the same way build should not be run, avoid running `test` as well.
-- just run the other verification commands such as linting and formatting.
+## Developer constraints
+- Do not run `pnpm build` or `pnpm test` after changes unless committing to `main`. Commits to `main` must be intentional. The remote tests the build.
+- For local verification run `pnpm check` / `pnpm fix` only.
 
 ## Package manager
-- Use `pnpm` only. `packageManager` is pinned to `pnpm@10.32.1`.
-- Do not use npm or yarn.
+- `pnpm@10.32.1` only (`packageManager` pinned). Do not use npm or yarn.
 
-## Daily commands
+## Commands
 - `pnpm install`
-- `pnpm db:migrate` — run before dev to apply Drizzle migrations (`lib/db/migrations`). Loads `.env.local`.
-- `pnpm dev` — Next.js dev server with Turbopack on port 3000.
-- `pnpm build` — production build. TypeScript checking happens during the build; there is no separate `tsc` script.
-- `pnpm check` / `pnpm fix` — lint and format via Ultracite (Biome). Pre-commit runs `pnpm exec lint-staged`, which runs `pnpm run fix --` on staged files.
-- `pnpm test` — Playwright e2e tests. Sets `PLAYWRIGHT=True` so the app uses the mock AI provider (`lib/ai/models.mock.ts`) AND bypasses Clerk entirely (mock test-mode auth, no Clerk keys needed). Playwright starts the dev server automatically and waits on `/ping`.
+- `pnpm db:migrate` — apply Drizzle migrations from `lib/db/migrations`. Reads `.env.local` via `dotenv`. Exits silently if `POSTGRES_URL` unset.
+- `pnpm dev` — Next.js with Turbopack on `http://localhost:3000`.
+- `pnpm dev:demo` — `DEMO_MODE=1` next dev. Zero deps: in-memory DB, mock AI, auto-signed-in `demo@example.com`. Ephemeral, per-instance. Refuses to start in production unless `ALLOW_DEMO_IN_PROD=1` is also set.
+- `pnpm build` — production build. Type checking happens inside the build, no separate `tsc` script.
+- `pnpm check` / `pnpm fix` — lint and format via Ultracite (Biome). Pre-commit hook is `husky` + `lint-staged` running `pnpm run fix --` on staged `*.{ts,tsx,js,jsx,jsonc}`.
+- `pnpm test` — `export PLAYWRIGHT=True && pnpm exec playwright test`. Playwright starts `pnpm dev` itself and waits on `/ping`. Also usable: `PLAYWRIGHT_TEST_BASE_URL` or `CI_PLAYWRIGHT` trigger the same test mode.
+- DB helpers: `db:generate`, `db:studio`, `db:push`, `db:pull`, `db:check` (all via `drizzle-kit`, also read `.env.local`).
 
 ## Environment
-- Copy `.env.example` to `.env.local`.
-- Required: `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`, `NEXT_PUBLIC_CLERK_SIGN_IN_URL`, `NEXT_PUBLIC_CLERK_SIGN_UP_URL`, `ENCRYPTION_KEY`, `POSTGRES_URL`.
-- Optional: `REDIS_URL` (rate limiting / stream resumption), `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GOOGLE_API_KEY`, `XAI_API_KEY`.
-- Drizzle Kit, the migrate script, and Playwright all read `.env.local` via `dotenv`.
+- Copy `.env.example` to `.env.local`. `drizzle.config.ts`, `lib/db/migrate.ts`, and `playwright.config.ts` all load `.env.local`.
+- Required: `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`, `NEXT_PUBLIC_CLERK_SIGN_IN_URL`, `NEXT_PUBLIC_CLERK_SIGN_UP_URL`, `ENCRYPTION_KEY` (`openssl rand -base64 32`), `POSTGRES_URL`.
+- Optional: `REDIS_URL` (enables rate limiting and resumable streams), `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GOOGLE_API_KEY`, `XAI_API_KEY`, `NEXT_PUBLIC_APP_URL`.
+- `DEMO_MODE=1` bypasses Clerk and DB entirely. Never set in production unless you intend a public demo. `PLAYWRIGHT*` flags are ignored in production (`lib/constants.ts:13`).
 
 ## Database
-- Schema: `lib/db/schema.ts`.
-- Migrations folder: `lib/db/migrations`.
-- Useful scripts: `db:generate`, `db:migrate`, `db:studio`, `db:push`, `db:pull`, `db:check`.
-- `pnpm db:migrate` runs `lib/db/migrate.ts`, which exits silently if `POSTGRES_URL` is unset.
+- Schema: `lib/db/schema.ts`. Migrations: `lib/db/migrations`.
+- `migrate.ts` uses `postgres` with `max: 1` and `drizzle-orm/postgres-js/migrator`.
 
 ## Architecture
-- Next.js 16 App Router, React 19, TypeScript, Tailwind CSS v4.
-- Chat UI is rendered by `app/(chat)/layout.tsx`; `app/(chat)/page.tsx` and `app/(chat)/chat/[id]/page.tsx` return `null`.
-- Auth is Clerk. `app/(auth)/auth.ts` exposes a `auth()` session helper backed by `@clerk/nextjs/server`. Under `PLAYWRIGHT=True` it switches to mock test-mode auth driven by a `test-user` cookie (no Clerk keys needed for tests). Middleware (`middleware.ts`) handles `/ping` and protects all other routes with Clerk in production, but is bypassed in test mode.
-- API routes are under `app/(chat)/api/`.
-- Model list and discovery: `lib/ai/models.ts`. Provider resolution: `lib/ai/providers.ts`. Custom providers are stored in Postgres and resolved at runtime.
+- Chat UI is rendered by `app/(chat)/layout.tsx`; `app/(chat)/page.tsx` and `app/(chat)/chat/[id]/page.tsx` return `null`. `ChatShellWrapper` and `ActiveChatProvider` are the real entrypoints.
+- Auth helper `app/(auth)/auth.ts:25` — Clerk in prod, mock cookie `test-user` email in `isTestEnvironment`. `middleware.ts:23` bypasses Clerk entirely when `isTestEnvironment` is true; otherwise `clerkMiddleware` protects `/`, `/chat/:id`, `/settings`, `/api/:path*`. `/ping` always returns `pong`.
+- `isTestEnvironment` (`lib/constants.ts:13`) is true when `DEMO_MODE=1` outside production (or with `ALLOW_DEMO_IN_PROD=1`) or when any of `PLAYWRIGHT` / `PLAYWRIGHT_TEST_BASE_URL` / `CI_PLAYWRIGHT` is set outside production.
+- API routes under `app/(chat)/api/`. Tools under `lib/ai/tools/`, artifacts under `artifacts/`.
+- Providers: `lib/ai/providers.ts` merges env keys with encrypted `CustomProvider` rows (stored in Postgres). Model catalog: `lib/ai/catalog.ts` wraps `@opencode-ai/models` snapshot + live fetch from `models.dev` (5s timeout, 5m live TTL, 1h persisted sync). Capabilities mapped in `mapModelCapabilities`. Mock provider for tests is `lib/ai/models.mock.ts`.
 
 ## Docker
-- `docker compose up` runs the full stack: app on `localhost:3001`, Postgres on `localhost:5433`, Redis on `localhost:6380`.
-- The container image runs migrations automatically via `docker-entrypoint.sh` before starting the app.
+- `docker compose up` — app `localhost:3001`, Postgres `localhost:5433`, Redis `localhost:6380`. `docker-entrypoint.sh` runs migrations before start.
 
-## Testing notes
-- E2E tests live in `tests/e2e/`. Playwright config starts `pnpm dev` and loads `.env.local`.
-- `PLAYWRIGHT=True` triggers the mock AI provider, so chat/API tests do not need real provider keys. It also switches auth to mock test-mode (a `test-user` cookie), so no Clerk keys are needed for tests.
-- Some model-selector tests reference models (DeepSeek, Kimi) that are not in the default `lib/ai/models.ts` list; they rely on provider discovery or may be stale.
+## Testing
+- E2E lives in `tests/e2e/`, config in `playwright.config.ts:25`. `PLAYWRIGHT=True` enables mock AI and mock auth (no Clerk or provider keys needed). `webServer` is `pnpm dev` with `reuseExistingServer: !CI`, health check `baseURL + /ping`. CI runs only `e2e` (Chromium) project in `e2e.yml`; `firefox`, `webkit`, `mobile-chrome` available locally.
+- Some model-selector tests reference DeepSeek/Kimi which may not be in the default snapshot; they depend on live catalog discovery.
 
 ## Tooling quirks
-- Path alias `@/*` maps to `./*`.
-- `biome.jsonc` extends `ultracite/biome/*` presets and excludes generated/vendored files (`components/ui`, `components/elements`, etc.).
-- `next.config.ts` uses `output: "standalone"`, `reactCompiler: true`, and several experimental flags.
-- `instrumentation.ts` is a no-op (telemetry disabled for self-hosting).
+- Path alias `@/*` maps to `./*` (`tsconfig.json:22`).
+- `biome.jsonc` extends `ultracite/biome/*` and excludes `components/ui` and `lib/db/migrations`.
+- `next.config.ts:55` is `output: "standalone"`, `reactCompiler: true`, `cacheComponents: true`, plus `turbopackFileSystemCacheForDev` and `optimizePackageImports` for `framer-motion`, `shiki`, `streamdown`. `instrumentation.ts` is a no-op.
