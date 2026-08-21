@@ -34,12 +34,13 @@ function pruneTestUserHits(): void {
   if (testUserHits.size > MAX_TEST_USER_KEYS) {
     // evict oldest entries
     const toDelete = testUserHits.size - MAX_TEST_USER_KEYS;
-    let i = 0;
+    let deleted = 0;
     for (const k of testUserHits.keys()) {
-      if (i++ >= toDelete) {
+      if (deleted >= toDelete) {
         break;
       }
       testUserHits.delete(k);
+      deleted += 1;
     }
   }
 }
@@ -169,7 +170,10 @@ export async function auth(): Promise<Session | null> {
         return null;
       }
       email = verified;
-      if (!checkTestUserRateLimit(`test-user:${email}`)) {
+      if (
+        !isTestEnvironmentNow() &&
+        !checkTestUserRateLimit(`test-user:${email}`)
+      ) {
         return null;
       }
     } else if (
@@ -198,7 +202,7 @@ export async function auth(): Promise<Session | null> {
         return null;
       }
       email = v;
-      if (!checkTestUserRateLimit(`demo:${email}`)) {
+      if (!isTestEnvironmentNow() && !checkTestUserRateLimit(`demo:${email}`)) {
         return null;
       }
     }
