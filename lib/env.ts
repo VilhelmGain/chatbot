@@ -22,6 +22,10 @@ function isDemoActive(): boolean {
   return process.env.DEMO_MODE === "1";
 }
 
+function isBuildPhase(): boolean {
+  return process.env.NEXT_PHASE === "phase-production-build";
+}
+
 function parseEnv(): Env {
   const parsed = envSchema.safeParse(process.env);
   if (!parsed.success) {
@@ -30,6 +34,18 @@ function parseEnv(): Env {
     const issues = parsed.error.issues
       .map((i) => `${i.path.join(".")}: ${i.message}`)
       .join("; ");
+    // Never throw during next build — env is not available at build time in Docker/Vercel.
+    // Demo mode also runs with no ENCRYPTION_KEY/DB.
+    if (isBuildPhase()) {
+      console.warn(`[env] Build-time validation warning: ${issues}`);
+      return {
+        ENCRYPTION_KEY: process.env.ENCRYPTION_KEY ?? "",
+        NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
+        POSTGRES_URL: process.env.POSTGRES_URL,
+        REDIS_URL: process.env.REDIS_URL,
+        UPLOAD_DIR: process.env.UPLOAD_DIR,
+      };
+    }
     // Demo mode (and PLAYWRIGHT in non-prod) runs with no ENCRYPTION_KEY/DB.
     // Don't fail fast when DEMO_MODE is active — let assertProductionSecurity handle prod demo gating.
     if (isProd && !isDemoActive()) {
@@ -49,6 +65,7 @@ function parseEnv(): Env {
   const env = parsed.data;
 
   if (
+    !isBuildPhase() &&
     process.env.NODE_ENV === "production" &&
     !isDemoActive() &&
     env.NEXT_PUBLIC_APP_URL &&
@@ -70,8 +87,12 @@ export function getEnv(): Env {
 }
 
 // Eager validation in production to fail fast on startup (import side-effect)
-// Skip when DEMO_MODE is active — demo runs without ENCRYPTION_KEY/POSTGRES_URL.
-if (process.env.NODE_ENV === "production" && !isDemoActive()) {
+// Never run during next build, and skip when DEMO_MODE is active.
+if (
+  !isBuildPhase() &&
+  process.env.NODE_ENV === "production" &&
+  !isDemoActive()
+) {
   getEnv();
 }
 

@@ -10,7 +10,8 @@ if (!postgresUrl) {
   const msg =
     "[drizzle.config] POSTGRES_URL is not set – drizzle-kit commands will fail without a database URL";
   const isDemo = process.env.DEMO_MODE === "1";
-  if (process.env.NODE_ENV === "production" && !isDemo) {
+  const isBuild = process.env.NEXT_PHASE === "phase-production-build";
+  if (process.env.NODE_ENV === "production" && !isDemo && !isBuild) {
     throw new Error(msg);
   }
   console.warn(msg);
