@@ -43,26 +43,17 @@ function getLiveProviders(force = false): Promise<ProviderMap | null> {
     return Promise.resolve(cached.providers);
   }
 
-  if (liveInFlight) {
+  if (liveInFlight && !force) {
     return liveInFlight;
   }
 
-  const fetchPromise: Promise<ProviderMap | null> = (async () => {
+  let fetchPromise!: Promise<ProviderMap | null>;
+  fetchPromise = (async () => {
     try {
       const client = Models.make();
-      const timeout = new Promise<never>((_, reject) => {
-        setTimeout(
-          () =>
-            reject(
-              new Error("[catalog] live catalog fetch timed out after 5s")
-            ),
-          LIVE_FETCH_TIMEOUT_MS
-        );
-      });
-      const liveProviders = (await Promise.race([
-        client.providers(),
-        timeout,
-      ])) as ProviderMap;
+      const liveProviders = (await client.providers({
+        signal: AbortSignal.timeout(LIVE_FETCH_TIMEOUT_MS),
+      })) as ProviderMap;
       liveCache = { fetchedAt: Date.now(), providers: liveProviders };
       return liveProviders;
     } catch (error) {
@@ -76,7 +67,9 @@ function getLiveProviders(force = false): Promise<ProviderMap | null> {
       liveCache = { fetchedAt: Date.now(), providers: null };
       return null;
     } finally {
-      liveInFlight = null;
+      if (liveInFlight === fetchPromise) {
+        liveInFlight = null;
+      }
     }
   })();
 
