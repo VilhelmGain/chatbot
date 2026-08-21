@@ -134,7 +134,7 @@ if (
   !isDemoActive() &&
   isClerkConfigured() &&
   process.env.VERCEL_ENV !== "preview" &&
-  Boolean(process.env.POSTGRES_URL)
+  process.env.POSTGRES_URL
 ) {
   getEnv();
 }
