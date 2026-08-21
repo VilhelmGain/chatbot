@@ -125,9 +125,15 @@ function isClerkConfigured(): boolean {
 }
 
 function getImpl(): Queries {
-  // Also fall back to in-memory when Clerk isn't configured (preview/Hub without
-  // secrets) so the app stays usable without DB instead of 500.
-  if (isTestEnvironmentNow() || !isClerkConfigured()) {
+  // Fall back to in-memory when Clerk isn't configured, when no DB is
+  // configured, or in demo/test — so Vercel preview without POSTGRES_URL
+  // (even with Clerk keys) stays usable instead of 500 from pg connection.
+  if (
+    isTestEnvironmentNow() ||
+    !isClerkConfigured() ||
+    !process.env.POSTGRES_URL ||
+    process.env.VERCEL_ENV === "preview"
+  ) {
     return memQueries;
   }
   return pgQueries;

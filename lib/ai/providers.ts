@@ -18,7 +18,12 @@ function isClerkConfigured(): boolean {
 }
 
 function getMockProvider() {
-  if (!isTestEnvironmentNow() && isClerkConfigured()) {
+  if (
+    !isTestEnvironmentNow() &&
+    isClerkConfigured() &&
+    Boolean(process.env.POSTGRES_URL) &&
+    process.env.VERCEL_ENV !== "preview"
+  ) {
     return null;
   }
   const { chatModel, titleModel: mockTitleModel } = require("./models.mock");
@@ -47,8 +52,14 @@ export const myProvider: ReturnType<typeof getMockProvider> = new Proxy(
 ) as unknown as ReturnType<typeof getMockProvider>;
 
 function getActiveMockProvider() {
-  // Fall back to mock when Clerk isn't configured (preview/Hub without secrets)
-  if (isTestEnvironmentNow() || !isClerkConfigured()) {
+  // Fall back to mock when Clerk isn't configured, when no DB, or in Vercel
+  // preview — so PR preview without POSTGRES_URL stays usable.
+  if (
+    isTestEnvironmentNow() ||
+    !isClerkConfigured() ||
+    !process.env.POSTGRES_URL ||
+    process.env.VERCEL_ENV === "preview"
+  ) {
     return getMockProvider();
   }
   return null;

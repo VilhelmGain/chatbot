@@ -153,7 +153,12 @@ function isClerkConfigured(): boolean {
 }
 
 export async function auth(): Promise<Session | null> {
-  if (isTestEnvironmentNow() || !isClerkConfigured()) {
+  if (
+    isTestEnvironmentNow() ||
+    !isClerkConfigured() ||
+    !process.env.POSTGRES_URL ||
+    process.env.VERCEL_ENV === "preview"
+  ) {
     const cookieStore = await cookies();
     const rawCookie = cookieStore.get("test-user")?.value;
 
@@ -167,10 +172,17 @@ export async function auth(): Promise<Session | null> {
       if (!checkTestUserRateLimit(`test-user:${email}`)) {
         return null;
       }
-    } else if (isDemoModeNow()) {
+    } else if (
+      isDemoModeNow() ||
+      !isClerkConfigured() ||
+      !process.env.POSTGRES_URL ||
+      process.env.VERCEL_ENV === "preview"
+    ) {
       // Per-session demo user is minted in middleware (see middleware.ts).
       // Middleware uses plain demo-.*@demo.local for Edge compatibility;
-      // accept both signed and plain demo pattern when isDemoMode.
+      // accept both signed and plain demo pattern when isDemoMode. In
+      // Vercel preview without DB we also mint demo-session so preview stays
+      // usable without Clerk sign-in.
       const demoCookie = cookieStore.get("demo-session")?.value;
       if (!demoCookie) {
         return null;

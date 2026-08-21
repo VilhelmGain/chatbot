@@ -99,8 +99,13 @@ function handleTestRequest(request: NextRequest): NextResponse | Response {
   }
 
   // Demo/test auth handling (from PR134) — mint demo session if needed
-  // Treat missing Clerk config as demo so preview/Hub without secrets stays usable.
-  const useDemoAuth = isDemoModeNow() || !isClerkConfiguredNow();
+  // Treat missing Clerk config, missing DB, or Vercel preview as demo so
+  // PR preview without POSTGRES_URL stays usable even when Clerk keys exist.
+  const useDemoAuth =
+    isDemoModeNow() ||
+    !isClerkConfiguredNow() ||
+    !process.env.POSTGRES_URL ||
+    process.env.VERCEL_ENV === "preview";
   const isApiRoute = request.nextUrl.pathname.startsWith("/api/");
   if (isApiRoute && isProtectedRoute(request)) {
     const hasTestCookie = request.cookies.has("test-user");
@@ -175,10 +180,15 @@ function shouldUseTestHandler(): boolean {
   // Re-evaluate env at request time — not at import — so DEMO_MODE set at
   // runtime (Docker compose env_file, Vercel runtime) is respected even when
   // the image was built without those env vars.
-  // Fall back to test handler whenever Clerk isn't configured — this keeps
-  // Vercel preview (no secrets) and Hub image (no build-args) alive instead
-  // of throwing MIDDLEWARE_INVOCATION_FAILED.
-  if (!isClerkConfiguredNow()) {
+  // Fall back to test handler whenever Clerk isn't configured or when no DB
+  // is configured or in Vercel preview (PR preview without POSTGRES_URL) —
+  // this keeps Vercel preview and Hub image alive instead of throwing
+  // MIDDLEWARE_INVOCATION_FAILED.
+  if (
+    !isClerkConfiguredNow() ||
+    !process.env.POSTGRES_URL ||
+    process.env.VERCEL_ENV === "preview"
+  ) {
     return true;
   }
   const demoNow = process.env.DEMO_MODE === "1";
