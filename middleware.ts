@@ -165,10 +165,25 @@ const testHandler = (request: NextRequest) => handleTestRequest(request);
 // In production, demo mode without ALLOW_DEMO_IN_PROD would normally use Clerk
 // and crash when Clerk keys are absent (Vercel demo case). Fall back to demo
 // handler when Clerk is not configured to avoid MIDDLEWARE_INVOCATION_FAILED.
-const isClerkConfigured =
-  Boolean(process.env.CLERK_SECRET_KEY) &&
-  Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY);
-const useTestHandler = isTestEnvironment || (isDemoMode && !isClerkConfigured);
+// Computed per-request so Hub image (build-time inlined NEXT_PUBLIC_* empty)
+// still respects runtime env.
+function isClerkConfiguredNow(): boolean {
+  return Boolean(process.env.CLERK_SECRET_KEY) && Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY);
+}
+function shouldUseTestHandler(): boolean {
+  // Re-evaluate env at request time — not at import — so DEMO_MODE set at
+  // runtime (Docker compose env_file, Vercel runtime) is respected even when
+  // the image was built without those env vars.
+  const demoNow = process.env.DEMO_MODE === "1";
+  const prodNow = process.env.NODE_ENV === "production";
+  const allowDemoNow = process.env.ALLOW_DEMO_IN_PROD === "1";
+  const hasPlaywrightNow = Boolean(
+    process.env.PLAYWRIGHT_TEST_BASE_URL || process.env.PLAYWRIGHT || process.env.CI_PLAYWRIGHT
+  );
+  const isTestNow =
+    (demoNow && (!prodNow || allowDemoNow)) || (!prodNow && hasPlaywrightNow);
+  return isTestNow || (demoNow && !isClerkConfiguredNow());
+}
 
 const clerkHandler = clerkMiddleware(async (auth, request: NextRequest) => {
   const pingResponse = handlePing(request);
@@ -224,17 +239,16 @@ function withMiddlewareErrorHandling(
   };
 }
 
-export default useTestHandler
-  ? withMiddlewareErrorHandling(
-      testHandler as unknown as (
-        r: NextRequest
-      ) => Promise<NextResponse | Response>
-    )
-  : withMiddlewareErrorHandling(
-      clerkHandler as unknown as (
-        r: NextRequest
-      ) => Promise<NextResponse | Response>
-    );
+const wrappedTest = withMiddlewareErrorHandling(
+  testHandler as unknown as (r: NextRequest) => Promise<NextResponse | Response>
+);
+const wrappedClerk = withMiddlewareErrorHandling(
+  clerkHandler as unknown as (r: NextRequest) => Promise<NextResponse | Response>
+);
+
+export default function middleware(request: NextRequest) {
+  return shouldUseTestHandler() ? wrappedTest(request) : wrappedClerk(request);
+}
 
 export const config = {
   matcher: [
