@@ -22,17 +22,24 @@ export const TEXT_MEDIA_TYPES = [
   "text/plain",
   "text/markdown",
   "text/csv",
-  "text/html",
   "application/json",
   "application/xml",
-  "text/javascript",
-  "text/x-typescript",
-  "text/typescript",
-  "text/x-shellscript",
   "text/yaml",
   "text/x-yaml",
   "application/yaml",
   "application/x-yaml",
+] as const;
+
+export const BLOCKED_MEDIA_TYPES: readonly string[] = [
+  "text/html",
+  "text/javascript",
+  "application/javascript",
+  "application/xhtml+xml",
+  "text/css",
+  "image/svg+xml",
+  "text/x-shellscript",
+  "text/x-typescript",
+  "text/typescript",
 ] as const;
 
 export const ALLOWED_MEDIA_TYPES: readonly string[] = [
@@ -42,6 +49,13 @@ export const ALLOWED_MEDIA_TYPES: readonly string[] = [
 ];
 
 export const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+
+export function isBlockedMediaType(mediaType: string | undefined): boolean {
+  return (
+    mediaType !== undefined &&
+    (BLOCKED_MEDIA_TYPES as readonly string[]).includes(mediaType)
+  );
+}
 
 export function isImageMediaType(mediaType: string | undefined): boolean {
   return (
@@ -63,9 +77,10 @@ export function isTextMediaType(mediaType: string | undefined): boolean {
 
 export function isAllowedMediaType(mediaType: string | undefined): boolean {
   return (
-    isImageMediaType(mediaType) ||
-    isPdfMediaType(mediaType) ||
-    isTextMediaType(mediaType)
+    !isBlockedMediaType(mediaType) &&
+    (isImageMediaType(mediaType) ||
+      isPdfMediaType(mediaType) ||
+      isTextMediaType(mediaType))
   );
 }
 

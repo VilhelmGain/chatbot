@@ -2,8 +2,8 @@ import { z } from "zod";
 import { auth } from "@/app/(auth)/auth";
 import {
   getAllChatsByUserId,
-  getChatById,
-  getMessagesByChatId,
+  getChatsByIds,
+  getMessagesByChatIds,
 } from "@/lib/db/queries";
 import type { Chat } from "@/lib/db/schema";
 import { ChatbotError } from "@/lib/errors";
@@ -66,13 +66,9 @@ export async function POST(request: Request) {
   let chats: Chat[];
 
   if (chatIds && chatIds.length > 0) {
-    const foundChats = await Promise.all(
-      chatIds.map((id) => getChatById({ id }))
-    );
+    const foundChats = await getChatsByIds({ ids: chatIds });
     // Silently drop chats that don't exist or belong to another user.
-    chats = foundChats.filter(
-      (chat): chat is Chat => chat !== null && chat.userId === userId
-    );
+    chats = foundChats.filter((chat) => chat.userId === userId);
   } else {
     const allChats = await getAllChatsByUserId({ userId });
     chats = allChats.map(({ createdAt, id, title, updatedAt, visibility }) => ({
@@ -85,16 +81,29 @@ export async function POST(request: Request) {
     }));
   }
 
-  const exports = await Promise.all(
-    chats.map(async (chat) => {
-      const messages = await getMessagesByChatId({ id: chat.id });
-      return {
-        filename: chatToFilename(chat),
-        id: chat.id,
-        markdown: chatToMarkdown(chat, messages),
-      };
-    })
-  );
+  const chatIdList = chats.map((c) => c.id);
+  const allMessages =
+    chatIdList.length > 0
+      ? await getMessagesByChatIds({ ids: chatIdList })
+      : [];
+  const messagesByChat = new Map<string, typeof allMessages>();
+  for (const m of allMessages) {
+    const list = messagesByChat.get(m.chatId);
+    if (list) {
+      list.push(m);
+    } else {
+      messagesByChat.set(m.chatId, [m]);
+    }
+  }
+
+  const exports = chats.map((chat) => {
+    const messages = messagesByChat.get(chat.id) ?? [];
+    return {
+      filename: chatToFilename(chat),
+      id: chat.id,
+      markdown: chatToMarkdown(chat, messages),
+    };
+  });
 
   return Response.json({ exports });
 }

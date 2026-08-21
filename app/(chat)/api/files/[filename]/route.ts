@@ -3,6 +3,7 @@ import { basename, isAbsolute, join, relative, resolve } from "node:path";
 import { NextResponse } from "next/server";
 
 import { auth } from "@/app/(auth)/auth";
+import { isBlockedMediaType } from "@/lib/attachments";
 
 function getUploadDir(): string {
   return process.env.UPLOAD_DIR ?? "./uploads";
@@ -66,10 +67,15 @@ export async function GET(
   const metaPath = join(uploadDir, ".meta", `${safeName}.json`);
   let isOwner = false;
   let metaExists = false;
+  let storedContentType: string | undefined;
   try {
     const metaRaw = await readFile(metaPath, "utf8");
-    const meta = JSON.parse(metaRaw) as { userId?: string };
+    const meta = JSON.parse(metaRaw) as {
+      userId?: string;
+      contentType?: string;
+    };
     metaExists = true;
+    storedContentType = meta.contentType;
     if (meta.userId && meta.userId === session.user.id) {
       isOwner = true;
     } else {
@@ -151,7 +157,8 @@ export async function GET(
   try {
     const data = await readFile(filePath);
     const ext = safeName.split(".").pop()?.toLowerCase() ?? "";
-    const isDangerous = DANGEROUS_EXTS.has(ext);
+    const isDangerous =
+      DANGEROUS_EXTS.has(ext) || isBlockedMediaType(storedContentType);
     const contentType = isDangerous
       ? "text/plain; charset=utf-8"
       : (CONTENT_TYPES[ext] ?? "application/octet-stream");

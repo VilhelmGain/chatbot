@@ -158,14 +158,16 @@ export async function saveChat({
 
 export async function deleteChatById({ id }: { id: string }) {
   try {
-    await db.delete(message).where(eq(message.chatId, id));
-    await db.delete(stream).where(eq(stream.chatId, id));
+    return await db.transaction(async (tx) => {
+      await tx.delete(message).where(eq(message.chatId, id));
+      await tx.delete(stream).where(eq(stream.chatId, id));
 
-    const [chatsDeleted] = await db
-      .delete(chat)
-      .where(eq(chat.id, id))
-      .returning();
-    return chatsDeleted;
+      const [chatsDeleted] = await tx
+        .delete(chat)
+        .where(eq(chat.id, id))
+        .returning();
+      return chatsDeleted;
+    });
   } catch (error) {
     throw new ChatbotError("bad_request:database", { cause: error });
   }
@@ -173,26 +175,28 @@ export async function deleteChatById({ id }: { id: string }) {
 
 export async function deleteAllChatsByUserId({ userId }: { userId: string }) {
   try {
-    const userChats = await db
-      .select({ id: chat.id })
-      .from(chat)
-      .where(eq(chat.userId, userId));
+    return await db.transaction(async (tx) => {
+      const userChats = await tx
+        .select({ id: chat.id })
+        .from(chat)
+        .where(eq(chat.userId, userId));
 
-    if (userChats.length === 0) {
-      return { deletedCount: 0 };
-    }
+      if (userChats.length === 0) {
+        return { deletedCount: 0 };
+      }
 
-    const chatIds = userChats.map((c) => c.id);
+      const chatIds = userChats.map((c) => c.id);
 
-    await db.delete(message).where(inArray(message.chatId, chatIds));
-    await db.delete(stream).where(inArray(stream.chatId, chatIds));
+      await tx.delete(message).where(inArray(message.chatId, chatIds));
+      await tx.delete(stream).where(inArray(stream.chatId, chatIds));
 
-    const deletedChats = await db
-      .delete(chat)
-      .where(eq(chat.userId, userId))
-      .returning();
+      const deletedChats = await tx
+        .delete(chat)
+        .where(eq(chat.userId, userId))
+        .returning();
 
-    return { deletedCount: deletedChats.length };
+      return { deletedCount: deletedChats.length };
+    });
   } catch (error) {
     throw new ChatbotError("bad_request:database", { cause: error });
   }
@@ -339,16 +343,18 @@ export async function saveMessages({ messages }: { messages: DBMessage[] }) {
       return;
     }
 
-    await db.insert(message).values(messages);
+    await db.transaction(async (tx) => {
+      await tx.insert(message).values(messages);
 
-    const chatIds = [...new Set(messages.map((m) => m.chatId))];
-    const touchedAt = new Date();
-    if (chatIds.length > 0) {
-      await db
-        .update(chat)
-        .set({ updatedAt: touchedAt })
-        .where(inArray(chat.id, chatIds));
-    }
+      const chatIds = [...new Set(messages.map((m) => m.chatId))];
+      const touchedAt = new Date();
+      if (chatIds.length > 0) {
+        await tx
+          .update(chat)
+          .set({ updatedAt: touchedAt })
+          .where(inArray(chat.id, chatIds));
+      }
+    });
   } catch (error) {
     throw new ChatbotError("bad_request:database", {
       cause: error,
@@ -383,6 +389,32 @@ export async function getMessagesByChatId({ id }: { id: string }) {
       .select()
       .from(message)
       .where(eq(message.chatId, id))
+      .orderBy(asc(message.createdAt));
+  } catch (error) {
+    throw new ChatbotError("bad_request:database", { cause: error });
+  }
+}
+
+export async function getChatsByIds({ ids }: { ids: string[] }) {
+  try {
+    if (ids.length === 0) {
+      return [];
+    }
+    return await db.select().from(chat).where(inArray(chat.id, ids));
+  } catch (error) {
+    throw new ChatbotError("bad_request:database", { cause: error });
+  }
+}
+
+export async function getMessagesByChatIds({ ids }: { ids: string[] }) {
+  try {
+    if (ids.length === 0) {
+      return [];
+    }
+    return await db
+      .select()
+      .from(message)
+      .where(inArray(message.chatId, ids))
       .orderBy(asc(message.createdAt));
   } catch (error) {
     throw new ChatbotError("bad_request:database", { cause: error });
@@ -492,19 +524,21 @@ export async function deleteDocumentsByIdAfterTimestamp({
   timestamp: Date;
 }) {
   try {
-    await db
-      .delete(suggestion)
-      .where(
-        and(
-          eq(suggestion.documentId, id),
-          gt(suggestion.documentCreatedAt, timestamp)
-        )
-      );
+    return await db.transaction(async (tx) => {
+      await tx
+        .delete(suggestion)
+        .where(
+          and(
+            eq(suggestion.documentId, id),
+            gt(suggestion.documentCreatedAt, timestamp)
+          )
+        );
 
-    return await db
-      .delete(document)
-      .where(and(eq(document.id, id), gt(document.createdAt, timestamp)))
-      .returning();
+      return await tx
+        .delete(document)
+        .where(and(eq(document.id, id), gt(document.createdAt, timestamp)))
+        .returning();
+    });
   } catch (error) {
     throw new ChatbotError("bad_request:database", { cause: error });
   }
@@ -553,24 +587,26 @@ export async function deleteMessagesByChatIdAfterTimestamp({
   timestamp: Date;
 }) {
   try {
-    const messagesToDelete = await db
-      .select({ id: message.id })
-      .from(message)
-      .where(
-        and(eq(message.chatId, chatId), gte(message.createdAt, timestamp))
+    return await db.transaction(async (tx) => {
+      const messagesToDelete = await tx
+        .select({ id: message.id })
+        .from(message)
+        .where(
+          and(eq(message.chatId, chatId), gte(message.createdAt, timestamp))
+        );
+
+      const messageIds = messagesToDelete.map(
+        (currentMessage) => currentMessage.id
       );
 
-    const messageIds = messagesToDelete.map(
-      (currentMessage) => currentMessage.id
-    );
-
-    if (messageIds.length > 0) {
-      return await db
-        .delete(message)
-        .where(
-          and(eq(message.chatId, chatId), inArray(message.id, messageIds))
-        );
-    }
+      if (messageIds.length > 0) {
+        return await tx
+          .delete(message)
+          .where(
+            and(eq(message.chatId, chatId), inArray(message.id, messageIds))
+          );
+      }
+    });
   } catch (error) {
     throw new ChatbotError("bad_request:database", { cause: error });
   }

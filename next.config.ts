@@ -17,18 +17,12 @@ const nextConfig: NextConfig = {
         ],
       }
     : {}),
-  cacheComponents: true,
   devIndicators: false,
   env: {
     NEXT_PUBLIC_BASE_PATH: basePath,
   },
   experimental: {
-    appNewScrollHandler: true,
-    cachedNavigations: true,
-    inlineCss: true,
     optimizePackageImports: ["framer-motion", "shiki", "streamdown"],
-    prefetchInlining: true,
-    turbopackFileSystemCacheForDev: true,
   },
   images: {
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
