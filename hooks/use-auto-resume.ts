@@ -30,7 +30,7 @@ export function useAutoResume({
     if (mostRecentMessage?.role === "user") {
       resumeStream();
     }
-  }, [autoResume, initialMessages.at, resumeStream]);
+  }, [autoResume, initialMessages, resumeStream]);
 
   useEffect(() => {
     if (!dataStream) {
@@ -43,7 +43,13 @@ export function useAutoResume({
     const [dataPart] = dataStream;
 
     if (dataPart.type === "data-appendMessage") {
-      const message = JSON.parse(dataPart.data);
+      let message: ChatMessage;
+      try {
+        message = JSON.parse(dataPart.data) as ChatMessage;
+      } catch {
+        console.error("[use-auto-resume] malformed data-appendMessage chunk");
+        return;
+      }
       setMessages([...initialMessages, message]);
     }
   }, [dataStream, initialMessages, setMessages]);

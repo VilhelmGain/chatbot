@@ -1,5 +1,6 @@
 #!/bin/sh
 set -e
+trap 'rm -f /tmp/migrate.mjs' EXIT
 
 if [ -z "$ENCRYPTION_KEY" ]; then
   echo "ERROR: ENCRYPTION_KEY is not set. It is required to encrypt provider API keys."
@@ -8,51 +9,54 @@ if [ -z "$ENCRYPTION_KEY" ]; then
 fi
 
 echo "Running database migrations..."
-node -e "
-const { config } = require('dotenv');
-const { drizzle } = require('drizzle-orm/postgres-js');
-const { migrate } = require('drizzle-orm/postgres-js/migrator');
-const postgres = require('postgres');
+# Write migration script to a temp file to avoid shell quoting issues with POSTGRES_URL
+cat > /tmp/migrate.mjs <<'MIGRATE_EOF'
+import postgres from "postgres";
+import { drizzle } from "drizzle-orm/postgres-js";
+import { migrate } from "drizzle-orm/postgres-js/migrator";
 
 async function waitForPostgres(url, maxAttempts = 30) {
-  console.log('Waiting for PostgreSQL...');
+  console.log("Waiting for PostgreSQL...");
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    let connection;
     try {
-      const connection = postgres(url, { max: 1 });
-      await connection\`SELECT 1\`;
+      connection = postgres(url, { max: 1 });
+      await connection`SELECT 1`;
       await connection.end();
-      console.log('PostgreSQL is ready!');
+      console.log("PostgreSQL is ready!");
       return true;
     } catch (err) {
-      console.log(\`Attempt \${attempt}/\${maxAttempts}: PostgreSQL not ready, waiting...\`);
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      try { if (connection) await connection.end(); } catch {}
+      console.log(`Attempt ${attempt}/${maxAttempts}: PostgreSQL not ready, waiting...`);
+      await new Promise((resolve) => setTimeout(resolve, 2000));
     }
   }
-  console.error('PostgreSQL did not become ready in time');
+  console.error("PostgreSQL did not become ready in time");
   return false;
 }
 
-(async () => {
-  if (!process.env.POSTGRES_URL) {
-    console.log('POSTGRES_URL not defined, skipping migrations');
-    process.exit(0);
-  }
-  
-  const isReady = await waitForPostgres(process.env.POSTGRES_URL);
-  if (!isReady) {
-    process.exit(1);
-  }
-  
-  const connection = postgres(process.env.POSTGRES_URL, { max: 1 });
-  const db = drizzle(connection);
-  console.log('Running migrations...');
-  await migrate(db, { migrationsFolder: './lib/db/migrations' });
-  console.log('Migrations complete');
+if (!process.env.POSTGRES_URL) {
+  console.log("POSTGRES_URL not defined, skipping migrations");
   process.exit(0);
-})().catch((err) => {
-  console.error('Migration failed:', err);
+}
+
+const isReady = await waitForPostgres(process.env.POSTGRES_URL);
+if (!isReady) {
   process.exit(1);
-});
-"
+}
+
+let _conn;
+try {
+  _conn = postgres(process.env.POSTGRES_URL, { max: 1 });
+  const db = drizzle(_conn);
+  console.log("Running migrations...");
+  await migrate(db, { migrationsFolder: "./lib/db/migrations" });
+  console.log("Migrations complete");
+} finally {
+  try { if (_conn) await _conn.end(); } catch {}
+}
+process.exit(0);
+MIGRATE_EOF
+node /tmp/migrate.mjs
 echo "Starting application..."
 exec node server.js

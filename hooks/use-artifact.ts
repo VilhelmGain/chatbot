@@ -30,7 +30,11 @@ export type ArtifactMetadata = Record<string, unknown> | null;
 
 export function useArtifactSelector<Selected>(selector: Selector<Selected>) {
   const { data: localArtifact } = useSWR<UIArtifact>("artifact", null, {
+    dedupingInterval: 0,
     fallbackData: initialArtifactData,
+    revalidateIfStale: false,
+    revalidateOnFocus: false,
+    revalidateOnReconnect: false,
   });
 
   const selectedValue = useMemo(() => {
@@ -48,7 +52,11 @@ export function useArtifact() {
     "artifact",
     null,
     {
+      dedupingInterval: 0,
       fallbackData: initialArtifactData,
+      revalidateIfStale: false,
+      revalidateOnFocus: false,
+      revalidateOnReconnect: false,
     }
   );
 
@@ -80,7 +88,11 @@ export function useArtifact() {
         artifact.documentId ? `artifact-metadata-${artifact.documentId}` : null,
       null,
       {
+        dedupingInterval: 0,
         fallbackData: null,
+        revalidateIfStale: false,
+        revalidateOnFocus: false,
+        revalidateOnReconnect: false,
       }
     );
 

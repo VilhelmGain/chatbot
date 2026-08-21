@@ -10,11 +10,7 @@
     "indentWidth": 2
   },
   "files": {
-    "includes": [
-      "**/*",
-      "!components/ui",
-      "!lib/db/migrations"
-    ]
+    "includes": ["**/*", "!components/ui", "!lib/db/migrations"]
   },
   "linter": {
     "rules": {
@@ -24,10 +20,7 @@
         "noConsole": {
           "level": "warn",
           "options": {
-            "allow": [
-              "warn",
-              "error"
-            ]
+            "allow": ["warn", "error"]
           }
         },
         "noBitwiseOperators": "off",

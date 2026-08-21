@@ -5,9 +5,19 @@ config({
   path: ".env.local",
 });
 
+const postgresUrl = process.env.POSTGRES_URL;
+if (!postgresUrl) {
+  const msg =
+    "[drizzle.config] POSTGRES_URL is not set – drizzle-kit commands will fail without a database URL";
+  if (process.env.NODE_ENV === "production") {
+    throw new Error(msg);
+  }
+  console.warn(msg);
+}
+
 export default defineConfig({
   dbCredentials: {
-    url: process.env.POSTGRES_URL ?? "",
+    url: postgresUrl ?? "",
   },
   dialect: "postgresql",
   out: "./lib/db/migrations",

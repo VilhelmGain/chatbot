@@ -444,10 +444,13 @@ function PureArtifact({
     return (
       <motion.div
         animate={{ opacity: 1, x: 0, y: 0 }}
+        aria-label={artifact.title || "Artifact"}
+        aria-modal="true"
         className="fixed inset-0 z-50 flex h-dvh flex-col overflow-hidden bg-sidebar"
         data-testid="artifact"
         exit={{ opacity: 0, scale: 0.95 }}
         initial={{ opacity: 0, x: 0, y: 12 }}
+        role="dialog"
         transition={{ damping: 30, stiffness: 300, type: "spring" }}
       >
         {artifactPanel}
