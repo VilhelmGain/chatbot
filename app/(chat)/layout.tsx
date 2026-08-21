@@ -8,8 +8,15 @@ import { DataStreamProvider } from "@/components/chat/data-stream-provider";
 import { PreferencesSync } from "@/components/preferences-sync";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { ActiveChatProvider } from "@/hooks/use-active-chat";
-import { isTestEnvironment } from "@/lib/constants";
+import { isTestEnvironmentNow } from "@/lib/constants";
 import { auth } from "../(auth)/auth";
+
+function isClerkConfiguredNow(): boolean {
+  return (
+    Boolean(process.env.CLERK_SECRET_KEY) &&
+    Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY)
+  );
+}
 
 export const metadata: Metadata = {
   robots: {
@@ -43,9 +50,15 @@ async function SidebarShell({ children }: { children: React.ReactNode }) {
   const [session, cookieStore] = await Promise.all([auth(), cookies()]);
   const isCollapsed = cookieStore.get("sidebar_state")?.value !== "true";
 
+  const useTestAuth =
+    isTestEnvironmentNow() ||
+    !isClerkConfiguredNow() ||
+    !process.env.POSTGRES_URL ||
+    process.env.VERCEL_ENV === "preview";
+
   return (
     <SidebarProvider defaultOpen={!isCollapsed}>
-      <AppSidebar testEnvironment={isTestEnvironment} user={session?.user} />
+      <AppSidebar testEnvironment={useTestAuth} user={session?.user} />
       <SidebarInset>
         <Suspense fallback={<div className="flex h-dvh" />}>
           <ActiveChatProvider>

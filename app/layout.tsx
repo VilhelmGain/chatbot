@@ -228,7 +228,10 @@ export default function RootLayout({
           disableTransitionOnChange
           enableSystem
         >
-          {isTestEnvironmentNow() || !isClerkConfigured() ? (
+          {isTestEnvironmentNow() ||
+          !isClerkConfigured() ||
+          !process.env.POSTGRES_URL ||
+          process.env.VERCEL_ENV === "preview" ? (
             <TooltipProvider>{children}</TooltipProvider>
           ) : (
             <ClerkProvider>
