@@ -47,7 +47,8 @@ function getLiveProviders(force = false): Promise<ProviderMap | null> {
     return liveInFlight;
   }
 
-  const fetchPromise: Promise<ProviderMap | null> = (async () => {
+  let fetchPromise!: Promise<ProviderMap | null>;
+  fetchPromise = (async () => {
     try {
       const client = Models.make();
       const liveProviders = (await client.providers({
@@ -66,7 +67,9 @@ function getLiveProviders(force = false): Promise<ProviderMap | null> {
       liveCache = { fetchedAt: Date.now(), providers: null };
       return null;
     } finally {
-      liveInFlight = null;
+      if (liveInFlight === fetchPromise) {
+        liveInFlight = null;
+      }
     }
   })();
 
