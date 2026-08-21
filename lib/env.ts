@@ -26,6 +26,13 @@ function isBuildPhase(): boolean {
   return process.env.NEXT_PHASE === "phase-production-build";
 }
 
+function isClerkConfigured(): boolean {
+  return (
+    Boolean(process.env.CLERK_SECRET_KEY) &&
+    Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY)
+  );
+}
+
 function parseEnv(): Env {
   const parsed = envSchema.safeParse(process.env);
   if (!parsed.success) {
@@ -48,7 +55,18 @@ function parseEnv(): Env {
     }
     // Demo mode (and PLAYWRIGHT in non-prod) runs with no ENCRYPTION_KEY/DB.
     // Don't fail fast when DEMO_MODE is active — let assertProductionSecurity handle prod demo gating.
-    if (isProd && !isDemoActive()) {
+    // Also don't fail when Clerk isn't configured or when DB/env is missing in
+    // Vercel preview — the app falls back to demo/in-memory handling instead
+    // of crashing instrumentation with 500. Preview deployments on PRs often
+    // have NEXT_PUBLIC_APP_URL/Clerk set but no ENCRYPTION_KEY/POSTGRES_URL.
+    const isVercelPreview = process.env.VERCEL_ENV === "preview";
+    if (
+      isProd &&
+      !isDemoActive() &&
+      isClerkConfigured() &&
+      !isVercelPreview &&
+      process.env.POSTGRES_URL
+    ) {
       throw new Error(`[env] Invalid environment: ${issues}`);
     }
     // In dev/test, or demo in prod, allow missing ENCRYPTION_KEY / POSTGRES_URL
@@ -74,7 +92,8 @@ function parseEnv(): Env {
     try {
       const u = new URL(env.NEXT_PUBLIC_APP_URL);
       const host = u.hostname.toLowerCase();
-      const isLocal = host === "localhost" || host === "127.0.0.1" || host === "::1";
+      const isLocal =
+        host === "localhost" || host === "127.0.0.1" || host === "::1";
       if (isLocal) {
         // Allow http for localhost in production (Docker self-hosted)
       } else {
@@ -106,11 +125,16 @@ export function getEnv(): Env {
 }
 
 // Eager validation in production to fail fast on startup (import side-effect)
-// Never run during next build, and skip when DEMO_MODE is active.
+// Never run during next build, and skip when DEMO_MODE is active, when Clerk
+// is not configured, or in Vercel preview without POSTGRES_URL — all fall
+// back to demo/in-memory.
 if (
   !isBuildPhase() &&
   process.env.NODE_ENV === "production" &&
-  !isDemoActive()
+  !isDemoActive() &&
+  isClerkConfigured() &&
+  process.env.VERCEL_ENV !== "preview" &&
+  Boolean(process.env.POSTGRES_URL)
 ) {
   getEnv();
 }

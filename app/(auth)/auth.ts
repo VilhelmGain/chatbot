@@ -2,7 +2,7 @@ import crypto from "node:crypto";
 import { auth as clerkAuth, currentUser } from "@clerk/nextjs/server";
 import { cookies } from "next/headers";
 import { z } from "zod";
-import { isDemoMode, isTestEnvironment } from "@/lib/constants";
+import { isDemoModeNow, isTestEnvironmentNow } from "@/lib/constants";
 import {
   createUserFromClerk,
   getOrCreateUserByEmail,
@@ -78,7 +78,7 @@ function verifySignedTestUserCookie(raw: string): string | null {
   const secret = process.env.ENCRYPTION_KEY;
   if (!secret) {
     // No key configured (e.g. CI without .env) — accept plain for test env.
-    if (isTestEnvironment) {
+    if (isTestEnvironmentNow()) {
       const plain = emailSchema.safeParse(raw);
       if (plain.success) {
         return plain.data;
@@ -145,8 +145,20 @@ export type Session = {
   user: User;
 };
 
+function isClerkConfigured(): boolean {
+  return (
+    Boolean(process.env.CLERK_SECRET_KEY) &&
+    Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY)
+  );
+}
+
 export async function auth(): Promise<Session | null> {
-  if (isTestEnvironment) {
+  if (
+    isTestEnvironmentNow() ||
+    !isClerkConfigured() ||
+    !process.env.POSTGRES_URL ||
+    process.env.VERCEL_ENV === "preview"
+  ) {
     const cookieStore = await cookies();
     const rawCookie = cookieStore.get("test-user")?.value;
 
@@ -160,10 +172,17 @@ export async function auth(): Promise<Session | null> {
       if (!checkTestUserRateLimit(`test-user:${email}`)) {
         return null;
       }
-    } else if (isDemoMode) {
+    } else if (
+      isDemoModeNow() ||
+      !isClerkConfigured() ||
+      !process.env.POSTGRES_URL ||
+      process.env.VERCEL_ENV === "preview"
+    ) {
       // Per-session demo user is minted in middleware (see middleware.ts).
       // Middleware uses plain demo-.*@demo.local for Edge compatibility;
-      // accept both signed and plain demo pattern when isDemoMode.
+      // accept both signed and plain demo pattern when isDemoMode. In
+      // Vercel preview without DB we also mint demo-session so preview stays
+      // usable without Clerk sign-in.
       const demoCookie = cookieStore.get("demo-session")?.value;
       if (!demoCookie) {
         return null;

@@ -5,8 +5,15 @@ import { Suspense } from "react";
 import { NonceScripts } from "@/components/nonce-scripts";
 import { ThemeProvider } from "@/components/theme-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { isTestEnvironment } from "@/lib/constants";
+import { isTestEnvironmentNow } from "@/lib/constants";
 import { getCanonicalUrl, getMetadataBase } from "@/lib/seo";
+
+function isClerkConfigured(): boolean {
+  return (
+    Boolean(process.env.CLERK_SECRET_KEY) &&
+    Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY)
+  );
+}
 
 import "./globals.css";
 
@@ -103,7 +110,7 @@ export default function RootLayout({
           disableTransitionOnChange
           enableSystem
         >
-          {isTestEnvironment ? (
+          {isTestEnvironmentNow() || !isClerkConfigured() ? (
             <TooltipProvider>{children}</TooltipProvider>
           ) : (
             <ClerkProvider>

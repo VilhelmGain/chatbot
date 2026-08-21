@@ -1,7 +1,7 @@
 import type { Model, Provider, ProviderMap } from "@opencode-ai/models";
 import { Models } from "@opencode-ai/models";
 import { generatedAt, providers } from "@opencode-ai/models/snapshot";
-import { isTestEnvironment } from "../constants";
+import { isTestEnvironmentNow } from "../constants";
 import type { ModelPricing } from "../db/schema";
 
 export type CatalogProvider = {
@@ -34,7 +34,7 @@ let liveCache: { fetchedAt: number; providers: ProviderMap | null } | null =
 let liveInFlight: Promise<ProviderMap | null> | null = null;
 
 function getLiveProviders(force = false): Promise<ProviderMap | null> {
-  if (isTestEnvironment) {
+  if (isTestEnvironmentNow()) {
     return Promise.resolve(null);
   }
 
