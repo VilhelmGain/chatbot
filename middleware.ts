@@ -51,7 +51,7 @@ function applySecurityHeaders(response: NextResponse, nonce: string): void {
     "default-src 'self'",
     `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https://cdn.jsdelivr.net https://*.clerk.com https://*.clerk.accounts.dev`,
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-    "img-src 'self' data: blob: https://img.clerk.com https://*.clerk.com https://*.clerk.accounts.dev https://*.googleusercontent.com https://*.githubusercontent.com https://*.gravatar.com",
+    "img-src 'self' data: blob: https://img.clerk.com https://images.clerk.dev https://*.clerk.com https://*.clerk.accounts.dev https://*.googleusercontent.com https://*.githubusercontent.com https://*.gravatar.com https://models.dev",
     "font-src 'self' data:",
     "connect-src 'self' https://*.clerk.com https://*.clerk.accounts.dev https://cdn.jsdelivr.net",
     "frame-ancestors 'none'",
@@ -245,7 +245,9 @@ function withMiddlewareErrorHandling(
       if (isDemoModeNow() || !isClerkConfiguredNow()) {
         try {
           return handleTestRequest(request);
-        } catch {}
+        } catch {
+          // Intentional: fall through to the generic 500 response below.
+        }
       }
       // Return a response instead of throwing — throwing causes Vercel's
       // MIDDLEWARE_INVOCATION_FAILED 500 page. 500 JSON keeps the edge
