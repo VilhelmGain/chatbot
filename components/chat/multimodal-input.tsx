@@ -74,6 +74,16 @@ function setCookie(name: string, value: string) {
   document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=${maxAge}`;
 }
 
+const MODEL_ID_RE =
+  /^([a-z0-9_-]+\/[a-z0-9._-]+|custom-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/[a-z0-9._-]+)$/i;
+
+function isValidModelIdFormat(id: string): boolean {
+  if (!id || id.length === 0 || id.length > 200) {
+    return false;
+  }
+  return MODEL_ID_RE.test(id);
+}
+
 function PureMultimodalInput({
   chatId,
   input,
@@ -231,6 +241,11 @@ function PureMultimodalInput({
   );
 
   const submitForm = useCallback(() => {
+    if (!isValidModelIdFormat(selectedModelId)) {
+      toast.error("Please select a valid model before sending.");
+      return;
+    }
+
     window.history.pushState(
       {},
       "",
@@ -269,6 +284,7 @@ function PureMultimodalInput({
     setLocalStorageInput,
     width,
     chatId,
+    selectedModelId,
   ]);
 
   const uploadFile = useCallback(async (file: File) => {
@@ -395,6 +411,8 @@ function PureMultimodalInput({
     setSlashOpen(false);
   }, []);
 
+  const hasValidModel = isValidModelIdFormat(selectedModelId);
+
   const handlePromptSubmit = useCallback(() => {
     if (input.startsWith("/")) {
       const query = input.slice(1).trim();
@@ -407,12 +425,23 @@ function PureMultimodalInput({
     if (!input.trim() && attachments.length === 0) {
       return;
     }
+    if (!hasValidModel) {
+      toast.error("Please select a model before sending.");
+      return;
+    }
     if (status === "ready" || status === "error") {
       submitForm();
     } else {
       toast.error("Please wait for the model to finish its response!");
     }
-  }, [attachments.length, handleSlashSelect, input, status, submitForm]);
+  }, [
+    attachments.length,
+    handleSlashSelect,
+    hasValidModel,
+    input,
+    status,
+    submitForm,
+  ]);
 
   const handleTextareaKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -581,12 +610,14 @@ function PureMultimodalInput({
               <PromptInputSubmit
                 className={cn(
                   "h-7 w-7 shrink-0 rounded-lg transition-all duration-200",
-                  input.trim()
+                  input.trim() && hasValidModel
                     ? "bg-foreground text-background hover:opacity-85 active:scale-95"
                     : "bg-foreground/5 text-muted-foreground/25 cursor-not-allowed"
                 )}
                 data-testid="send-button"
-                disabled={!input.trim() || uploadQueue.length > 0}
+                disabled={
+                  !input.trim() || uploadQueue.length > 0 || !hasValidModel
+                }
                 status={status}
                 variant="secondary"
               >

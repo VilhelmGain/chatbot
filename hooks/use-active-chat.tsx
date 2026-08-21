@@ -54,9 +54,29 @@ type ActiveChatContextValue = {
 
 const ActiveChatContext = createContext<ActiveChatContextValue | null>(null);
 
+const MODEL_ID_RE =
+  /^([a-z0-9_-]+\/[a-z0-9._-]+|custom-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/[a-z0-9._-]+)$/i;
+
+function isValidModelIdFormat(id: string): boolean {
+  if (!id || id.length === 0 || id.length > 200) {
+    return false;
+  }
+  return MODEL_ID_RE.test(id);
+}
+
+function isValidUUID(value: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+    value
+  );
+}
+
 function extractChatId(pathname: string): string | null {
   const match = pathname.match(/\/chat\/([^/]+)/);
-  return match ? match[1] : null;
+  const candidate = match ? match[1] : null;
+  if (candidate && isValidUUID(candidate)) {
+    return candidate;
+  }
+  return null;
 }
 
 export function ActiveChatProvider({ children }: { children: ReactNode }) {
@@ -128,6 +148,11 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
     fetcher,
     { dedupingInterval: 3_600_000 }
   );
+
+  const modelsDataRef = useRef(modelsData);
+  useEffect(() => {
+    modelsDataRef.current = modelsData;
+  }, [modelsData]);
 
   const { data: chatData, isLoading } = useSWR(
     isNewChat
@@ -206,6 +231,32 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
             })
           );
 
+        // Resolve effective model: prefer current selection, fallback to first available model
+        let effectiveModelId = currentModelIdRef.current;
+        const fallbackId =
+          (modelsDataRef.current as { models?: { id: string }[] } | undefined)
+            ?.models?.[0]?.id ?? "";
+        if (
+          (!isValidModelIdFormat(effectiveModelId) ||
+            (modelsDataRef.current?.models?.length &&
+              !modelsDataRef.current.models.some(
+                (m) => m.id === effectiveModelId
+              ))) &&
+          fallbackId &&
+          isValidModelIdFormat(fallbackId)
+        ) {
+          effectiveModelId = fallbackId;
+          // Keep ref in sync so subsequent sends are stable
+          currentModelIdRef.current = fallbackId;
+        }
+
+        if (!isValidModelIdFormat(effectiveModelId)) {
+          throw new ChatbotError(
+            "bad_request:chat",
+            "No model selected. Please choose a model before sending."
+          );
+        }
+
         return {
           body: {
             id: request.id,
@@ -214,7 +265,7 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
               : { message: lastMessage }),
             enabledTools: enabledToolsRef.current,
             reasoningEffort: reasoningEffortRef.current,
-            selectedChatModel: currentModelIdRef.current,
+            selectedChatModel: effectiveModelId,
             selectedVisibilityType: visibility,
             ...request.body,
           },
@@ -288,7 +339,19 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const firstModelId = modelsData?.models?.[0]?.id;
-    if (!firstModelId || currentModelId) {
+    if (!firstModelId) {
+      return;
+    }
+    const availableIds = new Set(
+      (modelsData?.models ?? []).map((m: { id: string }) => m.id)
+    );
+    const currentIsValid =
+      currentModelId.length > 0 &&
+      isValidModelIdFormat(currentModelId) &&
+      (availableIds.size === 0 || availableIds.has(currentModelId));
+    // If no valid model is selected, or the cookie points to a deleted model,
+    // fall back to the first available model
+    if (currentIsValid) {
       return;
     }
     setCurrentModelId(firstModelId);

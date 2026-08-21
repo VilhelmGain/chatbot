@@ -130,11 +130,11 @@ export async function POST(request: Request) {
     requestBody = postRequestBodySchema.parse(json);
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return new ChatbotError(
-        "bad_request:api",
-        error.issues.map((i) => i.message).join(", ")
-      ).toResponse();
+      const cause = error.issues.map((i) => i.message).join(", ");
+      console.error("Chat API Zod validation failed:", cause, error.issues);
+      return new ChatbotError("bad_request:api", cause).toResponse();
     }
+    console.error("Chat API JSON parse failed:", error);
     return new ChatbotError("bad_request:api").toResponse();
   }
 
@@ -156,7 +156,20 @@ export async function POST(request: Request) {
     }
 
     const chatModel = selectedChatModel;
-    const providerId = chatModel.split("/")[0].slice(7);
+    const [providerPrefix] = chatModel.split("/");
+    if (!providerPrefix.startsWith("custom-")) {
+      console.error("Invalid model prefix:", selectedChatModel);
+      return new ChatbotError("bad_request:chat").toResponse();
+    }
+    const providerId = providerPrefix.slice(7);
+    // Validate that providerId is a UUID before querying DB to avoid
+    // leaking DB errors as 503/400 mismatches
+    if (!z.string().uuid().safeParse(providerId).success) {
+      console.error("Invalid provider ID format:", providerId, {
+        chatModel: selectedChatModel,
+      });
+      return new ChatbotError("bad_request:chat").toResponse();
+    }
     const modelIdPart = chatModel.split("/").slice(1).join("/");
 
     const [
