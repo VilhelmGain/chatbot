@@ -10,10 +10,10 @@ import {
 import { ChatbotError } from "@/lib/errors";
 
 const documentSchema = z.object({
-  content: z.string(),
+  content: z.string().min(1).max(100_000),
   isManualEdit: z.boolean().optional(),
   kind: z.enum(["text", "code", "image", "sheet"]),
-  title: z.string(),
+  title: z.string().min(1).max(200),
 });
 
 export async function GET(request: Request) {

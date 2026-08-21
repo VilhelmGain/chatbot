@@ -1,10 +1,13 @@
 import { readFile, stat, writeFile } from "node:fs/promises";
-import { basename, join } from "node:path";
+import { basename, isAbsolute, join, relative, resolve } from "node:path";
 import { NextResponse } from "next/server";
 
 import { auth } from "@/app/(auth)/auth";
+import { isBlockedMediaType } from "@/lib/attachments";
 
-const UPLOAD_DIR = process.env.UPLOAD_DIR ?? "./uploads";
+function getUploadDir(): string {
+  return process.env.UPLOAD_DIR ?? "./uploads";
+}
 
 // Only safe types are served with their native Content-Type.
 // Dangerous types (html/js/xml/svg) are forced to a safe type and served as attachment.
@@ -51,11 +54,12 @@ export async function GET(
     return NextResponse.json({ error: "File not found" }, { status: 404 });
   }
 
-  const uploadDir = join(process.cwd(), UPLOAD_DIR);
-  const filePath = join(uploadDir, safeName);
+  const uploadDir = resolve(process.cwd(), getUploadDir());
+  const filePath = resolve(uploadDir, safeName);
 
-  // Prevent path traversal: filePath must stay inside uploadDir
-  if (!filePath.startsWith(uploadDir)) {
+  // Prevent path traversal: filePath must stay inside uploadDir (hardened via relative)
+  const rel = relative(uploadDir, filePath);
+  if (isAbsolute(rel) || rel.startsWith("..")) {
     return NextResponse.json({ error: "File not found" }, { status: 404 });
   }
 
@@ -63,10 +67,15 @@ export async function GET(
   const metaPath = join(uploadDir, ".meta", `${safeName}.json`);
   let isOwner = false;
   let metaExists = false;
+  let storedContentType: string | undefined;
   try {
     const metaRaw = await readFile(metaPath, "utf8");
-    const meta = JSON.parse(metaRaw) as { userId?: string };
+    const meta = JSON.parse(metaRaw) as {
+      userId?: string;
+      contentType?: string;
+    };
     metaExists = true;
+    storedContentType = meta.contentType;
     if (meta.userId && meta.userId === session.user.id) {
       isOwner = true;
     } else {
@@ -148,7 +157,8 @@ export async function GET(
   try {
     const data = await readFile(filePath);
     const ext = safeName.split(".").pop()?.toLowerCase() ?? "";
-    const isDangerous = DANGEROUS_EXTS.has(ext);
+    const isDangerous =
+      DANGEROUS_EXTS.has(ext) || isBlockedMediaType(storedContentType);
     const contentType = isDangerous
       ? "text/plain; charset=utf-8"
       : (CONTENT_TYPES[ext] ?? "application/octet-stream");

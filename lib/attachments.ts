@@ -22,17 +22,24 @@ export const TEXT_MEDIA_TYPES = [
   "text/plain",
   "text/markdown",
   "text/csv",
-  "text/html",
   "application/json",
   "application/xml",
-  "text/javascript",
-  "text/x-typescript",
-  "text/typescript",
-  "text/x-shellscript",
   "text/yaml",
   "text/x-yaml",
   "application/yaml",
   "application/x-yaml",
+] as const;
+
+export const BLOCKED_MEDIA_TYPES: readonly string[] = [
+  "text/html",
+  "text/javascript",
+  "application/javascript",
+  "application/xhtml+xml",
+  "text/css",
+  "image/svg+xml",
+  "text/x-shellscript",
+  "text/x-typescript",
+  "text/typescript",
 ] as const;
 
 export const ALLOWED_MEDIA_TYPES: readonly string[] = [
@@ -42,6 +49,13 @@ export const ALLOWED_MEDIA_TYPES: readonly string[] = [
 ];
 
 export const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+
+export function isBlockedMediaType(mediaType: string | undefined): boolean {
+  return (
+    mediaType !== undefined &&
+    (BLOCKED_MEDIA_TYPES as readonly string[]).includes(mediaType)
+  );
+}
 
 export function isImageMediaType(mediaType: string | undefined): boolean {
   return (
@@ -63,9 +77,10 @@ export function isTextMediaType(mediaType: string | undefined): boolean {
 
 export function isAllowedMediaType(mediaType: string | undefined): boolean {
   return (
-    isImageMediaType(mediaType) ||
-    isPdfMediaType(mediaType) ||
-    isTextMediaType(mediaType)
+    !isBlockedMediaType(mediaType) &&
+    (isImageMediaType(mediaType) ||
+      isPdfMediaType(mediaType) ||
+      isTextMediaType(mediaType))
   );
 }
 
@@ -73,9 +88,13 @@ export function isAllowedMediaType(mediaType: string | undefined): boolean {
 // Server-side resolver
 // ---------------------------------------------------------------------------
 
-const UPLOAD_DIR = process.env.UPLOAD_DIR ?? "./uploads";
+function getUploadDir(): string {
+  return process.env.UPLOAD_DIR ?? "./uploads";
+}
 
-const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+function getBasePath(): string {
+  return process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+}
 
 /**
  * Returns true when `url` points at this app's own file-serving route
@@ -84,15 +103,26 @@ const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
  * arbitrary external URLs) to data URLs.
  */
 export function isLocalFileUrl(url: string | undefined): boolean {
-  if (url === undefined) {
+  if (url === undefined || url === "") {
+    return false;
+  }
+  if (url.startsWith("//")) {
     return false;
   }
   try {
-    const { pathname } = new URL(url, "http://local.invalid");
-    return (
-      pathname.startsWith("/api/files/") ||
-      pathname.startsWith(`${BASE_PATH}/api/files/`)
-    );
+    const parsed = new URL(url, "http://local.invalid");
+    if (parsed.origin !== "http://local.invalid") {
+      return false;
+    }
+    const { pathname } = parsed;
+    const basePath = getBasePath();
+    if (pathname.startsWith("/api/files/")) {
+      return true;
+    }
+    if (basePath && pathname.startsWith(`${basePath}/api/files/`)) {
+      return true;
+    }
+    return false;
   } catch {
     return false;
   }
@@ -143,9 +173,14 @@ export async function localFileUrlToDataUrl(
   }
 
   try {
-    const { join } = await import("node:path");
+    const { resolve, relative, isAbsolute } = await import("node:path");
     const { cwd } = await import("node:process");
-    const filePath = join(cwd(), UPLOAD_DIR, filename);
+    const uploadDir = resolve(cwd(), getUploadDir());
+    const filePath = resolve(uploadDir, filename);
+    const rel = relative(uploadDir, filePath);
+    if (isAbsolute(rel) || rel.startsWith("..")) {
+      return null;
+    }
     const buffer = await readFile(filePath);
     return `data:${mediaType};base64,${buffer.toString("base64")}`;
   } catch (error) {

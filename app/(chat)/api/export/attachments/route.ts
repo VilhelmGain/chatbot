@@ -2,6 +2,7 @@ import { format } from "date-fns";
 import { zipSync } from "fflate";
 import { z } from "zod";
 import { auth } from "@/app/(auth)/auth";
+import { sanitizeFilename } from "@/lib/attachments";
 import { getAllMessagesByUserId } from "@/lib/db/queries";
 import { ChatbotError } from "@/lib/errors";
 import {
@@ -12,6 +13,9 @@ import {
 } from "@/lib/export/attachments";
 import { checkExportRateLimit } from "@/lib/ratelimit";
 import { getClientIp } from "@/lib/server/request-utils";
+
+const MAX_EXPORT_BYTES = 100 * 1024 * 1024;
+const MAX_FILES = 100;
 
 const exportAttachmentsBodySchema = z.object({
   attachmentIds: z.array(z.string()).max(100).optional(),
@@ -72,6 +76,9 @@ export async function POST(request: Request) {
     ? attachments.filter((attachment) => attachmentIds.includes(attachment.id))
     : attachments;
 
+  const totalSelected = selected.length;
+  const capped = selected.slice(0, MAX_FILES);
+
   const files: Record<string, Uint8Array> = {};
   const usedPaths = new Set<string>();
   const included: Array<{
@@ -80,30 +87,42 @@ export async function POST(request: Request) {
     path: string;
   }> = [];
   const excluded: Array<{ name: string; reason: string; url: string }> = [];
+  if (selected.length > MAX_FILES) {
+    for (const attachment of selected.slice(MAX_FILES)) {
+      excluded.push({
+        name: sanitizeFilename(attachment.name),
+        reason: "exceeds file count limit",
+        url: attachment.url,
+      });
+    }
+  }
 
-  const readResults = await Promise.all(
-    selected.map(async (attachment) => ({
-      attachment,
-      result: await readLocalAttachment(attachment.url),
-    }))
-  );
-
-  for (const { attachment, result } of readResults) {
+  let totalBytes = 0;
+  for (const attachment of capped) {
+    // biome-ignore lint/performance/noAwaitInLoops: sequential caps memory, avoids OOM
+    const result = await readLocalAttachment(attachment.url);
     if (result.status !== "ok") {
       excluded.push({
-        name: attachment.name,
+        name: sanitizeFilename(attachment.name),
         reason: result.status === "external" ? "external URL" : "missing file",
         url: attachment.url,
       });
       continue;
     }
 
-    const path = uniqueZipPath(
-      attachment.chatTitle,
-      attachment.name,
-      usedPaths
-    );
+    if (totalBytes + result.data.length > MAX_EXPORT_BYTES) {
+      excluded.push({
+        name: sanitizeFilename(attachment.name),
+        reason: "exceeds export size limit",
+        url: attachment.url,
+      });
+      continue;
+    }
+
+    const safeName = sanitizeFilename(attachment.name);
+    const path = uniqueZipPath(attachment.chatTitle, safeName, usedPaths);
     files[path] = result.data;
+    totalBytes += result.data.length;
     included.push({
       chatTitle: attachment.chatTitle,
       messageCreatedAt: attachment.messageCreatedAt,
@@ -117,7 +136,7 @@ export async function POST(request: Request) {
       excluded,
       exportedAt,
       files: included,
-      totalSelected: selected.length,
+      totalSelected,
     })
   );
 

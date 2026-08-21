@@ -315,6 +315,24 @@ function getChatById({ id }: { id: string }): Chat | null {
   return store.chats.get(id) ?? null;
 }
 
+function getChatsByIds({ ids }: { ids: string[] }): Chat[] {
+  if (ids.length === 0) {
+    return [];
+  }
+  const set = new Set(ids);
+  return [...store.chats.values()].filter((c) => set.has(c.id));
+}
+
+function getMessagesByChatIds({ ids }: { ids: string[] }): DBMessage[] {
+  if (ids.length === 0) {
+    return [];
+  }
+  const set = new Set(ids);
+  return [...store.messages.values()]
+    .filter((m) => set.has(m.chatId))
+    .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+}
+
 function saveMessages({ messages }: { messages: DBMessage[] }) {
   if (messages.length === 0) {
     return;
@@ -1133,6 +1151,7 @@ export const inMemoryQueries = {
   getAllMessagesByUserId,
   getCatalogSync,
   getChatById,
+  getChatsByIds,
   getChatsByUserId,
   getCustomModelsByProviderId,
   getCustomModelsByProviderIds,
@@ -1146,6 +1165,7 @@ export const inMemoryQueries = {
   getMessageById,
   getMessageCountByUserId,
   getMessagesByChatId,
+  getMessagesByChatIds,
   getOrCreateUserByEmail,
   getStreamIdsByChatId,
   getSuggestionsByDocumentId,
