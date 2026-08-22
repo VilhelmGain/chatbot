@@ -20,7 +20,7 @@ const buttonVariants = cva(
         ghost:
           "hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground",
         destructive:
-          "bg-error/10 text-error border border-error/20 hover:bg-error/20 focus-visible:border-error/40 focus-visible:ring-error/20",
+          "bg-error/10 text-error border border-error/20 hover:bg-error/20 focus:outline-none focus-visible:outline-none",
         link: "text-primary underline-offset-4 hover:underline",
         glass:
           "glass-surface text-foreground transition-all duration-200 hover:glass-floating hover:-translate-y-px",
