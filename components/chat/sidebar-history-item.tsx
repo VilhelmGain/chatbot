@@ -165,7 +165,7 @@ const PureChatItem = ({
         <SidebarInput
           autoFocus
           className={cn(
-            "h-8 rounded-lg border-none bg-transparent px-2.5 text-[13px] shadow-none focus-visible:ring-1 focus-visible:ring-sidebar-primary/50",
+            "h-8 rounded-lg border-none bg-transparent px-2.5 text-[13px] shadow-none focus:outline-none focus-visible:outline-none",
             isActive && "bg-sidebar-primary/5"
           )}
           data-testid="chat-title-input"
@@ -205,7 +205,7 @@ const PureChatItem = ({
         <DropdownMenu modal={true}>
           <DropdownMenuTrigger asChild>
             <SidebarMenuAction
-              className="mr-0.5 rounded-md text-sidebar-foreground/50 ring-0 transition-colors duration-150 focus-visible:ring-0 hover:text-sidebar-foreground data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+              className="mr-0.5 rounded-md text-sidebar-foreground/50 ring-0 transition-colors duration-150 focus:outline-none focus-visible:outline-none hover:text-sidebar-foreground data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
               showOnHover={!isActive}
             >
               <MoreHorizontalIcon />
