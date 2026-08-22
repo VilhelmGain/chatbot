@@ -242,7 +242,7 @@ export function SettingsDialog({
                 <AnimatePresence initial={false} mode="wait">
                   <motion.div
                     animate={{ opacity: 1, y: 0 }}
-                    className="flex flex-col gap-8"
+                    className="flex flex-col gap-6"
                     exit={{ opacity: 0, y: -10 }}
                     initial={{ opacity: 0, y: 14 }}
                     key={activeSection}
@@ -288,18 +288,21 @@ function SettingsNavButton({
   const handleSelect = useCallback(() => {
     onSelect(id);
   }, [id, onSelect]);
+  const description = NAV_ITEMS.find((item) => item.id === id)?.description;
 
   return (
     <button
       aria-current={active ? "page" : undefined}
+      aria-label={label}
       className={cn(
-        "fade-up relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm transition-colors duration-150",
+        "fade-up relative flex items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm transition-colors duration-150",
         active
           ? "text-sidebar-accent-foreground"
-          : "text-sidebar-foreground/60 hover:bg-sidebar-accent/40 hover:text-sidebar-foreground"
+          : "text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground"
       )}
       onClick={handleSelect}
       style={{ animationDelay: `${enterDelay}ms` }}
+      title={description}
       type="button"
     >
       {active ? (
@@ -310,17 +313,7 @@ function SettingsNavButton({
         />
       ) : null}
       <Icon className="relative size-4 shrink-0" />
-      <span className="relative min-w-0 flex-1 truncate">
-        <span className="relative block truncate font-medium" title={label}>
-          {label}
-        </span>
-        <span
-          className="relative block truncate text-xs text-sidebar-foreground/60"
-          title={NAV_ITEMS.find((item) => item.id === id)?.description}
-        >
-          {NAV_ITEMS.find((item) => item.id === id)?.description}
-        </span>
-      </span>
+      <span className="relative truncate font-medium">{label}</span>
     </button>
   );
 }
@@ -376,119 +369,123 @@ function PreferencesPanel() {
   const showConversationCost = useShowConversationCost();
 
   return (
-    <>
-      <div className="flex flex-col gap-5 rounded-lg border border-border glass-surface p-5">
-        <div className="flex items-start gap-3">
-          <div className="grid size-8 shrink-0 place-items-center rounded-lg bg-foreground/5">
-            <SlidersHorizontal className="size-3.5 text-muted-foreground" />
+    <div className="flex flex-col gap-6">
+      {/* General */}
+      <section className="overflow-hidden rounded-xl border border-border bg-card">
+        <div className="flex items-center gap-3 px-5 py-4">
+          <div className="grid size-7 shrink-0 place-items-center rounded-md bg-muted text-muted-foreground">
+            <SlidersHorizontal className="size-3.5" />
           </div>
           <div>
-            <h3 className="text-sm font-medium">Chat defaults</h3>
+            <h3 className="text-sm font-semibold">General</h3>
             <p className="text-xs text-muted-foreground">
-              Used for new chats and sidebar labels.
+              Defaults for new chats and sidebar identity.
             </p>
           </div>
         </div>
-        <div className="grid gap-5 border-t border-border pt-5">
-          <TitleModelSelector />
-          <IdentityDisplaySelector />
+        <div className="divide-y divide-border border-t border-border">
+          <div className="grid gap-5 px-5 py-5">
+            <TitleModelSelector />
+            <IdentityDisplaySelector />
+          </div>
+          <div className="px-5 py-5">
+            <EnterBehaviorSelector />
+          </div>
         </div>
-      </div>
+      </section>
 
-      <div className="flex flex-col gap-5 rounded-lg border border-border glass-surface p-5">
-        <div className="flex items-start gap-3">
-          <div className="grid size-8 shrink-0 place-items-center rounded-lg bg-foreground/5">
-            <Type className="size-3.5 text-muted-foreground" />
+      {/* Appearance */}
+      <section className="overflow-hidden rounded-xl border border-border bg-card">
+        <div className="flex items-center gap-3 px-5 py-4">
+          <div className="grid size-7 shrink-0 place-items-center rounded-md bg-muted text-muted-foreground">
+            <Palette className="size-3.5" />
           </div>
           <div>
-            <h3 className="text-sm font-medium">Fonts</h3>
+            <h3 className="text-sm font-semibold">Appearance</h3>
             <p className="text-xs text-muted-foreground">
-              Choose typefaces for body text, headings, labels, and code.
+              Theme and typography — stored locally in this browser.
             </p>
           </div>
         </div>
-        <div className="grid gap-5 border-t border-border pt-5">
-          <FontSelectors />
-        </div>
-      </div>
-
-      <div className="flex flex-col gap-5 rounded-lg border border-border glass-surface p-5">
-        <div className="flex items-start gap-3">
-          <div className="grid size-8 shrink-0 place-items-center rounded-lg bg-foreground/5">
-            <Palette className="size-3.5 text-muted-foreground" />
+        <div className="divide-y divide-border border-t border-border">
+          <div className="flex flex-col gap-2 px-5 py-5">
+            <Label htmlFor="theme">Theme</Label>
+            <Select onValueChange={setTheme} value={theme}>
+              <SelectTrigger className="w-full sm:w-64" id="theme">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="light">Light</SelectItem>
+                <SelectItem value="dark">Dark</SelectItem>
+                <SelectItem value="system">System</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
-          <div>
-            <h3 className="text-sm font-medium">Appearance</h3>
-            <p className="text-xs text-muted-foreground">
-              Theme preference for this browser.
-            </p>
-          </div>
-        </div>
-        <div className="flex flex-col gap-2 border-t border-border pt-5">
-          <Label htmlFor="theme">Theme</Label>
-          <Select onValueChange={setTheme} value={theme}>
-            <SelectTrigger className="w-full sm:w-64" id="theme">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="light">Light</SelectItem>
-              <SelectItem value="dark">Dark</SelectItem>
-              <SelectItem value="system">System</SelectItem>
-            </SelectContent>
-          </Select>
-          <p className="text-xs text-muted-foreground">
-            Choose your preferred color scheme.
-          </p>
-          <div className="flex items-center justify-between gap-4 rounded-lg border border-border bg-muted/70 px-3 py-2.5">
-            <div className="flex flex-col gap-1">
-              <Label htmlFor="stats-for-nerds">Stats for nerds</Label>
-              <p className="text-xs text-muted-foreground">
-                Show token and latency details on responses.
-              </p>
+          <div className="px-5 py-5">
+            <div className="mb-3 flex items-center gap-2">
+              <Type className="size-3.5 text-muted-foreground" />
+              <h4 className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+                Typography
+              </h4>
             </div>
+            <FontSelectors />
+          </div>
+        </div>
+      </section>
+
+      {/* Insights */}
+      <section className="overflow-hidden rounded-xl border border-border bg-card">
+        <div className="flex items-center gap-3 px-5 py-4">
+          <div className="grid size-7 shrink-0 place-items-center rounded-md bg-muted text-muted-foreground">
+            <Keyboard className="size-3.5" />
+          </div>
+          <div>
+            <h3 className="text-sm font-semibold">Diagnostics</h3>
+            <p className="text-xs text-muted-foreground">
+              Optional details shown in the conversation UI.
+            </p>
+          </div>
+        </div>
+        <div className="divide-y divide-border border-t border-border">
+          <label
+            className="flex cursor-pointer items-center justify-between gap-4 px-5 py-3.5 transition-colors hover:bg-muted/50"
+            htmlFor="stats-for-nerds"
+          >
+            <span className="flex flex-col gap-0.5">
+              <span className="text-sm font-medium">Stats for nerds</span>
+              <span className="text-xs text-muted-foreground">
+                Show token and latency details on responses.
+              </span>
+            </span>
             <Checkbox
               checked={statsForNerds}
               data-testid="stats-for-nerds-toggle"
               id="stats-for-nerds"
               onCheckedChange={setStatsForNerds}
             />
-          </div>
-          <div className="flex items-center justify-between gap-4 rounded-lg border border-border bg-muted/70 px-3 py-2.5">
-            <div className="flex flex-col gap-1">
-              <Label htmlFor="show-conversation-cost">
+          </label>
+          <label
+            className="flex cursor-pointer items-center justify-between gap-4 px-5 py-3.5 transition-colors hover:bg-muted/50"
+            htmlFor="show-conversation-cost"
+          >
+            <span className="flex flex-col gap-0.5">
+              <span className="text-sm font-medium">
                 Show conversation cost
-              </Label>
-              <p className="text-xs text-muted-foreground">
-                Show model pricing in the conversation information drawer.
-              </p>
-            </div>
+              </span>
+              <span className="text-xs text-muted-foreground">
+                Show model pricing in the conversation drawer.
+              </span>
+            </span>
             <Checkbox
               checked={showConversationCost}
               data-testid="show-conversation-cost-toggle"
               id="show-conversation-cost"
               onCheckedChange={setShowConversationCost}
             />
-          </div>
+          </label>
         </div>
-      </div>
-
-      <div className="flex flex-col gap-5 rounded-lg border border-border glass-surface p-5">
-        <div className="flex items-start gap-3">
-          <div className="grid size-8 shrink-0 place-items-center rounded-lg bg-foreground/5">
-            <Keyboard className="size-3.5 text-muted-foreground" />
-          </div>
-          <div>
-            <h3 className="text-sm font-medium">Composer</h3>
-            <p className="text-xs text-muted-foreground">
-              Keyboard behavior for the message input.
-            </p>
-          </div>
-        </div>
-        <div className="flex flex-col gap-2 border-t border-border pt-5">
-          <EnterBehaviorSelector />
-        </div>
-      </div>
-    </>
+      </section>
+    </div>
   );
 }
 
