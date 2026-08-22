@@ -51,12 +51,14 @@ function FontSelect({ fontRole }: { fontRole: FontRole }) {
 
 export function FontSelectors() {
   return (
-    <div className="flex flex-col gap-4">
+    <div className="grid gap-4 sm:grid-cols-2">
       <FontSelect fontRole="body" />
       <FontSelect fontRole="heading" />
       <FontSelect fontRole="label" />
       <FontSelect fontRole="code" />
-      <FontSelect fontRole="math" />
+      <div className="sm:col-span-2 sm:max-w-[calc(50%-0.5rem)]">
+        <FontSelect fontRole="math" />
+      </div>
     </div>
   );
 }
