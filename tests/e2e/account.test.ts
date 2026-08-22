@@ -11,6 +11,8 @@ test.describe("Account Dialog", () => {
 
   test("opens the account dialog from the user nav", async ({ page }) => {
     await page.getByTestId("user-nav-button").click();
+    await expect(page.getByTestId("user-menu-popover")).toBeVisible();
+    await page.getByTestId("user-menu-manage-account").click();
 
     // Test mode renders the fallback panel instead of Clerk's <UserProfile />.
     await expect(page.getByTestId("account-dialog")).toBeVisible();
@@ -21,6 +23,8 @@ test.describe("Account Dialog", () => {
     page,
   }) => {
     await page.getByTestId("user-nav-button").click();
+    await expect(page.getByTestId("user-menu-popover")).toBeVisible();
+    await page.getByTestId("user-menu-manage-account").click();
 
     await expect(page.getByTestId("account-dialog")).toContainText(email);
     // In test mode user.image is null, so the gradient avatar renders.
@@ -31,9 +35,17 @@ test.describe("Account Dialog", () => {
 
   test("closes the account dialog with Escape", async ({ page }) => {
     await page.getByTestId("user-nav-button").click();
+    await page.getByTestId("user-menu-manage-account").click();
     await expect(page.getByTestId("account-dialog")).toBeVisible();
 
     await page.keyboard.press("Escape");
     await expect(page.getByTestId("account-dialog")).not.toBeVisible();
+  });
+
+  test("shows user menu popover on user nav click", async ({ page }) => {
+    await page.getByTestId("user-nav-button").click();
+    await expect(page.getByTestId("user-menu-popover")).toBeVisible();
+    await expect(page.getByTestId("user-menu-manage-account")).toBeVisible();
+    await expect(page.getByTestId("user-menu-sign-out")).toBeVisible();
   });
 });
