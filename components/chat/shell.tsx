@@ -131,81 +131,83 @@ export function ChatShell() {
         className="flex h-dvh w-full flex-row overflow-hidden"
         style={shellStyle}
       >
-        <div
-          className={cn(
-            "flex min-w-0 flex-col glass-surface-static transition-[width] duration-200 ease-smooth max-md:w-full",
-            isArtifactVisible ? "md:w-[40%] max-md:hidden" : "w-full"
-          )}
-        >
-          <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden bg-transparent md:border-l md:border-border">
-            <Messages
-              addToolApprovalResponse={addToolApprovalResponse}
-              chatId={chatId}
-              isArtifactVisible={isArtifactVisible}
-              isLoading={isLoading}
-              isReadonly={isReadonly}
-              messages={messages}
-              onEditMessage={handleEditMessage}
-              onForkMessage={handleForkMessage}
-              regenerate={regenerate}
-              selectedModelId={currentModelId}
-              setMessages={setMessages}
-              status={status}
-            />
+        <div className="flex min-w-0 flex-1 flex-row overflow-hidden">
+          <div
+            className={cn(
+              "flex min-w-0 flex-col glass-surface-static transition-[width] duration-200 ease-smooth max-md:w-full",
+              isArtifactVisible ? "md:w-[40%] max-md:hidden" : "w-full"
+            )}
+          >
+            <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden bg-transparent md:border-l md:border-border">
+              <Messages
+                addToolApprovalResponse={addToolApprovalResponse}
+                chatId={chatId}
+                isArtifactVisible={isArtifactVisible}
+                isLoading={isLoading}
+                isReadonly={isReadonly}
+                messages={messages}
+                onEditMessage={handleEditMessage}
+                onForkMessage={handleForkMessage}
+                regenerate={regenerate}
+                selectedModelId={currentModelId}
+                setMessages={setMessages}
+                status={status}
+              />
 
-            <div className="sticky bottom-0 z-10 mx-auto flex w-full max-w-4xl gap-2 bg-transparent px-4 pt-2 pb-3 md:px-6 md:pb-4 md:pt-3">
-              {!isReadonly && (
-                <MultimodalInput
-                  attachments={attachments}
-                  chatId={chatId}
-                  editingMessage={editingMessage}
-                  input={input}
-                  isLoading={isLoading}
-                  messages={messages}
-                  onCancelEdit={handleCancelEdit}
-                  onModelChange={setCurrentModelId}
-                  reasoningEffort={reasoningEffort}
-                  selectedModelId={currentModelId}
-                  selectedVisibilityType={visibilityType}
-                  sendMessage={
-                    editingMessage ? handleSendEditedMessage : sendMessage
-                  }
-                  setAttachments={setAttachments}
-                  setInput={setInput}
-                  setMessages={setMessages}
-                  setReasoningEffort={setReasoningEffort}
-                  status={status}
-                  stop={stop}
-                />
-              )}
+              <div className="sticky bottom-0 z-10 mx-auto flex w-full max-w-4xl gap-2 bg-transparent px-4 pt-2 pb-3 md:px-6 md:pb-4 md:pt-3">
+                {!isReadonly && (
+                  <MultimodalInput
+                    attachments={attachments}
+                    chatId={chatId}
+                    editingMessage={editingMessage}
+                    input={input}
+                    isLoading={isLoading}
+                    messages={messages}
+                    onCancelEdit={handleCancelEdit}
+                    onModelChange={setCurrentModelId}
+                    reasoningEffort={reasoningEffort}
+                    selectedModelId={currentModelId}
+                    selectedVisibilityType={visibilityType}
+                    sendMessage={
+                      editingMessage ? handleSendEditedMessage : sendMessage
+                    }
+                    setAttachments={setAttachments}
+                    setInput={setInput}
+                    setMessages={setMessages}
+                    setReasoningEffort={setReasoningEffort}
+                    status={status}
+                    stop={stop}
+                  />
+                )}
+              </div>
             </div>
           </div>
+
+          <Artifact
+            addToolApprovalResponse={addToolApprovalResponse}
+            attachments={attachments}
+            input={input}
+            isReadonly={isReadonly}
+            messages={messages}
+            regenerate={regenerate}
+            selectedModelId={currentModelId}
+            selectedVisibilityType={visibilityType}
+            sendMessage={sendMessage}
+            setAttachments={setAttachments}
+            setInput={setInput}
+            setMessages={setMessages}
+            status={status}
+            stop={stop}
+          />
         </div>
 
-        <Artifact
-          addToolApprovalResponse={addToolApprovalResponse}
-          attachments={attachments}
-          input={input}
-          isReadonly={isReadonly}
-          messages={messages}
-          regenerate={regenerate}
-          selectedModelId={currentModelId}
-          selectedVisibilityType={visibilityType}
-          sendMessage={sendMessage}
-          setAttachments={setAttachments}
-          setInput={setInput}
-          setMessages={setMessages}
-          status={status}
-          stop={stop}
-        />
+        {pathname?.includes("/chat/") ? (
+          <ConversationInfoDrawer
+            chatId={chatId}
+            messageCount={messages.length}
+          />
+        ) : null}
       </div>
-
-      {pathname?.includes("/chat/") ? (
-        <ConversationInfoDrawer
-          chatId={chatId}
-          messageCount={messages.length}
-        />
-      ) : null}
 
       <DataStreamHandler />
     </>
