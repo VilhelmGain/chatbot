@@ -59,14 +59,10 @@ export function ChatShell() {
       }
     : undefined;
 
-  const stopRef = useRef(stop);
-  stopRef.current = stop;
-
   const prevChatIdRef = useRef(chatId);
   useEffect(() => {
     if (prevChatIdRef.current !== chatId) {
       prevChatIdRef.current = chatId;
-      stopRef.current();
       setArtifact(initialArtifactData);
       setEditingMessage(null);
       setAttachments([]);

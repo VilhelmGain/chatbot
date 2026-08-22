@@ -146,7 +146,7 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
       ? null
       : `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/api/messages?chatId=${chatId}`,
     fetcher,
-    { revalidateOnFocus: false }
+    { revalidateOnFocus: true, revalidateOnReconnect: true }
   );
 
   const initialMessages: ChatMessage[] = isNewChat
@@ -189,6 +189,17 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
     },
     onFinish: () => {
       mutate(unstable_serialize(getChatHistoryPaginationKey));
+      try {
+        const ch = new BroadcastChannel("chat-history");
+        ch.postMessage({ type: "mutate" });
+        ch.close();
+        // biome-ignore lint/suspicious/noEmptyBlockStatements: broadcast fallback non-critical
+      } catch {}
+      // localStorage fallback for Safari / older browsers
+      try {
+        localStorage.setItem("chat-history-ping", String(Date.now()));
+        // biome-ignore lint/suspicious/noEmptyBlockStatements: storage fallback non-critical
+      } catch {}
     },
     sendAutomaticallyWhen: ({ messages: currentMessages }) => {
       const lastMessage = currentMessages.at(-1);
@@ -383,6 +394,7 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
     initialMessages,
     resumeStream,
     setMessages,
+    status,
   });
 
   const isReadonly = isNewChat ? false : (chatData?.isReadonly ?? false);
