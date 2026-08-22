@@ -35,8 +35,9 @@ export async function GET(request: NextRequest) {
     );
   } catch (error) {
     if (error instanceof ChatbotError) {
-      // Fail-open for history: cold-start Redis not ready should not block sidebar
-      if (error.message.includes("rate_limit")) {
+      // Fail-open for history: cold-start Redis not ready should not block sidebar.
+      // Check `type` (not message) because message is user-facing (e.g. "You've reached the message limit...").
+      if (error.type === "rate_limit") {
         console.warn("[history] rate-limit fail-open", error.message);
       } else {
         return error.toResponse();
