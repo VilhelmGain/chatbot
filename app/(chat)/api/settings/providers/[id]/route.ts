@@ -1,7 +1,6 @@
 import { z } from "zod";
 import { auth } from "@/app/(auth)/auth";
 import { invalidateProviderCache } from "@/lib/ai/providers";
-import { isTestEnvironment } from "@/lib/constants";
 import {
   deleteCustomProvider,
   getCustomProviderById,
@@ -75,7 +74,7 @@ export async function PUT(
   if (body.baseURL) {
     try {
       await assertPublicUrl(body.baseURL, {
-        allowPrivate: isTestEnvironment,
+        allowPrivate: true,
       });
     } catch (error) {
       return new ChatbotError("bad_request:provider", {

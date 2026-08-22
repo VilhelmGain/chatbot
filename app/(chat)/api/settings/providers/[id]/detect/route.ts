@@ -1,6 +1,5 @@
 import { auth } from "@/app/(auth)/auth";
 import { getLiveCatalogModelsForProvider } from "@/lib/ai/catalog";
-import { isTestEnvironment } from "@/lib/constants";
 import {
   createCustomModels,
   getCustomModelsByProviderId,
@@ -56,7 +55,7 @@ export async function POST(
 
   try {
     const targetUrl = `${normalizedBaseURL}/models`;
-    await assertPublicUrl(targetUrl, { allowPrivate: isTestEnvironment });
+    await assertPublicUrl(targetUrl, { allowPrivate: true });
     const response = await fetch(targetUrl, {
       headers: {
         Authorization: `Bearer ${apiKey}`,

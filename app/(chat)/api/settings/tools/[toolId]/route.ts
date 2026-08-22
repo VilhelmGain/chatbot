@@ -1,7 +1,6 @@
 import { z } from "zod";
 import { auth } from "@/app/(auth)/auth";
 import { CONFIGURABLE_TOOLS, SEARCH_PROVIDERS } from "@/lib/ai/tools/metadata";
-import { isTestEnvironment } from "@/lib/constants";
 import {
   deleteToolConfig,
   getToolConfigByUserId,
@@ -81,8 +80,12 @@ export async function PUT(
 
   if (body.baseURL) {
     try {
+      // SearXNG is user-configured and commonly self-hosted on localhost
+      // or a private Docker network (e.g. http://searxng:8080). The subsequent
+      // fetch re-validates with allowPrivate, so allow private here to avoid
+      // rejecting legitimate self-hosted instances.
       await assertPublicUrl(body.baseURL, {
-        allowPrivate: isTestEnvironment,
+        allowPrivate: true,
       });
     } catch (error) {
       return new ChatbotError("bad_request:tools", {

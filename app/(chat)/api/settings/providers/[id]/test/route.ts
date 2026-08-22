@@ -1,5 +1,4 @@
 import { auth } from "@/app/(auth)/auth";
-import { isTestEnvironment } from "@/lib/constants";
 import { getCustomProviderById, getDecryptedApiKey } from "@/lib/db/queries";
 import { ChatbotError } from "@/lib/errors";
 import { checkProviderTestRateLimit } from "@/lib/ratelimit";
@@ -40,7 +39,7 @@ export async function POST(
   try {
     if (provider.type === "openai") {
       const targetUrl = `${normalizedBaseURL}/models`;
-      await assertPublicUrl(targetUrl, { allowPrivate: isTestEnvironment });
+      await assertPublicUrl(targetUrl, { allowPrivate: true });
       const response = await fetch(targetUrl, {
         headers: {
           Authorization: `Bearer ${apiKey}`,
@@ -71,7 +70,7 @@ export async function POST(
 
     if (provider.type === "anthropic") {
       const targetUrl = `${normalizedBaseURL}/messages`;
-      await assertPublicUrl(targetUrl, { allowPrivate: isTestEnvironment });
+      await assertPublicUrl(targetUrl, { allowPrivate: true });
       const response = await fetch(targetUrl, {
         body: JSON.stringify({
           max_tokens: 1,
