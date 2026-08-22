@@ -22,13 +22,14 @@ import { useDataStream } from "@/components/chat/data-stream-provider";
 import { getChatHistoryPaginationKey } from "@/components/chat/sidebar-history";
 import { toast } from "@/components/chat/toast";
 import { useAutoResume } from "@/hooks/use-auto-resume";
-import type { ReasoningEffort } from "@/lib/ai/models.client";
+import type { ChatModel, ReasoningEffort } from "@/lib/ai/models.client";
 import type { ToolId } from "@/lib/ai/tools/metadata";
 import { TOOL_IDS, TOOL_IDS_SET } from "@/lib/ai/tools/metadata";
 import { ChatbotError } from "@/lib/errors";
 import { syncPreference } from "@/lib/preferences-sync";
 import type { ChatMessage, VisibilityType } from "@/lib/types";
 import { fetcher, fetchWithErrorHandlers, generateUUID } from "@/lib/utils";
+import { isValidModelIdFormat, isValidUUID } from "@/lib/validation";
 
 type ActiveChatContextValue = {
   chatId: string;
@@ -56,7 +57,11 @@ const ActiveChatContext = createContext<ActiveChatContextValue | null>(null);
 
 function extractChatId(pathname: string): string | null {
   const match = pathname.match(/\/chat\/([^/]+)/);
-  return match ? match[1] : null;
+  const candidate = match ? match[1] : null;
+  if (candidate && isValidUUID(candidate)) {
+    return candidate;
+  }
+  return null;
 }
 
 export function ActiveChatProvider({ children }: { children: ReactNode }) {
@@ -123,11 +128,18 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
 
   const [input, setInput] = useState("");
 
-  const { data: modelsData } = useSWR(
-    `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/api/models`,
-    fetcher,
-    { dedupingInterval: 3_600_000 }
-  );
+  const { data: modelsData } = useSWR<{
+    models: ChatModel[];
+    providerNames?: Record<string, string>;
+    capabilities?: Record<string, unknown>;
+  }>(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/api/models`, fetcher, {
+    dedupingInterval: 3_600_000,
+  });
+
+  const modelsDataRef = useRef<typeof modelsData>(modelsData);
+  useEffect(() => {
+    modelsDataRef.current = modelsData;
+  }, [modelsData]);
 
   const { data: chatData, isLoading } = useSWR(
     isNewChat
@@ -206,6 +218,32 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
             })
           );
 
+        // Resolve effective model: prefer current selection, fallback to first available model
+        let effectiveModelId = currentModelIdRef.current;
+        const fallbackId =
+          (modelsDataRef.current as { models?: { id: string }[] } | undefined)
+            ?.models?.[0]?.id ?? "";
+        if (
+          (!isValidModelIdFormat(effectiveModelId) ||
+            (modelsDataRef.current?.models?.length &&
+              !modelsDataRef.current.models.some(
+                (m: Pick<ChatModel, "id">) => m.id === effectiveModelId
+              ))) &&
+          fallbackId &&
+          isValidModelIdFormat(fallbackId)
+        ) {
+          effectiveModelId = fallbackId;
+          // Keep ref in sync so subsequent sends are stable
+          currentModelIdRef.current = fallbackId;
+        }
+
+        if (!isValidModelIdFormat(effectiveModelId)) {
+          throw new ChatbotError(
+            "bad_request:chat",
+            "No model selected. Please choose a model before sending."
+          );
+        }
+
         return {
           body: {
             id: request.id,
@@ -214,7 +252,7 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
               : { message: lastMessage }),
             enabledTools: enabledToolsRef.current,
             reasoningEffort: reasoningEffortRef.current,
-            selectedChatModel: currentModelIdRef.current,
+            selectedChatModel: effectiveModelId,
             selectedVisibilityType: visibility,
             ...request.body,
           },
@@ -288,7 +326,19 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const firstModelId = modelsData?.models?.[0]?.id;
-    if (!firstModelId || currentModelId) {
+    if (!firstModelId) {
+      return;
+    }
+    const availableIds = new Set(
+      (modelsData?.models ?? []).map((m: { id: string }) => m.id)
+    );
+    const currentIsValid =
+      currentModelId.length > 0 &&
+      isValidModelIdFormat(currentModelId) &&
+      (availableIds.size === 0 || availableIds.has(currentModelId));
+    // If no valid model is selected, or the cookie points to a deleted model,
+    // fall back to the first available model
+    if (currentIsValid) {
       return;
     }
     setCurrentModelId(firstModelId);

@@ -46,6 +46,7 @@ import type {
 import { syncPreference } from "@/lib/preferences-sync";
 import type { Attachment, ChatMessage, VisibilityType } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { isValidModelIdFormat } from "@/lib/validation";
 import {
   PromptInput,
   PromptInputFooter,
@@ -154,6 +155,17 @@ function PureMultimodalInput({
   const [slashQuery, setSlashQuery] = useState("");
   const [slashIndex, setSlashIndex] = useState(0);
 
+  const { data: guardModelsData } = useSWR(
+    `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/api/models`,
+    (url: string) => fetch(url).then((r) => r.json()),
+    { dedupingInterval: 3_600_000, revalidateOnFocus: false }
+  );
+  const modelsLoaded =
+    (guardModelsData as { models?: unknown[] } | undefined)?.models !==
+    undefined;
+  const hasValidModel = isValidModelIdFormat(selectedModelId);
+  const shouldBlockOnInvalidModel = modelsLoaded && !hasValidModel;
+
   const handleInput = useCallback(
     (event: ChangeEvent<HTMLTextAreaElement>) => {
       const val = event.target.value;
@@ -231,6 +243,11 @@ function PureMultimodalInput({
   );
 
   const submitForm = useCallback(() => {
+    if (shouldBlockOnInvalidModel) {
+      toast.error("Please select a valid model before sending.");
+      return;
+    }
+
     window.history.pushState(
       {},
       "",
@@ -269,6 +286,7 @@ function PureMultimodalInput({
     setLocalStorageInput,
     width,
     chatId,
+    shouldBlockOnInvalidModel,
   ]);
 
   const uploadFile = useCallback(async (file: File) => {
@@ -407,12 +425,23 @@ function PureMultimodalInput({
     if (!input.trim() && attachments.length === 0) {
       return;
     }
+    if (shouldBlockOnInvalidModel) {
+      toast.error("Please select a model before sending.");
+      return;
+    }
     if (status === "ready" || status === "error") {
       submitForm();
     } else {
       toast.error("Please wait for the model to finish its response!");
     }
-  }, [attachments.length, handleSlashSelect, input, status, submitForm]);
+  }, [
+    attachments.length,
+    handleSlashSelect,
+    shouldBlockOnInvalidModel,
+    input,
+    status,
+    submitForm,
+  ]);
 
   const handleTextareaKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -581,12 +610,16 @@ function PureMultimodalInput({
               <PromptInputSubmit
                 className={cn(
                   "h-7 w-7 shrink-0 rounded-lg transition-all duration-200",
-                  input.trim()
+                  input.trim() && !shouldBlockOnInvalidModel
                     ? "bg-foreground text-background hover:opacity-85 active:scale-95"
                     : "bg-foreground/5 text-muted-foreground/25 cursor-not-allowed"
                 )}
                 data-testid="send-button"
-                disabled={!input.trim() || uploadQueue.length > 0}
+                disabled={
+                  !input.trim() ||
+                  uploadQueue.length > 0 ||
+                  shouldBlockOnInvalidModel
+                }
                 status={status}
                 variant="secondary"
               >
