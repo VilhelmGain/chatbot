@@ -74,6 +74,14 @@ const nextConfig: NextConfig = {
         protocol: "https",
       },
       {
+        hostname: "clerk.chat.visbyr.com",
+        protocol: "https",
+      },
+      {
+        hostname: "*.visbyr.com",
+        protocol: "https",
+      },
+      {
         hostname: "*.googleusercontent.com",
         protocol: "https",
       },
