@@ -77,10 +77,19 @@ async function searchSearxng({
   url.searchParams.set("format", "json");
   url.searchParams.set("q", query);
 
-  await assertPublicUrl(url.href);
+  // User-configured SearXNG base URL is intentional (often self-hosted on
+  // localhost / private network). The host is fixed by the user; the query
+  // is URL-encoded so it cannot pivot to an arbitrary private host. Allow
+  // private addresses here while fetchUrl (fully LLM-controlled) stays blocked.
+  await assertPublicUrl(url.href, { allowPrivate: true });
 
   const response = await fetch(url, {
-    headers: apiKey ? { "X-API-Key": apiKey } : undefined,
+    headers: {
+      Accept: "application/json",
+      "Accept-Language": "en",
+      "User-Agent": "chatbot/1.0",
+      ...(apiKey ? { "X-API-Key": apiKey } : {}),
+    },
     method: "GET",
     signal: AbortSignal.timeout(SEARXNG_TIMEOUT_MS),
   });

@@ -2,7 +2,6 @@ import { after } from "next/server";
 import { z } from "zod";
 import { auth } from "@/app/(auth)/auth";
 import { getLiveCatalogModelsForProvider } from "@/lib/ai/catalog";
-import { isTestEnvironment } from "@/lib/constants";
 import {
   createCustomModels,
   createCustomProvider,
@@ -56,8 +55,11 @@ export async function POST(request: Request) {
   }
 
   try {
+    // Custom providers are user-configured and commonly point at
+    // localhost / private networks (e.g. Ollama at http://localhost:11434).
+    // Allow private addresses for this intentional configuration.
     await assertPublicUrl(body.baseURL, {
-      allowPrivate: isTestEnvironment,
+      allowPrivate: true,
     });
   } catch (error) {
     return new ChatbotError("bad_request:provider", {
