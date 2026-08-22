@@ -1,6 +1,6 @@
 "use client";
 
-import { useUser } from "@clerk/nextjs";
+import { useClerk, useUser } from "@clerk/nextjs";
 import { LogOut, Settings } from "lucide-react";
 import { useCallback, useState } from "react";
 import type { User } from "@/app/(auth)/auth";
@@ -18,6 +18,14 @@ import {
   type IdentityDisplayMode,
   useIdentityDisplayMode,
 } from "@/lib/identity-display";
+
+function useSafeClerk() {
+  try {
+    return useClerk();
+  } catch {
+    return null;
+  }
+}
 
 function ClerkAvatar({
   user,
@@ -75,11 +83,24 @@ export function SidebarUserNav({
   const [showAccount, setShowAccount] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const identityDisplayMode = useIdentityDisplayMode();
+  const clerk = useSafeClerk();
 
   const handleOpenAccount = useCallback(() => {
     setPopoverOpen(false);
+    if (testEnvironment) {
+      setShowAccount(true);
+      return;
+    }
+    if (clerk?.openUserProfile) {
+      try {
+        clerk.openUserProfile();
+        return;
+      } catch {
+        // fallback to dialog
+      }
+    }
     setShowAccount(true);
-  }, []);
+  }, [clerk, testEnvironment]);
 
   const handleOpenSettings = useCallback(() => {
     setShowSettings(true);
@@ -87,8 +108,22 @@ export function SidebarUserNav({
 
   const handleSignOut = useCallback(() => {
     setPopoverOpen(false);
+    if (testEnvironment) {
+      void signOut();
+      return;
+    }
+    if (clerk?.signOut) {
+      clerk
+        .signOut(() => {
+          window.location.href = "/";
+        })
+        .catch(() => {
+          window.location.href = "/";
+        });
+      return;
+    }
     void signOut();
-  }, []);
+  }, [clerk, testEnvironment]);
 
   const displayName = user.name ?? user.email ?? "User";
   const displaySub = user.email ?? "";
@@ -101,7 +136,7 @@ export function SidebarUserNav({
             <div className="flex items-center gap-1 rounded-lg bg-transparent p-1 group-data-[collapsible=icon]:flex-col group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:gap-2 group-data-[collapsible=icon]:p-0">
               <PopoverTrigger asChild>
                 <button
-                  className={`flex min-w-0 flex-1 items-center gap-2 rounded-md px-2 text-left text-sidebar-foreground/70 transition-colors duration-150 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:size-8 group-data-[collapsible=icon]:flex-none group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0 ${identityDisplayMode === "name-email" ? "h-10 group-data-[collapsible=icon]:h-8" : "h-8"}`}
+                  className={`flex min-w-0 flex-1 items-center gap-2 rounded-md px-2 text-left text-sidebar-foreground/70 transition-colors duration-150 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:size-8 group-data-[collapsible=icon]:flex-none group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:order-2 ${identityDisplayMode === "name-email" ? "h-10 group-data-[collapsible=icon]:h-8" : "h-8"}`}
                   data-testid="user-nav-button"
                   type="button"
                 >
@@ -124,7 +159,7 @@ export function SidebarUserNav({
               </PopoverTrigger>
               <button
                 aria-label="Settings"
-                className="grid size-8 shrink-0 place-items-center rounded-md text-sidebar-foreground/50 transition-colors duration-150 hover:bg-sidebar-accent hover:text-sidebar-foreground group-data-[collapsible=icon]:size-8"
+                className="grid size-8 shrink-0 place-items-center rounded-md text-sidebar-foreground/50 transition-colors duration-150 hover:bg-sidebar-accent hover:text-sidebar-foreground group-data-[collapsible=icon]:size-8 group-data-[collapsible=icon]:order-1"
                 data-testid="user-nav-item-settings"
                 onClick={handleOpenSettings}
                 type="button"

@@ -44,7 +44,7 @@ export function AccountDialog({
       <DialogContent
         className="h-fit w-fit max-h-[calc(100vh-2rem)] max-w-[calc(100vw-2rem)]! gap-0 overflow-hidden rounded-lg! p-0"
         data-testid="account-dialog"
-        showCloseButton={testEnvironment}
+        showCloseButton
       >
         <DialogTitle className="sr-only">Account</DialogTitle>
         {testEnvironment ? (
