@@ -1,8 +1,8 @@
 This is a chatbot app with Next.js 16 (App Router, React 19), TypeScript, Tailwind CSS v4, Drizzle ORM on Postgres, optional Redis, Clerk auth, and multi-provider AI via AI SDK.
 
 ## Developer constraints
-- Do not run `pnpm build` or `pnpm test` after changes unless committing to `main`. Commits to `main` must be intentional. The remote tests the build.
-- For local verification run `pnpm check` / `pnpm fix` only.
+- run `pnpm build` and `pnpm test` commands locally before pushing to branch.
+- before ending a turn, ensure your changes is ready to commit and passes pre-commit. run the required tests for that.
 
 ## Package manager
 - `pnpm@10.32.1` only (`packageManager` pinned). Do not use npm or yarn.
