@@ -1,6 +1,6 @@
 import { auth } from "@/app/(auth)/auth";
 import { getChatById, getStreamIdsByChatId } from "@/lib/db/queries";
-import { getStreamContext } from "../../../route";
+import { getStreamContext } from "../../route";
 
 export async function GET(
   _request: Request,
