@@ -179,7 +179,7 @@ export function ConversationInfoDrawer({
       <div className="absolute right-3 top-3 z-20">
         <SidebarTrigger
           aria-label="Conversation information"
-          className="relative size-11 rounded-full border border-border bg-surface-container-lowest text-muted-foreground/70 shadow-[var(--shadow-float)] transition-all hover:border-primary/30 hover:bg-primary/10 hover:text-primary"
+          className="relative flex size-9 items-center justify-center rounded-xl border border-border bg-surface-container-lowest text-foreground shadow-[var(--shadow-float)] transition-colors hover:bg-primary/10 hover:text-primary active:bg-primary/15"
           data-testid="conversation-info-trigger"
         >
           <MoreHorizontalIcon />
