@@ -12,7 +12,7 @@ export const RATE_LIMITS = {
   document: { limit: 60, windowSeconds: TTL_SECONDS },
   export: { limit: 20, windowSeconds: TTL_SECONDS },
   filesGet: { limit: 60, windowSeconds: TTL_SECONDS },
-  history: { limit: 60, windowSeconds: TTL_SECONDS },
+  history: { limit: 300, windowSeconds: TTL_SECONDS },
   messages: { limit: 100, windowSeconds: TTL_SECONDS },
   providerTest: { limit: 20, windowSeconds: TTL_SECONDS },
   suggestions: { limit: 30, windowSeconds: TTL_SECONDS },
@@ -47,10 +47,11 @@ function pruneMemoryStore(): void {
     const toDelete = memoryStore.size - MAX_MEMORY_KEYS;
     let i = 0;
     for (const k of memoryStore.keys()) {
-      if (i++ >= toDelete) {
+      if (i >= toDelete) {
         break;
       }
       memoryStore.delete(k);
+      i += 1;
     }
   }
 }
@@ -156,7 +157,7 @@ export async function rateLimit(
         .multi()
         .incr(key)
         .expire(key, windowSeconds)
-        .exec()) as unknown as Array<[Error | null, number]> | null;
+        .exec()) as unknown as [Error | null, number][] | null;
       const first = results?.[0];
       count = Array.isArray(first)
         ? (first[1] as number)
@@ -192,11 +193,13 @@ export async function rateLimit(
         `Rate limit check for "${key}" failed (fail-closed):`,
         error
       );
-      throw new ChatbotError("rate_limit:chat");
+      // biome-ignore lint/style/useErrorCause: ChatbotError cause handled via ErrorOptions, biome false positive
+      throw new ChatbotError("rate_limit:chat", { cause: error as Error });
     }
     // Fallback to memory when no REDIS_URL
     const count = memoryRateLimit(key, limit, windowSeconds);
     if (count > limit) {
+      // biome-ignore lint/style/useErrorCause: rate-limit is intentional, not caused by redis error
       throw new ChatbotError("rate_limit:chat");
     }
   }

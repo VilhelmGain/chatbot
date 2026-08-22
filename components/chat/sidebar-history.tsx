@@ -118,10 +118,19 @@ export function SidebarHistory({ user }: { user: User | undefined }) {
     fetcher,
     {
       dedupingInterval: 1000,
+      errorRetryCount: 3,
+      errorRetryInterval: 5000,
       keepPreviousData: true,
       refreshInterval: 30_000,
       revalidateOnFocus: true,
       revalidateOnReconnect: true,
+      shouldRetryOnError: (err: unknown) => {
+        const e = err as { statusCode?: number; type?: string };
+        if (e?.statusCode === 429 || e?.type === "rate_limit") {
+          return false;
+        }
+        return true;
+      },
     }
   );
 
