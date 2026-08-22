@@ -1,14 +1,14 @@
 "use client";
 
 import { PenSquareIcon, TrashIcon } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import { useSWRConfig } from "swr";
 import { unstable_serialize } from "swr/infinite";
 import type { User } from "@/app/(auth)/auth";
+import { ChatMonoLogo } from "@/components/chat/chat-logo";
 import {
   getChatHistoryPaginationKey,
   SidebarHistory,
@@ -40,7 +40,7 @@ import {
 } from "../ui/alert-dialog";
 import { Button } from "../ui/button";
 
-function CollapsedSidebarToggle({ faviconHref }: { faviconHref: string }) {
+function CollapsedSidebarToggle() {
   const { toggleSidebar } = useSidebar();
   return (
     <Button
@@ -51,14 +51,7 @@ function CollapsedSidebarToggle({ faviconHref }: { faviconHref: string }) {
       size="icon-sm"
       variant="ghost"
     >
-      <Image
-        alt="Visbyr Chat"
-        className="size-4 shrink-0"
-        height={16}
-        src={faviconHref}
-        unoptimized
-        width={16}
-      />
+      <ChatMonoLogo className="size-4 shrink-0" size={16} />
     </Button>
   );
 }
@@ -74,18 +67,6 @@ export function AppSidebar({
   const { setOpenMobile } = useSidebar();
   const { mutate } = useSWRConfig();
   const [showDeleteAllDialog, setShowDeleteAllDialog] = useState(false);
-  const [faviconHref, setFaviconHref] = useState(
-    `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/icon.png`
-  );
-
-  useEffect(() => {
-    const href = document
-      .querySelector('link[rel="icon"]')
-      ?.getAttribute("href");
-    if (href) {
-      setFaviconHref(href);
-    }
-  }, []);
 
   const closeMobile = useCallback(() => {
     setOpenMobile(false);
@@ -127,19 +108,12 @@ export function AppSidebar({
                   tooltip="Chatbot"
                 >
                   <Link href="/" onClick={closeMobile}>
-                    <Image
-                      alt="Visbyr Chat"
-                      className="size-5 shrink-0"
-                      height={20}
-                      src={faviconHref}
-                      unoptimized
-                      width={20}
-                    />
+                    <ChatMonoLogo className="size-5 shrink-0" size={20} />
                   </Link>
                 </SidebarMenuButton>
               </div>
               <div className="hidden size-8 items-center justify-center group-data-[collapsible=icon]:flex">
-                <CollapsedSidebarToggle faviconHref={faviconHref} />
+                <CollapsedSidebarToggle />
               </div>
               <div className="group-data-[collapsible=icon]:hidden">
                 <SidebarTrigger className="text-sidebar-foreground/70 transition-colors duration-150 hover:text-sidebar-foreground" />
