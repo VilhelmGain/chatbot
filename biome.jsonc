@@ -36,7 +36,8 @@
       },
       "complexity": {
         "noExcessiveCognitiveComplexity": "off",
-        "useSimplifiedLogicExpression": "off"
+        "useSimplifiedLogicExpression": "off",
+        "useLiteralKeys": "off"
       },
       "a11y": {
         "noSvgWithoutTitle": "warn"

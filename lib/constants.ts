@@ -35,10 +35,17 @@ export function isTestEnvironmentNow(): boolean {
     (demoNow && (!prodNow || allowNow || previewNow)) || (!prodNow && pwNow)
   );
 }
+// Use bracket notation to avoid Next.js build-time inlining of NEXT_PUBLIC_*.
+// A dotted `process.env.NEXT_PUBLIC_*` read is replaced at build time, which
+// breaks Docker Hub images built without keys but run with keys at `docker run`.
+// `process.env["NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY"]` survives to runtime.
+function getPublishableKeyNow(): string | undefined {
+  return process.env["NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY"];
+}
+
 export function isClerkConfiguredNow(): boolean {
   return (
-    Boolean(process.env.CLERK_SECRET_KEY) &&
-    Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY)
+    Boolean(process.env["CLERK_SECRET_KEY"]) && Boolean(getPublishableKeyNow())
   );
 }
 // Single source of truth for "run on mock auth instead of Clerk". Must match
@@ -48,8 +55,8 @@ export function usesMockAuthNow(): boolean {
   return (
     isTestEnvironmentNow() ||
     !isClerkConfiguredNow() ||
-    !process.env.POSTGRES_URL ||
-    process.env.VERCEL_ENV === "preview"
+    !process.env["POSTGRES_URL"] ||
+    process.env["VERCEL_ENV"] === "preview"
   );
 }
 

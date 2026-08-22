@@ -125,11 +125,13 @@ function handleTestRequest(request: NextRequest): NextResponse | Response {
   // Demo/test auth handling (from PR134) — mint demo session if needed
   // Treat missing Clerk config, missing DB, or Vercel preview as demo so
   // PR preview without POSTGRES_URL stays usable even when Clerk keys exist.
+  // Use bracket notation for env to avoid Next.js inlining issues (same fix
+  // as lib/constants.ts for Docker Hub runtime env).
   const useDemoAuth =
     isDemoModeNow() ||
     !isClerkConfiguredNow() ||
-    !process.env.POSTGRES_URL ||
-    process.env.VERCEL_ENV === "preview";
+    !process.env["POSTGRES_URL"] ||
+    process.env["VERCEL_ENV"] === "preview";
   const isApiRoute = request.nextUrl.pathname.startsWith("/api/");
   if (isApiRoute && isProtectedRoute(request)) {
     const hasTestCookie = request.cookies.has("test-user");
@@ -154,7 +156,7 @@ function handleTestRequest(request: NextRequest): NextResponse | Response {
         httpOnly: true,
         path: "/",
         sameSite: "lax",
-        secure: process.env.NODE_ENV === "production",
+        secure: process.env["NODE_ENV"] === "production",
       });
       applySecurityHeaders(res, nonce);
       return res;
@@ -172,7 +174,7 @@ function handleTestRequest(request: NextRequest): NextResponse | Response {
         httpOnly: true,
         path: "/",
         sameSite: "lax",
-        secure: process.env.NODE_ENV === "production",
+        secure: process.env["NODE_ENV"] === "production",
       });
       applySecurityHeaders(res, nonce);
       return res;

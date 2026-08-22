@@ -73,15 +73,15 @@ function verifySignedTestUserCookie(raw: string): string | null {
   // ALLOW_PLAIN_TEST_COOKIE=1 in non-production for local dev, or when
   // ENCRYPTION_KEY is unset (test without key).
   if (
-    process.env.ALLOW_PLAIN_TEST_COOKIE === "1" &&
-    process.env.NODE_ENV !== "production"
+    process.env["ALLOW_PLAIN_TEST_COOKIE"] === "1" &&
+    process.env["NODE_ENV"] !== "production"
   ) {
     const plain = emailSchema.safeParse(raw);
     if (plain.success) {
       return plain.data;
     }
   }
-  const secret = process.env.ENCRYPTION_KEY;
+  const secret = process.env["ENCRYPTION_KEY"];
   if (!secret) {
     // No key configured (e.g. CI without .env) — accept plain for test env.
     if (isTestEnvironmentNow()) {
@@ -128,7 +128,7 @@ function verifySignedTestUserCookie(raw: string): string | null {
 }
 
 export function signTestUserCookie(email: string): string {
-  const secret = process.env.ENCRYPTION_KEY;
+  const secret = process.env["ENCRYPTION_KEY"];
   if (!secret) {
     return email;
   }
@@ -172,8 +172,8 @@ export async function auth(): Promise<Session | null> {
     } else if (
       isDemoModeNow() ||
       !isClerkConfiguredNow() ||
-      !process.env.POSTGRES_URL ||
-      process.env.VERCEL_ENV === "preview"
+      !process.env["POSTGRES_URL"] ||
+      process.env["VERCEL_ENV"] === "preview"
     ) {
       // Per-session demo user is minted in middleware (see middleware.ts).
       // Middleware uses plain demo-.*@demo.local for Edge compatibility;

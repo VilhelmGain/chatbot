@@ -151,7 +151,9 @@ test.describe("Provider Settings", () => {
     await page.goto("/");
 
     // Open Settings -> Providers
-    await page.getByTestId("user-nav-item-settings").evaluate((el) => (el as HTMLElement).click());
+    await page
+      .getByTestId("user-nav-item-settings")
+      .evaluate((el) => (el as HTMLElement).click());
     await page.getByRole("button", { name: /Providers/i }).click();
 
     await page.getByRole("button", { name: "Add Provider" }).click();

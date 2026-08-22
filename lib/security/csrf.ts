@@ -22,7 +22,7 @@ function getExpectedHosts(request: Request): Set<string> {
     }
   }
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+  const appUrl = process.env["NEXT_PUBLIC_APP_URL"];
   if (appUrl) {
     try {
       const url = new URL(appUrl);
@@ -57,7 +57,7 @@ export function isCsrfOriginAllowed(request: Request): boolean {
   // In test env, bypass to keep Playwright e2e working without Origin.
   // Aligned with lib/constants.ts isTestEnvironment (any PLAYWRIGHT flag when !production)
   // plus NODE_ENV==="test" for Vitest. DEMO_MODE bypass is covered by isTestEnvironment.
-  if (process.env.NODE_ENV === "test" || isTestEnvironment) {
+  if (process.env["NODE_ENV"] === "test" || isTestEnvironment) {
     return true;
   }
 
