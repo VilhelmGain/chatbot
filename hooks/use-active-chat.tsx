@@ -17,9 +17,7 @@ import {
   useState,
 } from "react";
 import useSWR, { useSWRConfig } from "swr";
-import { unstable_serialize } from "swr/infinite";
 import { useDataStream } from "@/components/chat/data-stream-provider";
-import { getChatHistoryPaginationKey } from "@/components/chat/sidebar-history";
 import { toast } from "@/components/chat/toast";
 import { useAutoResume } from "@/hooks/use-auto-resume";
 import type { ChatModel, ReasoningEffort } from "@/lib/ai/models.client";
@@ -188,7 +186,11 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
       }
     },
     onFinish: () => {
-      mutate(unstable_serialize(getChatHistoryPaginationKey));
+      mutate(
+        (key) => typeof key === "string" && key.includes("/api/history"),
+        undefined,
+        { revalidate: true }
+      );
       try {
         const ch = new BroadcastChannel("chat-history");
         ch.postMessage({ type: "mutate" });

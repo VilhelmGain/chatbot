@@ -46,6 +46,7 @@ import {
   getMessagesByChatId,
   getToolConfigByUserId,
   getUserSettings,
+  pruneStreams,
   saveChat,
   saveMessages,
   updateChatTitleById,
@@ -522,7 +523,7 @@ export async function POST(request: Request) {
             : undefined;
 
         const result = streamText({
-          abortSignal: request.signal,
+          // intentionally omitted abortSignal to keep generation alive after tab close; client Stop still stops rendering
           activeTools: supportsTools
             ? TOOL_IDS.filter(
                 (toolId) =>
@@ -646,12 +647,26 @@ export async function POST(request: Request) {
         );
 
         if (titlePromise) {
+          const p = titlePromise
+            .then(async (title) => {
+              if (!title || title === "New chat") {
+                return;
+              }
+              dataStream.write({ data: title, type: "data-chat-title" });
+              try {
+                await updateChatTitleById({ chatId: id, title });
+              } catch (error) {
+                console.error("[title] update", error);
+              }
+            })
+            .catch((error) => {
+              console.error("[title] gen", error);
+            });
           try {
-            const title = await titlePromise;
-            dataStream.write({ data: title, type: "data-chat-title" });
-            updateChatTitleById({ chatId: id, title });
+            after(() => p);
           } catch {
-            /* non-fatal */
+            // biome-ignore lint/suspicious/noUnusedExpressions: intentional noop
+            0;
           }
         }
       },
@@ -661,55 +676,101 @@ export async function POST(request: Request) {
         messages: finishedMessages,
         responseMessage,
       }) => {
-        if (isAborted) {
-          const abortedMessage = responseMessage ?? finishedMessages.at(-1);
-          if (!abortedMessage || !hasMessageContent(abortedMessage)) {
-            return;
-          }
-        }
-        if (isToolApprovalFlow) {
-          await Promise.all(
-            finishedMessages.map(async (finishedMsg) => {
+        const persist = async () => {
+          if (isAborted) {
+            const abortedMessage = responseMessage ?? finishedMessages.at(-1);
+            if (
+              !abortedMessage ||
+              !hasMessageContent(abortedMessage as ChatMessage)
+            ) {
+              return;
+            }
+            // Save partial abort as single message; reuse same path as normal save
+            if (isToolApprovalFlow) {
               const existingMsg = uiMessages.find(
-                (m) => m.id === finishedMsg.id
+                (m) => m.id === abortedMessage.id
               );
               if (existingMsg) {
                 await updateMessage({
-                  id: finishedMsg.id,
-                  metadata: finishedMsg.metadata,
-                  parts: finishedMsg.parts,
+                  id: abortedMessage.id,
+                  metadata: (abortedMessage as ChatMessage).metadata ?? {},
+                  parts: (abortedMessage as ChatMessage).parts,
                 });
                 return;
               }
-
-              await saveMessages({
-                messages: [
-                  {
-                    attachments: [],
-                    chatId: id,
-                    createdAt: new Date(),
+            }
+            await saveMessages({
+              messages: [
+                {
+                  attachments: [],
+                  chatId: id,
+                  createdAt: new Date(),
+                  id: abortedMessage.id,
+                  metadata: (abortedMessage as ChatMessage).metadata ?? {},
+                  parts: (abortedMessage as ChatMessage).parts,
+                  role: (abortedMessage as ChatMessage).role,
+                },
+              ],
+            });
+            return;
+          }
+          if (isToolApprovalFlow) {
+            await Promise.all(
+              finishedMessages.map(async (finishedMsg) => {
+                const existingMsg = uiMessages.find(
+                  (m) => m.id === finishedMsg.id
+                );
+                if (existingMsg) {
+                  await updateMessage({
                     id: finishedMsg.id,
-                    metadata: finishedMsg.metadata ?? {},
+                    metadata: finishedMsg.metadata,
                     parts: finishedMsg.parts,
-                    role: finishedMsg.role,
-                  },
-                ],
-              });
-            })
+                  });
+                  return;
+                }
+
+                await saveMessages({
+                  messages: [
+                    {
+                      attachments: [],
+                      chatId: id,
+                      createdAt: new Date(),
+                      id: finishedMsg.id,
+                      metadata: finishedMsg.metadata ?? {},
+                      parts: finishedMsg.parts,
+                      role: finishedMsg.role,
+                    },
+                  ],
+                });
+              })
+            );
+          } else if (finishedMessages.length > 0) {
+            await saveMessages({
+              messages: finishedMessages.map((currentMessage) => ({
+                attachments: [],
+                chatId: id,
+                createdAt: new Date(),
+                id: currentMessage.id,
+                metadata: currentMessage.metadata ?? {},
+                parts: currentMessage.parts,
+                role: currentMessage.role,
+              })),
+            });
+          }
+        };
+        try {
+          after(() =>
+            persist().catch((error) =>
+              console.error("[onEnd] after persist", error)
+            )
           );
-        } else if (finishedMessages.length > 0) {
-          await saveMessages({
-            messages: finishedMessages.map((currentMessage) => ({
-              attachments: [],
-              chatId: id,
-              createdAt: new Date(),
-              id: currentMessage.id,
-              metadata: currentMessage.metadata ?? {},
-              parts: currentMessage.parts,
-              role: currentMessage.role,
-            })),
-          });
+        } catch {
+          // biome-ignore lint/suspicious/noUnusedExpressions: intentional noop
+          0;
         }
+        await persist().catch((error) =>
+          console.error("[onEnd] persist", error)
+        );
       },
       onError: (error: unknown) => {
         console.error("createUIMessageStream error:", error);
@@ -728,6 +789,17 @@ export async function POST(request: Request) {
           if (streamContext) {
             const streamId = generateUUID();
             await createStreamId({ chatId: id, streamId });
+            try {
+              after(() =>
+                pruneStreams({ chatId: id }).catch(() => {
+                  // biome-ignore lint/suspicious/noUnusedExpressions: intentional noop
+                  0;
+                })
+              );
+            } catch {
+              // biome-ignore lint/suspicious/noUnusedExpressions: intentional noop
+              0;
+            }
             await streamContext.createNewResumableStream(
               streamId,
               () => sseStream

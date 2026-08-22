@@ -42,7 +42,11 @@ export const chat = pgTable(
       .notNull()
       .default("private"),
   },
-  (table) => [index("Chat_userId_idx").on(table.userId)]
+  (table) => [
+    index("Chat_userId_idx").on(table.userId),
+    index("Chat_userId_updatedAt_idx").on(table.userId, table.updatedAt),
+    index("Chat_updatedAt_idx").on(table.updatedAt),
+  ]
 );
 
 export type Chat = InferSelectModel<typeof chat>;
@@ -134,7 +138,12 @@ export const stream = pgTable(
       foreignColumns: [chat.id],
     }).onDelete("cascade"),
     pk: primaryKey({ columns: [table.id] }),
+    streamChatIdCreatedAtIdx: index("Stream_chatId_createdAt_idx").on(
+      table.chatId,
+      table.createdAt
+    ),
     streamChatIdIdx: index("Stream_chatId_idx").on(table.chatId),
+    streamCreatedAtIdx: index("Stream_createdAt_idx").on(table.createdAt),
   })
 );
 

@@ -35,19 +35,35 @@ export async function GET(request: NextRequest) {
     );
   } catch (error) {
     if (error instanceof ChatbotError) {
-      return error.toResponse();
+      // Fail-open for history: cold-start Redis not ready should not block sidebar
+      if (error.message.includes("rate_limit")) {
+        console.warn("[history] rate-limit fail-open", error.message);
+      } else {
+        return error.toResponse();
+      }
+    } else {
+      throw error;
+    }
+  }
+
+  try {
+    const chats = await getChatsByUserId({
+      endingBefore,
+      id: session.user.id,
+      limit,
+      startingAfter,
+    });
+    return Response.json(chats);
+  } catch (error) {
+    if (
+      error instanceof ChatbotError &&
+      error.message.includes("not_found:database")
+    ) {
+      // Cursor points to deleted chat → return empty page not 500
+      return Response.json({ chats: [], hasMore: false });
     }
     throw error;
   }
-
-  const chats = await getChatsByUserId({
-    endingBefore,
-    id: session.user.id,
-    limit,
-    startingAfter,
-  });
-
-  return Response.json(chats);
 }
 
 export async function DELETE() {
