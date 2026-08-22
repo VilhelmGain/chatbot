@@ -46,6 +46,7 @@ import type {
 import { syncPreference } from "@/lib/preferences-sync";
 import type { Attachment, ChatMessage, VisibilityType } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { isValidModelIdFormat } from "@/lib/validation";
 import {
   PromptInput,
   PromptInputFooter,
@@ -72,16 +73,6 @@ function setCookie(name: string, value: string) {
   const maxAge = 60 * 60 * 24 * 365;
   // biome-ignore lint/suspicious/noDocumentCookie: needed for client-side cookie setting
   document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=${maxAge}`;
-}
-
-const MODEL_ID_RE =
-  /^([a-z0-9_-]+\/[a-z0-9._-]+|custom-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/[a-z0-9._-]+)$/i;
-
-function isValidModelIdFormat(id: string): boolean {
-  if (!id || id.length === 0 || id.length > 200) {
-    return false;
-  }
-  return MODEL_ID_RE.test(id);
 }
 
 function PureMultimodalInput({
@@ -164,6 +155,17 @@ function PureMultimodalInput({
   const [slashQuery, setSlashQuery] = useState("");
   const [slashIndex, setSlashIndex] = useState(0);
 
+  const { data: guardModelsData } = useSWR(
+    `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/api/models`,
+    (url: string) => fetch(url).then((r) => r.json()),
+    { dedupingInterval: 3_600_000, revalidateOnFocus: false }
+  );
+  const modelsLoaded =
+    (guardModelsData as { models?: unknown[] } | undefined)?.models !==
+    undefined;
+  const hasValidModel = isValidModelIdFormat(selectedModelId);
+  const shouldBlockOnInvalidModel = modelsLoaded && !hasValidModel;
+
   const handleInput = useCallback(
     (event: ChangeEvent<HTMLTextAreaElement>) => {
       const val = event.target.value;
@@ -241,7 +243,7 @@ function PureMultimodalInput({
   );
 
   const submitForm = useCallback(() => {
-    if (!isValidModelIdFormat(selectedModelId)) {
+    if (shouldBlockOnInvalidModel) {
       toast.error("Please select a valid model before sending.");
       return;
     }
@@ -284,7 +286,7 @@ function PureMultimodalInput({
     setLocalStorageInput,
     width,
     chatId,
-    selectedModelId,
+    shouldBlockOnInvalidModel,
   ]);
 
   const uploadFile = useCallback(async (file: File) => {
@@ -411,8 +413,6 @@ function PureMultimodalInput({
     setSlashOpen(false);
   }, []);
 
-  const hasValidModel = isValidModelIdFormat(selectedModelId);
-
   const handlePromptSubmit = useCallback(() => {
     if (input.startsWith("/")) {
       const query = input.slice(1).trim();
@@ -425,7 +425,7 @@ function PureMultimodalInput({
     if (!input.trim() && attachments.length === 0) {
       return;
     }
-    if (!hasValidModel) {
+    if (shouldBlockOnInvalidModel) {
       toast.error("Please select a model before sending.");
       return;
     }
@@ -437,7 +437,7 @@ function PureMultimodalInput({
   }, [
     attachments.length,
     handleSlashSelect,
-    hasValidModel,
+    shouldBlockOnInvalidModel,
     input,
     status,
     submitForm,
@@ -610,13 +610,15 @@ function PureMultimodalInput({
               <PromptInputSubmit
                 className={cn(
                   "h-7 w-7 shrink-0 rounded-lg transition-all duration-200",
-                  input.trim() && hasValidModel
+                  input.trim() && !shouldBlockOnInvalidModel
                     ? "bg-foreground text-background hover:opacity-85 active:scale-95"
                     : "bg-foreground/5 text-muted-foreground/25 cursor-not-allowed"
                 )}
                 data-testid="send-button"
                 disabled={
-                  !input.trim() || uploadQueue.length > 0 || !hasValidModel
+                  !input.trim() ||
+                  uploadQueue.length > 0 ||
+                  shouldBlockOnInvalidModel
                 }
                 status={status}
                 variant="secondary"

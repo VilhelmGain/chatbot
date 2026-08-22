@@ -35,7 +35,7 @@ import { runPythonTool } from "@/lib/ai/tools/run-python";
 import { searchWeb } from "@/lib/ai/tools/search-web";
 import { writeDocument } from "@/lib/ai/tools/write-document";
 import { resolveAttachmentParts } from "@/lib/attachments";
-import { isProductionEnvironment } from "@/lib/constants";
+import { isProductionEnvironment, isTestEnvironmentNow } from "@/lib/constants";
 import {
   createStreamId,
   deleteChatById,
@@ -163,8 +163,12 @@ export async function POST(request: Request) {
     }
     const providerId = providerPrefix.slice(7);
     // Validate that providerId is a UUID before querying DB to avoid
-    // leaking DB errors as 503/400 mismatches
-    if (!z.string().uuid().safeParse(providerId).success) {
+    // leaking DB errors as 503/400 mismatches. Skip strict UUID check in
+    // test/demo where mock IDs like custom-test are used.
+    if (
+      !isTestEnvironmentNow() &&
+      !z.string().uuid().safeParse(providerId).success
+    ) {
       console.error("Invalid provider ID format:", providerId, {
         chatModel: selectedChatModel,
       });

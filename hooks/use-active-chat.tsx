@@ -22,13 +22,14 @@ import { useDataStream } from "@/components/chat/data-stream-provider";
 import { getChatHistoryPaginationKey } from "@/components/chat/sidebar-history";
 import { toast } from "@/components/chat/toast";
 import { useAutoResume } from "@/hooks/use-auto-resume";
-import type { ReasoningEffort } from "@/lib/ai/models.client";
+import type { ChatModel, ReasoningEffort } from "@/lib/ai/models.client";
 import type { ToolId } from "@/lib/ai/tools/metadata";
 import { TOOL_IDS, TOOL_IDS_SET } from "@/lib/ai/tools/metadata";
 import { ChatbotError } from "@/lib/errors";
 import { syncPreference } from "@/lib/preferences-sync";
 import type { ChatMessage, VisibilityType } from "@/lib/types";
 import { fetcher, fetchWithErrorHandlers, generateUUID } from "@/lib/utils";
+import { isValidModelIdFormat, isValidUUID } from "@/lib/validation";
 
 type ActiveChatContextValue = {
   chatId: string;
@@ -53,22 +54,6 @@ type ActiveChatContextValue = {
 };
 
 const ActiveChatContext = createContext<ActiveChatContextValue | null>(null);
-
-const MODEL_ID_RE =
-  /^([a-z0-9_-]+\/[a-z0-9._-]+|custom-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/[a-z0-9._-]+)$/i;
-
-function isValidModelIdFormat(id: string): boolean {
-  if (!id || id.length === 0 || id.length > 200) {
-    return false;
-  }
-  return MODEL_ID_RE.test(id);
-}
-
-function isValidUUID(value: string): boolean {
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
-    value
-  );
-}
 
 function extractChatId(pathname: string): string | null {
   const match = pathname.match(/\/chat\/([^/]+)/);
@@ -143,13 +128,15 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
 
   const [input, setInput] = useState("");
 
-  const { data: modelsData } = useSWR(
-    `${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/api/models`,
-    fetcher,
-    { dedupingInterval: 3_600_000 }
-  );
+  const { data: modelsData } = useSWR<{
+    models: ChatModel[];
+    providerNames?: Record<string, string>;
+    capabilities?: Record<string, unknown>;
+  }>(`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/api/models`, fetcher, {
+    dedupingInterval: 3_600_000,
+  });
 
-  const modelsDataRef = useRef(modelsData);
+  const modelsDataRef = useRef<typeof modelsData>(modelsData);
   useEffect(() => {
     modelsDataRef.current = modelsData;
   }, [modelsData]);
@@ -240,7 +227,7 @@ export function ActiveChatProvider({ children }: { children: ReactNode }) {
           (!isValidModelIdFormat(effectiveModelId) ||
             (modelsDataRef.current?.models?.length &&
               !modelsDataRef.current.models.some(
-                (m) => m.id === effectiveModelId
+                (m: Pick<ChatModel, "id">) => m.id === effectiveModelId
               ))) &&
           fallbackId &&
           isValidModelIdFormat(fallbackId)
