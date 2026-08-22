@@ -33,7 +33,9 @@ test.describe("Stats for nerds", () => {
       timeout: 30_000,
     });
 
-    await page.getByTestId("user-nav-item-settings").evaluate((el) => (el as HTMLElement).click());
+    await page
+      .getByTestId("user-nav-item-settings")
+      .evaluate((el) => (el as HTMLElement).click());
     await page.getByTestId("stats-for-nerds-toggle").click();
     await page.keyboard.press("Escape");
     await expect(page.getByTestId("settings-dialog")).not.toBeVisible();

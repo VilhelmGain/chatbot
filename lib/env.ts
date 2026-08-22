@@ -19,17 +19,19 @@ type Env = z.infer<typeof envSchema>;
 let cachedEnv: Env | null = null;
 
 function isDemoActive(): boolean {
-  return process.env.DEMO_MODE === "1";
+  return process.env["DEMO_MODE"] === "1";
 }
 
 function isBuildPhase(): boolean {
-  return process.env.NEXT_PHASE === "phase-production-build";
+  return process.env["NEXT_PHASE"] === "phase-production-build";
 }
 
 function isClerkConfigured(): boolean {
+  // Bracket notation prevents Next.js build-time inlining of NEXT_PUBLIC_* so
+  // runtime env from `docker run -e` is honored.
   return (
-    Boolean(process.env.CLERK_SECRET_KEY) &&
-    Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY)
+    Boolean(process.env["CLERK_SECRET_KEY"]) &&
+    Boolean(process.env["NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY"])
   );
 }
 
@@ -59,24 +61,24 @@ function parseEnv(): Env {
     // Vercel preview — the app falls back to demo/in-memory handling instead
     // of crashing instrumentation with 500. Preview deployments on PRs often
     // have NEXT_PUBLIC_APP_URL/Clerk set but no ENCRYPTION_KEY/POSTGRES_URL.
-    const isVercelPreview = process.env.VERCEL_ENV === "preview";
+    const isVercelPreview = process.env["VERCEL_ENV"] === "preview";
     if (
       isProd &&
       !isDemoActive() &&
       isClerkConfigured() &&
       !isVercelPreview &&
-      process.env.POSTGRES_URL
+      process.env["POSTGRES_URL"]
     ) {
       throw new Error(`[env] Invalid environment: ${issues}`);
     }
     // In dev/test, or demo in prod, allow missing ENCRYPTION_KEY / POSTGRES_URL
     console.warn(`[env] Environment validation warning: ${issues}`);
     return {
-      ENCRYPTION_KEY: process.env.ENCRYPTION_KEY ?? "",
-      NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
-      POSTGRES_URL: process.env.POSTGRES_URL,
-      REDIS_URL: process.env.REDIS_URL,
-      UPLOAD_DIR: process.env.UPLOAD_DIR,
+      ENCRYPTION_KEY: process.env["ENCRYPTION_KEY"] ?? "",
+      NEXT_PUBLIC_APP_URL: process.env["NEXT_PUBLIC_APP_URL"],
+      POSTGRES_URL: process.env["POSTGRES_URL"],
+      REDIS_URL: process.env["REDIS_URL"],
+      UPLOAD_DIR: process.env["UPLOAD_DIR"],
     };
   }
 
@@ -84,7 +86,7 @@ function parseEnv(): Env {
 
   if (
     !isBuildPhase() &&
-    process.env.NODE_ENV === "production" &&
+    process.env["NODE_ENV"] === "production" &&
     !isDemoActive() &&
     env.NEXT_PUBLIC_APP_URL &&
     !env.NEXT_PUBLIC_APP_URL.startsWith("https://")
@@ -109,7 +111,8 @@ function parseEnv(): Env {
         throw e;
       }
       throw new Error(
-        "[env] NEXT_PUBLIC_APP_URL must use https:// in production"
+        "[env] NEXT_PUBLIC_APP_URL must use https:// in production",
+        { cause: e }
       );
     }
   }
@@ -130,11 +133,11 @@ export function getEnv(): Env {
 // back to demo/in-memory.
 if (
   !isBuildPhase() &&
-  process.env.NODE_ENV === "production" &&
+  process.env["NODE_ENV"] === "production" &&
   !isDemoActive() &&
   isClerkConfigured() &&
-  process.env.VERCEL_ENV !== "preview" &&
-  process.env.POSTGRES_URL
+  process.env["VERCEL_ENV"] !== "preview" &&
+  process.env["POSTGRES_URL"]
 ) {
   getEnv();
 }

@@ -119,8 +119,8 @@ const memQueries = inMemoryQueries as unknown as Queries satisfies Queries;
 // frozen at build-time and broke demo after Hub pull.
 function isClerkConfigured(): boolean {
   return (
-    Boolean(process.env.CLERK_SECRET_KEY) &&
-    Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY)
+    Boolean(process.env["CLERK_SECRET_KEY"]) &&
+    Boolean(process.env["NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY"])
   );
 }
 
@@ -131,8 +131,8 @@ function getImpl(): Queries {
   if (
     isTestEnvironmentNow() ||
     !isClerkConfigured() ||
-    !process.env.POSTGRES_URL ||
-    process.env.VERCEL_ENV === "preview"
+    !process.env["POSTGRES_URL"] ||
+    process.env["VERCEL_ENV"] === "preview"
   ) {
     return memQueries;
   }

@@ -12,8 +12,8 @@ import { decrypt } from "./encryption";
 
 function isClerkConfigured(): boolean {
   return (
-    Boolean(process.env.CLERK_SECRET_KEY) &&
-    Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY)
+    Boolean(process.env["CLERK_SECRET_KEY"]) &&
+    Boolean(process.env["NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY"])
   );
 }
 
@@ -21,8 +21,8 @@ function getMockProvider() {
   if (
     !isTestEnvironmentNow() &&
     isClerkConfigured() &&
-    process.env.POSTGRES_URL &&
-    process.env.VERCEL_ENV !== "preview"
+    process.env["POSTGRES_URL"] &&
+    process.env["VERCEL_ENV"] !== "preview"
   ) {
     return null;
   }
@@ -57,8 +57,8 @@ function getActiveMockProvider() {
   if (
     isTestEnvironmentNow() ||
     !isClerkConfigured() ||
-    !process.env.POSTGRES_URL ||
-    process.env.VERCEL_ENV === "preview"
+    !process.env["POSTGRES_URL"] ||
+    process.env["VERCEL_ENV"] === "preview"
   ) {
     return getMockProvider();
   }

@@ -1,10 +1,50 @@
 "use client";
 
 import { UserProfile } from "@clerk/nextjs";
-import { useEffect } from "react";
+import { Component, type ReactNode, useEffect } from "react";
 import type { User } from "@/app/(auth)/auth";
 import { UserAvatar } from "@/components/chat/user-avatar";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+
+class ClerkProfileErrorBoundary extends Component<
+  { children: ReactNode },
+  { hasError: boolean }
+> {
+  state = { hasError: false };
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: unknown) {
+    console.error("[AccountDialog] Clerk UserProfile failed", error);
+  }
+
+  handleRetry = () => {
+    this.setState({ hasError: false });
+  };
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="flex w-[40rem] max-w-full flex-col items-center justify-center gap-3 p-8 text-center">
+          <p className="text-sm font-medium">Account failed to load</p>
+          <p className="text-sm text-muted-foreground">
+            Clerk could not load. Check your connection or try again.
+          </p>
+          <button
+            className="text-sm underline underline-offset-4"
+            onClick={this.handleRetry}
+            type="button"
+          >
+            Retry
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 const PROFILE_APPEARANCE = {
   elements: {
@@ -50,15 +90,18 @@ export function AccountDialog({
         {testEnvironment ? (
           <TestAccountPanel user={user} />
         ) : (
-          <UserProfile
-            appearance={PROFILE_APPEARANCE}
-            fallback={
-              <div className="flex size-full items-center justify-center text-sm text-muted-foreground">
-                Loading account&hellip;
-              </div>
-            }
-            routing="hash"
-          />
+          <ClerkProfileErrorBoundary>
+            <UserProfile
+              appearance={PROFILE_APPEARANCE}
+              fallback={
+                <div className="flex size-full min-h-[30rem] items-center justify-center text-sm text-muted-foreground">
+                  Loading account&hellip;
+                </div>
+              }
+              key={open ? "open" : "closed"}
+              routing="hash"
+            />
+          </ClerkProfileErrorBoundary>
         )}
       </DialogContent>
     </Dialog>
