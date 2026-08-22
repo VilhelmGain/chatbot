@@ -25,14 +25,16 @@ const nextConfig: NextConfig = {
     optimizePackageImports: ["framer-motion", "shiki", "streamdown"],
   },
   async headers() {
+    // Content-Security-Policy is set dynamically per-request with a nonce
+    // in middleware.ts (buildCsp + x-nonce). Do NOT set a static CSP here —
+    // a static header would be sent alongside the nonce header on HTML
+    // responses, and browsers enforce *all* CSP headers (intersection). A
+    // static `script-src 'unsafe-inline'` without the nonce would block the
+    // nonced scripts and dynamically-imported chunks, surfacing as
+    // "Failed to load chunk ..." / ChunkLoadError after a deployment.
     return [
       {
         headers: [
-          {
-            key: "Content-Security-Policy",
-            value:
-              "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://clerk.com https://*.clerk.com https://*.clerk.accounts.dev; connect-src 'self' https://clerk.com https://*.clerk.com https://*.clerk.accounts.dev https://api.clerk.com; img-src 'self' data: blob: https://img.clerk.com https://images.clerk.dev https://*.clerk.com https://*.clerk.accounts.dev https://*.googleusercontent.com https://*.githubusercontent.com https://*.gravatar.com https://models.dev; style-src 'self' 'unsafe-inline'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
-          },
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "X-Frame-Options", value: "DENY" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },

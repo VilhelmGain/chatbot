@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import { headers } from "next/headers";
 import { Suspense } from "react";
+import { ChunkErrorHandler } from "@/components/chunk-error-handler";
 import { NonceScripts } from "@/components/nonce-scripts";
 import { ThemeProvider } from "@/components/theme-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -224,6 +225,7 @@ export default async function RootLayout({
         </Suspense>
       </head>
       <body className="antialiased">
+        <ChunkErrorHandler />
         <div aria-hidden className="bg-aurora" />
         <div aria-hidden className="bg-noise" />
         <ThemeProvider

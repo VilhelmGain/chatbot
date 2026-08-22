@@ -31,9 +31,13 @@ ENV NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL=${NEXT_PUBLIC_CLERK_SIGN_IN_
 ARG NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL
 ENV NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL=${NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL}
 
-# Mount Next.js build cache for faster rebuilds
-RUN --mount=type=cache,target=/app/.next/cache \
-    pnpm build
+# Do not mount .next/cache as a BuildKit cache — webpack's filesystem cache
+# is content-hashed and incrementally reused. Reusing it across Docker
+# builds via `type=gha` layer caching + BuildKit cache mounts can produce
+# a stale manifest where HTML references chunks that were not emitted in
+# this build (or vice versa), surfacing as
+# "Failed to load chunk /_next/static/chunks/..." / ChunkLoadError.
+RUN pnpm build
 
 FROM base AS runner
 WORKDIR /app
