@@ -15,7 +15,7 @@ import {
   getLanguageModel,
   isOpenAICompatibleProvider,
 } from "@/lib/ai/providers";
-import { isTestEnvironmentNow } from "@/lib/constants";
+import { usesMockAuthNow } from "@/lib/constants";
 import {
   deleteMessagesByChatIdAfterTimestamp,
   getChatById,
@@ -51,15 +51,10 @@ export async function saveTitleModelAsCookie(model: string) {
 }
 
 export async function signOut() {
-  if (
-    isTestEnvironmentNow() ||
-    !process.env.CLERK_SECRET_KEY ||
-    !process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ||
-    !process.env.POSTGRES_URL ||
-    process.env.VERCEL_ENV === "preview"
-  ) {
+  if (usesMockAuthNow()) {
     const cookieStore = await cookies();
     cookieStore.delete("test-user");
+    cookieStore.delete("demo-session");
     redirect("/");
   }
 

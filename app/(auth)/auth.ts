@@ -2,7 +2,12 @@ import crypto from "node:crypto";
 import { auth as clerkAuth, currentUser } from "@clerk/nextjs/server";
 import { cookies } from "next/headers";
 import { z } from "zod";
-import { isDemoModeNow, isTestEnvironmentNow } from "@/lib/constants";
+import {
+  isClerkConfiguredNow,
+  isDemoModeNow,
+  isTestEnvironmentNow,
+  usesMockAuthNow,
+} from "@/lib/constants";
 import {
   createUserFromClerk,
   getOrCreateUserByEmail,
@@ -146,20 +151,8 @@ export type Session = {
   user: User;
 };
 
-function isClerkConfigured(): boolean {
-  return (
-    Boolean(process.env.CLERK_SECRET_KEY) &&
-    Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY)
-  );
-}
-
 export async function auth(): Promise<Session | null> {
-  if (
-    isTestEnvironmentNow() ||
-    !isClerkConfigured() ||
-    !process.env.POSTGRES_URL ||
-    process.env.VERCEL_ENV === "preview"
-  ) {
+  if (usesMockAuthNow()) {
     const cookieStore = await cookies();
     const rawCookie = cookieStore.get("test-user")?.value;
 
@@ -178,7 +171,7 @@ export async function auth(): Promise<Session | null> {
       }
     } else if (
       isDemoModeNow() ||
-      !isClerkConfigured() ||
+      !isClerkConfiguredNow() ||
       !process.env.POSTGRES_URL ||
       process.env.VERCEL_ENV === "preview"
     ) {

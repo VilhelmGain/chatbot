@@ -1,6 +1,11 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { type NextRequest, NextResponse } from "next/server";
-import { isDemoModeNow, isProductionEnvironmentNow } from "./lib/constants";
+import {
+  isClerkConfiguredNow,
+  isDemoModeNow,
+  isProductionEnvironmentNow,
+  usesMockAuthNow,
+} from "./lib/constants";
 import { isCsrfOriginAllowed } from "./lib/security/csrf";
 
 const isProtectedRoute = createRouteMatcher([
@@ -32,6 +37,23 @@ function generateNonce(): string {
   }
 }
 
+function buildCsp(nonce: string): string {
+  return [
+    "default-src 'self'",
+    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https://cdn.jsdelivr.net https://*.clerk.com https://*.clerk.accounts.dev`,
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    "img-src 'self' data: blob: https://img.clerk.com https://images.clerk.dev https://*.clerk.com https://*.clerk.accounts.dev https://*.googleusercontent.com https://*.githubusercontent.com https://*.gravatar.com https://models.dev",
+    "font-src 'self' data:",
+    "connect-src 'self' https://*.clerk.com https://*.clerk.accounts.dev https://cdn.jsdelivr.net",
+    // Clerk prebuilt components (<UserProfile>, <UserButton>) render inside a
+    // cross-origin iframe hosted on the Clerk instance domain.
+    "frame-src 'self' https://*.clerk.com https://*.clerk.accounts.dev",
+    "frame-ancestors 'none'",
+    "object-src 'none'",
+    "base-uri 'self'",
+  ].join("; ");
+}
+
 function applySecurityHeaders(response: NextResponse, nonce: string): void {
   response.headers.set("X-Frame-Options", "DENY");
   response.headers.set("X-Content-Type-Options", "nosniff");
@@ -47,19 +69,21 @@ function applySecurityHeaders(response: NextResponse, nonce: string): void {
       "max-age=31536000; includeSubDomains; preload"
     );
   }
-  const csp = [
-    "default-src 'self'",
-    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https://cdn.jsdelivr.net https://*.clerk.com https://*.clerk.accounts.dev`,
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-    "img-src 'self' data: blob: https://img.clerk.com https://images.clerk.dev https://*.clerk.com https://*.clerk.accounts.dev https://*.googleusercontent.com https://*.githubusercontent.com https://*.gravatar.com https://models.dev",
-    "font-src 'self' data:",
-    "connect-src 'self' https://*.clerk.com https://*.clerk.accounts.dev https://cdn.jsdelivr.net",
-    "frame-ancestors 'none'",
-    "object-src 'none'",
-    "base-uri 'self'",
-  ].join("; ");
+  const csp = buildCsp(nonce);
   response.headers.set("Content-Security-Policy", csp);
   response.headers.set("x-nonce", nonce);
+}
+
+// Next.js SSR extracts its script nonce from the CSP *request* header
+// (app-render reads headers['content-security-policy']; it never reads
+// 'x-nonce'). Without it, framework scripts render without a nonce and are
+// blocked by the response CSP under 'strict-dynamic' — killing all client JS,
+// including Clerk's.
+function prepareRequestHeaders(request: NextRequest, nonce: string): Headers {
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-nonce", nonce);
+  requestHeaders.set("Content-Security-Policy", buildCsp(nonce));
+  return requestHeaders;
 }
 
 const MUTATING_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
@@ -123,9 +147,9 @@ function handleTestRequest(request: NextRequest): NextResponse | Response {
     if (useDemoAuth && !hasTestCookie && !hasDemoCookie) {
       const demoEmail = `demo-${globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2)}@demo.local`;
       const nonce = generateNonce();
-      const requestHeaders = new Headers(request.headers);
-      requestHeaders.set("x-nonce", nonce);
-      const res = NextResponse.next({ request: { headers: requestHeaders } });
+      const res = NextResponse.next({
+        request: { headers: prepareRequestHeaders(request, nonce) },
+      });
       res.cookies.set("demo-session", demoEmail, {
         httpOnly: true,
         path: "/",
@@ -141,9 +165,9 @@ function handleTestRequest(request: NextRequest): NextResponse | Response {
     if (!hasTestCookie && !hasDemoCookie) {
       const demoEmail = `demo-${globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2)}@demo.local`;
       const nonce = generateNonce();
-      const requestHeaders = new Headers(request.headers);
-      requestHeaders.set("x-nonce", nonce);
-      const res = NextResponse.next({ request: { headers: requestHeaders } });
+      const res = NextResponse.next({
+        request: { headers: prepareRequestHeaders(request, nonce) },
+      });
       res.cookies.set("demo-session", demoEmail, {
         httpOnly: true,
         path: "/",
@@ -156,52 +180,19 @@ function handleTestRequest(request: NextRequest): NextResponse | Response {
   }
 
   const nonce = generateNonce();
-  const requestHeaders = new Headers(request.headers);
-  requestHeaders.set("x-nonce", nonce);
-  const response = NextResponse.next({ request: { headers: requestHeaders } });
+  const response = NextResponse.next({
+    request: { headers: prepareRequestHeaders(request, nonce) },
+  });
   applySecurityHeaders(response, nonce);
   return response;
 }
 
 const testHandler = (request: NextRequest) => handleTestRequest(request);
 
-// In production, demo mode without ALLOW_DEMO_IN_PROD would normally use Clerk
-// and crash when Clerk keys are absent (Vercel demo case). Fall back to demo
-// handler when Clerk is not configured to avoid MIDDLEWARE_INVOCATION_FAILED.
-// Computed per-request so Hub image (build-time inlined NEXT_PUBLIC_* empty)
-// still respects runtime env.
-function isClerkConfiguredNow(): boolean {
-  return (
-    Boolean(process.env.CLERK_SECRET_KEY) &&
-    Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY)
-  );
-}
+// Computed per-request so images built without env vars (Docker Hub) still
+// respect the runtime environment.
 function shouldUseTestHandler(): boolean {
-  // Re-evaluate env at request time — not at import — so DEMO_MODE set at
-  // runtime (Docker compose env_file, Vercel runtime) is respected even when
-  // the image was built without those env vars.
-  // Fall back to test handler whenever Clerk isn't configured or when no DB
-  // is configured or in Vercel preview (PR preview without POSTGRES_URL) —
-  // this keeps Vercel preview and Hub image alive instead of throwing
-  // MIDDLEWARE_INVOCATION_FAILED.
-  if (
-    !isClerkConfiguredNow() ||
-    !process.env.POSTGRES_URL ||
-    process.env.VERCEL_ENV === "preview"
-  ) {
-    return true;
-  }
-  const demoNow = process.env.DEMO_MODE === "1";
-  const prodNow = process.env.NODE_ENV === "production";
-  const allowDemoNow = process.env.ALLOW_DEMO_IN_PROD === "1";
-  const hasPlaywrightNow = Boolean(
-    process.env.PLAYWRIGHT_TEST_BASE_URL ||
-      process.env.PLAYWRIGHT ||
-      process.env.CI_PLAYWRIGHT
-  );
-  const isTestNow =
-    (demoNow && (!prodNow || allowDemoNow)) || (!prodNow && hasPlaywrightNow);
-  return isTestNow;
+  return usesMockAuthNow();
 }
 
 const clerkHandler = clerkMiddleware(async (auth, request: NextRequest) => {
@@ -222,10 +213,8 @@ const clerkHandler = clerkMiddleware(async (auth, request: NextRequest) => {
   }
 
   const nonce = generateNonce();
-  const requestHeaders = new Headers(request.headers);
-  requestHeaders.set("x-nonce", nonce);
   const response = NextResponse.next({
-    request: { headers: requestHeaders },
+    request: { headers: prepareRequestHeaders(request, nonce) },
   });
   applySecurityHeaders(response, nonce);
   return response;
