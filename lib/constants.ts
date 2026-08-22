@@ -99,8 +99,8 @@ export function assertProductionSecurity(): void {
 }
 
 export const suggestions = [
-  "What are the advantages of using Next.js?",
-  "Write code to demonstrate Dijkstra's algorithm",
-  "Help me write an essay about Silicon Valley",
-  "What is the weather in San Francisco?",
+  "What are the advantages of using Astro?",
+  "Write code to calculate Peter vs Chicken win odds",
+  "Help me write an essay about my love for McDonald's",
+  "What is the weather in Stockholm?",
 ];
