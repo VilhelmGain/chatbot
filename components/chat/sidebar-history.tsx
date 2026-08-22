@@ -4,7 +4,7 @@ import { isToday, isYesterday, subMonths, subWeeks } from "date-fns";
 import { motion } from "framer-motion";
 import { MessageSquare } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import useSWRInfinite from "swr/infinite";
 import type { User } from "@/app/(auth)/auth";
@@ -115,8 +115,51 @@ export function SidebarHistory({ user }: { user: User | undefined }) {
   } = useSWRInfinite<ChatHistory>(
     user ? getChatHistoryPaginationKey : () => null,
     fetcher,
-    { fallbackData: [], revalidateOnFocus: false }
+    {
+      dedupingInterval: 2000,
+      fallbackData: [],
+      refreshInterval: 30_000,
+      revalidateOnFocus: true,
+      revalidateOnReconnect: true,
+    }
   );
+
+  // Cross-tab instant sync via BroadcastChannel + storage fallback
+  useEffect(() => {
+    let channel: BroadcastChannel | null = null;
+    try {
+      channel = new BroadcastChannel("chat-history");
+      channel.onmessage = () => {
+        mutate();
+      };
+      // biome-ignore lint/suspicious/noEmptyBlockStatements: broadcast not supported in some browsers
+    } catch {}
+
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === "chat-history-ping") {
+        mutate();
+      }
+    };
+    window.addEventListener("storage", onStorage);
+
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") {
+        mutate();
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener("focus", onVisibility);
+
+    return () => {
+      try {
+        channel?.close();
+        // biome-ignore lint/suspicious/noEmptyBlockStatements: close may throw if already closed
+      } catch {}
+      window.removeEventListener("storage", onStorage);
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("focus", onVisibility);
+    };
+  }, [mutate]);
 
   const router = useRouter();
   const [deleteId, setDeleteId] = useState<string | null>(null);

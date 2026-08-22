@@ -25,6 +25,16 @@ export function DataStreamHandler() {
     for (const delta of newDeltas) {
       if (delta.type === "data-chat-title") {
         mutate(unstable_serialize(getChatHistoryPaginationKey));
+        try {
+          const ch = new BroadcastChannel("chat-history");
+          ch.postMessage({ type: "mutate" });
+          ch.close();
+          // biome-ignore lint/suspicious/noEmptyBlockStatements: broadcast fallback non-critical
+        } catch {}
+        try {
+          localStorage.setItem("chat-history-ping", String(Date.now()));
+          // biome-ignore lint/suspicious/noEmptyBlockStatements: storage fallback non-critical
+        } catch {}
         continue;
       }
       const artifactDefinition = artifactDefinitions.find(
