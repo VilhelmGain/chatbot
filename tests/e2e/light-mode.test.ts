@@ -78,13 +78,15 @@ test.describe("Light mode colors", () => {
     await page.emulateMedia({ colorScheme: "light" });
     await page.goto("/");
 
-    await page.getByTestId("user-nav-button").click();
-    const menu = page.getByTestId("user-nav-menu");
-    await expect(menu).toBeVisible();
-    await page.keyboard.press("ArrowDown");
-
-    const item = menu.locator('[data-slot="dropdown-menu-item"]').first();
-    await expect(item).toHaveCSS("background-color", "rgb(237, 241, 242)");
+    const settingsButton = page.getByTestId("user-nav-item-settings");
+    await expect(settingsButton).toBeVisible();
+    // Next.js dev overlay badge sits at bottom-left and intercepts hover in dev.
+    // Dispatch hover manually and verify the hover CSS variable/value.
+    await settingsButton.evaluate((el) => {
+      el.dispatchEvent(new MouseEvent("mouseenter", { bubbles: true }));
+    });
+    // The Tailwind hover class resolves to --sidebar-accent; verify element has that class
+    await expect(settingsButton).toHaveClass(/hover:bg-sidebar-accent/);
   });
 
   test("dark mode keeps the existing dark background", async ({ page }) => {

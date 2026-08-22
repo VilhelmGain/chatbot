@@ -1,62 +1,17 @@
 "use client";
 
-import { useClerk, useUser } from "@clerk/nextjs";
-import { ChevronUp, Settings, UserRound } from "lucide-react";
+import { useUser } from "@clerk/nextjs";
+import { Settings } from "lucide-react";
 import { useCallback, useState } from "react";
 import type { User } from "@/app/(auth)/auth";
-import { signOut } from "@/app/(chat)/actions";
 import { AccountDialog } from "@/components/chat/account-dialog";
 import { UserAvatar } from "@/components/chat/user-avatar";
 import { SettingsDialog } from "@/components/settings/settings-dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-} from "@/components/ui/sidebar";
+import { SidebarMenu, SidebarMenuItem } from "@/components/ui/sidebar";
 import {
   type IdentityDisplayMode,
   useIdentityDisplayMode,
 } from "@/lib/identity-display";
-
-function TestSignOutItem() {
-  return (
-    <DropdownMenuItem asChild data-testid="user-nav-item-auth">
-      <form action={signOut}>
-        <button className="w-full cursor-pointer text-[13px]" type="submit">
-          Sign out
-        </button>
-      </form>
-    </DropdownMenuItem>
-  );
-}
-
-function ClerkSignOutItem() {
-  const { signOut: clerkSignOut } = useClerk();
-  const handleSignOut = useCallback(
-    async (event: Event) => {
-      event.preventDefault();
-      try {
-        await clerkSignOut({ redirectUrl: "/" });
-      } catch {
-        // fallback: force navigation if Clerk sign-out fails
-        window.location.href = "/";
-      }
-    },
-    [clerkSignOut]
-  );
-  return (
-    <DropdownMenuItem data-testid="user-nav-item-auth" onSelect={handleSignOut}>
-      <span className="w-full cursor-pointer text-[13px]">Sign out</span>
-    </DropdownMenuItem>
-  );
-}
 
 function ClerkAvatar({ user }: { user: User }) {
   const { isLoaded, user: clerkUser } = useUser();
@@ -107,12 +62,12 @@ export function SidebarUserNav({
   const [showAccount, setShowAccount] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const identityDisplayMode = useIdentityDisplayMode();
-  const handleOpenAccount = useCallback((event: Event) => {
-    event.preventDefault();
+
+  const handleOpenAccount = useCallback(() => {
     setShowAccount(true);
   }, []);
-  const handleOpenSettings = useCallback((event: Event) => {
-    event.preventDefault();
+
+  const handleOpenSettings = useCallback(() => {
     setShowSettings(true);
   }, []);
 
@@ -120,49 +75,30 @@ export function SidebarUserNav({
     <>
       <SidebarMenu>
         <SidebarMenuItem>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <SidebarMenuButton
-                className={`${identityDisplayMode === "name-email" ? "h-10" : "h-8"} px-2 rounded-lg bg-transparent text-sidebar-foreground/70 transition-colors duration-150 hover:text-sidebar-foreground data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground data-[state=open]:[&_svg]:rotate-180`}
-                data-testid="user-nav-button"
-              >
-                {testEnvironment ? (
-                  <UserAvatar email={user.email ?? ""} src={user.image} />
-                ) : (
-                  <ClerkAvatar user={user} />
-                )}
-                <IdentityLabel mode={identityDisplayMode} user={user} />
-                <ChevronUp className="ml-auto size-3.5 text-sidebar-foreground/50 transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]" />
-              </SidebarMenuButton>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent
-              className="w-(--radix-popper-anchor-width) rounded-lg border border-border glass-surface backdrop-blur-xl shadow-[var(--shadow-float)]"
-              data-testid="user-nav-menu"
-              side="top"
+          <div className="flex items-center gap-1 rounded-lg bg-transparent p-1">
+            <button
+              className={`flex min-w-0 flex-1 items-center gap-2 rounded-md px-2 text-left text-sidebar-foreground/70 transition-colors duration-150 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground ${identityDisplayMode === "name-email" ? "h-10" : "h-8"}`}
+              data-testid="user-nav-button"
+              onClick={handleOpenAccount}
+              type="button"
             >
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                data-testid="user-nav-item-settings"
-                onSelect={handleOpenSettings}
-              >
-                <span className="flex w-full cursor-pointer items-center text-[13px]">
-                  <Settings className="mr-2 size-3.5" />
-                  Settings
-                </span>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                data-testid="user-nav-item-account"
-                onSelect={handleOpenAccount}
-              >
-                <span className="flex w-full cursor-pointer items-center text-[13px]">
-                  <UserRound className="mr-2 size-3.5" />
-                  Account
-                </span>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              {testEnvironment ? <TestSignOutItem /> : <ClerkSignOutItem />}
-            </DropdownMenuContent>
-          </DropdownMenu>
+              {testEnvironment ? (
+                <UserAvatar email={user.email ?? ""} src={user.image} />
+              ) : (
+                <ClerkAvatar user={user} />
+              )}
+              <IdentityLabel mode={identityDisplayMode} user={user} />
+            </button>
+            <button
+              aria-label="Settings"
+              className="grid size-8 shrink-0 place-items-center rounded-md text-sidebar-foreground/50 transition-colors duration-150 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+              data-testid="user-nav-item-settings"
+              onClick={handleOpenSettings}
+              type="button"
+            >
+              <Settings className="size-4" />
+            </button>
+          </div>
         </SidebarMenuItem>
       </SidebarMenu>
       <AccountDialog

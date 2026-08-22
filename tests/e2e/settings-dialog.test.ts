@@ -8,8 +8,7 @@ test.describe("Settings Dialog", () => {
     await signIn(page);
     await page.goto("/");
 
-    await page.getByTestId("user-nav-button").click();
-    await page.getByTestId("user-nav-item-settings").click();
+    await page.getByTestId("user-nav-item-settings").evaluate((el) => (el as HTMLElement).click());
 
     await expect(page.getByTestId("settings-dialog")).toBeVisible();
     await expect(

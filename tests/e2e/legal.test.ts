@@ -62,8 +62,7 @@ test.describe("Legal pages", () => {
     await signIn(page);
     await page.goto("/");
 
-    await page.getByTestId("user-nav-button").click();
-    await page.getByTestId("user-nav-item-settings").click();
+    await page.getByTestId("user-nav-item-settings").evaluate((el) => (el as HTMLElement).click());
 
     await expect(page.getByTestId("settings-dialog")).toBeVisible();
     await page.getByRole("button", { name: /Legal/i }).click();
