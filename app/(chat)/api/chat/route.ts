@@ -389,13 +389,25 @@ export async function POST(request: Request) {
       );
       if (enabledSearchConfig) {
         const { provider: configProvider, toolConfig } = enabledSearchConfig;
-        searchWebConfig = {
-          apiKey: toolConfig?.encryptedApiKey
-            ? decrypt(toolConfig.encryptedApiKey, toolConfig.iv)
-            : "",
-          baseURL: toolConfig?.baseURL || undefined,
-          provider: configProvider,
-        };
+        try {
+          searchWebConfig = {
+            apiKey: toolConfig?.encryptedApiKey
+              ? decrypt(
+                  toolConfig.encryptedApiKey,
+                  toolConfig.iv,
+                  toolConfig.salt ?? null
+                )
+              : "",
+            baseURL: toolConfig?.baseURL || undefined,
+            provider: configProvider,
+          };
+        } catch (error) {
+          console.warn(
+            "Failed to decrypt search tool API key, disabling search for this request:",
+            error
+          );
+          searchWebConfig = undefined;
+        }
       }
     }
 

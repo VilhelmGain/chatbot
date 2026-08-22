@@ -74,8 +74,12 @@ export function decrypt(
   ivHex: string,
   saltHex?: string | null
 ): string {
-  const [encrypted, authTag] = encryptedPayload.split(":");
-  if (!encrypted || !authTag) {
+  const parts = encryptedPayload.split(":");
+  if (parts.length !== 2) {
+    throw new Error("Invalid encrypted payload");
+  }
+  const [encrypted, authTag] = parts;
+  if (!authTag) {
     throw new Error("Invalid encrypted payload");
   }
   const iv = Buffer.from(ivHex, "hex");
