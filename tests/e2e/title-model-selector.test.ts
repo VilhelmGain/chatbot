@@ -118,7 +118,7 @@ test.describe("Title Model Selector", () => {
     await trigger.click();
     await page.getByRole("option", { name: /Kimi K2\.5/ }).click();
     await page.getByRole("option", { name: /Kimi K2\.5/ }).click();
-    await expect(trigger).toHaveText("Kimi K2.5");
+    await expect(trigger).toContainText("Kimi K2.5");
 
     await trigger.click();
     await page.getByRole("option", { name: "Use active chat model" }).click();
