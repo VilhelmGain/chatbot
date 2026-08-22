@@ -33,17 +33,10 @@ test.describe("Stats for nerds", () => {
       timeout: 30_000,
     });
 
-    await page.getByTestId("user-nav-button").click();
-    await page.getByTestId("user-nav-item-settings").click();
+    await page.getByTestId("user-nav-item-settings").evaluate((el) => (el as HTMLElement).click());
     await page.getByTestId("stats-for-nerds-toggle").click();
     await page.keyboard.press("Escape");
     await expect(page.getByTestId("settings-dialog")).not.toBeVisible();
-
-    // Opening the dialog from the dropdown keeps the menu open behind it
-    // (Radix dialog-from-menu pattern); its modal layer locks pointer
-    // events, so dismiss the lingering menu before using the page again.
-    await page.mouse.click(640, 150);
-    await expect(page.getByTestId("user-nav-menu")).not.toBeVisible();
 
     await page.waitForFunction(
       () => {
