@@ -18,6 +18,7 @@ import { ConversationInfoDrawer } from "./conversation-info-drawer";
 import { DataStreamHandler } from "./data-stream-handler";
 import { submitEditedMessage } from "./message-editor";
 import { Messages } from "./messages";
+import { MobileTopBar } from "./mobile-top-bar";
 import { MultimodalInput } from "./multimodal-input";
 
 export function ChatShell() {
@@ -139,6 +140,7 @@ export function ChatShell() {
             )}
           >
             <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden bg-transparent md:border-l md:border-border">
+              <MobileTopBar />
               <Messages
                 addToolApprovalResponse={addToolApprovalResponse}
                 chatId={chatId}
