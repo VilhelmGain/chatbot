@@ -10,6 +10,7 @@ import {
   gte,
   inArray,
   lt,
+  or,
   type SQL,
 } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
@@ -225,7 +226,7 @@ export async function getChatsByUserId({
             ? and(whereCondition, eq(chat.userId, id))
             : eq(chat.userId, id)
         )
-        .orderBy(desc(chat.updatedAt))
+        .orderBy(desc(chat.updatedAt), desc(chat.id))
         .limit(extendedLimit);
 
     let filteredChats: Chat[] = [];
@@ -238,13 +239,20 @@ export async function getChatsByUserId({
         .limit(1);
 
       if (!selectedChat) {
-        throw new ChatbotError(
-          "not_found:database",
-          `Chat with id ${startingAfter} not found`
-        );
+        return { chats: [], hasMore: false };
       }
 
-      filteredChats = await query(gt(chat.updatedAt, selectedChat.updatedAt));
+      const startingAfterCondition = or(
+        gt(chat.updatedAt, selectedChat.updatedAt),
+        and(
+          eq(chat.updatedAt, selectedChat.updatedAt),
+          gt(chat.id, selectedChat.id)
+        )
+      );
+      if (!startingAfterCondition) {
+        return { chats: [], hasMore: false };
+      }
+      filteredChats = await query(startingAfterCondition);
     } else if (endingBefore) {
       const [selectedChat] = await db
         .select()
@@ -253,13 +261,20 @@ export async function getChatsByUserId({
         .limit(1);
 
       if (!selectedChat) {
-        throw new ChatbotError(
-          "not_found:database",
-          `Chat with id ${endingBefore} not found`
-        );
+        return { chats: [], hasMore: false };
       }
 
-      filteredChats = await query(lt(chat.updatedAt, selectedChat.updatedAt));
+      const endingBeforeCondition = or(
+        lt(chat.updatedAt, selectedChat.updatedAt),
+        and(
+          eq(chat.updatedAt, selectedChat.updatedAt),
+          lt(chat.id, selectedChat.id)
+        )
+      );
+      if (!endingBeforeCondition) {
+        return { chats: [], hasMore: false };
+      }
+      filteredChats = await query(endingBeforeCondition);
     } else {
       filteredChats = await query();
     }
@@ -634,9 +649,39 @@ export async function updateChatTitleById({
   title: string;
 }) {
   try {
-    return await db.update(chat).set({ title }).where(eq(chat.id, chatId));
-  } catch {
-    // Best effort title update.
+    return await db
+      .update(chat)
+      .set({ title, updatedAt: new Date() })
+      .where(eq(chat.id, chatId));
+  } catch (error) {
+    console.error("[updateChatTitle]", error);
+    throw error;
+  }
+}
+
+export async function pruneStreams({ chatId }: { chatId: string }) {
+  try {
+    await db
+      .delete(stream)
+      .where(
+        and(
+          eq(stream.chatId, chatId),
+          lt(stream.createdAt, new Date(Date.now() - 24 * 60 * 60 * 1000))
+        )
+      );
+    const ids = await getStreamIdsByChatId({ chatId });
+    if (ids.length > 5) {
+      await db
+        .delete(stream)
+        .where(
+          and(
+            eq(stream.chatId, chatId),
+            inArray(stream.id, ids.slice(0, ids.length - 5))
+          )
+        );
+    }
+  } catch (error) {
+    console.error("[pruneStreams]", error);
   }
 }
 

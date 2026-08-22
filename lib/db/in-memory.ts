@@ -244,28 +244,31 @@ function getChatsByUserId({
   if (startingAfter) {
     const cursor = store.chats.get(startingAfter);
     if (!cursor) {
-      throw new ChatbotError(
-        "not_found:database",
-        `Chat with id ${startingAfter} not found`
-      );
+      return { chats: [], hasMore: false };
     }
     chats = chats.filter(
-      (chat) => chat.updatedAt.getTime() > cursor.updatedAt.getTime()
+      (chat) =>
+        chat.updatedAt.getTime() > cursor.updatedAt.getTime() ||
+        (chat.updatedAt.getTime() === cursor.updatedAt.getTime() &&
+          chat.id > cursor.id)
     );
   } else if (endingBefore) {
     const cursor = store.chats.get(endingBefore);
     if (!cursor) {
-      throw new ChatbotError(
-        "not_found:database",
-        `Chat with id ${endingBefore} not found`
-      );
+      return { chats: [], hasMore: false };
     }
     chats = chats.filter(
-      (chat) => chat.updatedAt.getTime() < cursor.updatedAt.getTime()
+      (chat) =>
+        chat.updatedAt.getTime() < cursor.updatedAt.getTime() ||
+        (chat.updatedAt.getTime() === cursor.updatedAt.getTime() &&
+          chat.id < cursor.id)
     );
   }
 
-  chats.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
+  chats.sort((a, b) => {
+    const diff = b.updatedAt.getTime() - a.updatedAt.getTime();
+    return diff === 0 ? b.id.localeCompare(a.id) : diff;
+  });
 
   const hasMore = chats.length > limit;
 
@@ -534,7 +537,25 @@ function updateChatTitleById({
   if (!existing) {
     return;
   }
-  store.chats.set(chatId, { ...existing, title });
+  store.chats.set(chatId, { ...existing, title, updatedAt: new Date() });
+}
+
+function pruneStreams({ chatId }: { chatId: string }) {
+  const cutoff = Date.now() - 24 * 60 * 60 * 1000;
+  for (const [sid, s] of store.streams) {
+    if (s.chatId === chatId && s.createdAt.getTime() < cutoff) {
+      store.streams.delete(sid);
+    }
+  }
+  const ids = [...store.streams.values()]
+    .filter((s) => s.chatId === chatId)
+    .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
+    .map((s) => s.id);
+  if (ids.length > 5) {
+    for (const sid of ids.slice(0, ids.length - 5)) {
+      store.streams.delete(sid);
+    }
+  }
 }
 
 function getMessageCountByUserId({
@@ -1173,6 +1194,7 @@ export const inMemoryQueries = {
   getToolConfigsByUserId,
   getUserByClerkId,
   getUserSettings,
+  pruneStreams,
   saveChat,
   saveDocument,
   saveMessages,

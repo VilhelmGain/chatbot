@@ -1,5 +1,10 @@
+import { after } from "next/server";
 import { auth } from "@/app/(auth)/auth";
-import { getChatById, getStreamIdsByChatId } from "@/lib/db/queries";
+import {
+  getChatById,
+  getStreamIdsByChatId,
+  pruneStreams,
+} from "@/lib/db/queries";
 import { getStreamContext } from "../../route";
 
 export async function GET(
@@ -37,6 +42,17 @@ export async function GET(
       // biome-ignore lint/performance/noAwaitInLoops: sequential resume attempts required
       const resumed = await streamContext.resumeExistingStream(streamId);
       if (resumed) {
+        try {
+          after(() =>
+            pruneStreams({ chatId: id }).catch(() => {
+              // biome-ignore lint/suspicious/noUnusedExpressions: intentional noop
+              0;
+            })
+          );
+        } catch {
+          // biome-ignore lint/suspicious/noUnusedExpressions: intentional noop
+          0;
+        }
         return new Response(resumed, {
           headers: {
             "Cache-Control": "no-cache, no-transform",

@@ -112,12 +112,13 @@ export function SidebarHistory({ user }: { user: User | undefined }) {
     isValidating,
     isLoading,
     mutate,
+    error,
   } = useSWRInfinite<ChatHistory>(
     user ? getChatHistoryPaginationKey : () => null,
     fetcher,
     {
-      dedupingInterval: 2000,
-      fallbackData: [],
+      dedupingInterval: 1000,
+      keepPreviousData: true,
       refreshInterval: 30_000,
       revalidateOnFocus: true,
       revalidateOnReconnect: true,
@@ -169,9 +170,12 @@ export function SidebarHistory({ user }: { user: User | undefined }) {
     ? paginatedChatHistories.some((page) => page.hasMore === false)
     : false;
 
-  const hasEmptyChatHistory = paginatedChatHistories
-    ? paginatedChatHistories.every((page) => page.chats.length === 0)
-    : false;
+  const hasEmptyChatHistory =
+    !isLoading &&
+    !error &&
+    !!paginatedChatHistories &&
+    paginatedChatHistories.length > 0 &&
+    paginatedChatHistories.every((page) => page.chats.length === 0);
 
   const groupedChats = useMemo(() => {
     if (!paginatedChatHistories) {
@@ -228,6 +232,10 @@ export function SidebarHistory({ user }: { user: User | undefined }) {
     window.location.href = `${base}/`;
   }, []);
 
+  const handleRetry = useCallback(() => {
+    mutate();
+  }, [mutate]);
+
   if (!user) {
     return (
       <SidebarGroup className="group-data-[collapsible=icon]:hidden">
@@ -244,6 +252,26 @@ export function SidebarHistory({ user }: { user: User | undefined }) {
                 Login to save and revisit previous chats!
               </p>
             </div>
+          </div>
+        </SidebarGroupContent>
+      </SidebarGroup>
+    );
+  }
+
+  if (error) {
+    return (
+      <SidebarGroup className="group-data-[collapsible=icon]:hidden">
+        <SidebarGroupLabel className="text-[10px] font-semibold uppercase tracking-[0.12em] text-sidebar-foreground/70">
+          History
+        </SidebarGroupLabel>
+        <SidebarGroupContent>
+          <div className="flex flex-col gap-2 px-4 py-6">
+            <p className="text-[13px] text-muted-foreground">
+              Failed to load history
+            </p>
+            <Button onClick={handleRetry} size="sm" variant="outline">
+              Retry
+            </Button>
           </div>
         </SidebarGroupContent>
       </SidebarGroup>

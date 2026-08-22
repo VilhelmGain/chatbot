@@ -226,6 +226,7 @@ function handleTestRequest(request: NextRequest): NextResponse | Response {
       });
       res.cookies.set("demo-session", demoEmail, {
         httpOnly: true,
+        maxAge: 60 * 60 * 24 * 30,
         path: "/",
         sameSite: "lax",
         secure: process.env["NODE_ENV"] === "production",
@@ -244,6 +245,7 @@ function handleTestRequest(request: NextRequest): NextResponse | Response {
       });
       res.cookies.set("demo-session", demoEmail, {
         httpOnly: true,
+        maxAge: 60 * 60 * 24 * 30,
         path: "/",
         sameSite: "lax",
         secure: process.env["NODE_ENV"] === "production",
