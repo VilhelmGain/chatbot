@@ -37,20 +37,92 @@ function generateNonce(): string {
   }
 }
 
+function getClerkFrontendApiHosts(): string[] {
+  const hosts = new Set<string>();
+  // Env-provided domain (satellite / custom). Read via bracket to avoid inlining.
+  for (const key of [
+    "NEXT_PUBLIC_CLERK_DOMAIN",
+    "NEXT_PUBLIC_CLERK_FRONTEND_API",
+    "CLERK_FRONTEND_API",
+    "CLERK_DOMAIN",
+  ] as const) {
+    const raw = process.env[key as string];
+    if (raw) {
+      const host = raw
+        .replace(/^https?:\/\//, "")
+        .split("/")[0]
+        .trim();
+      if (host) {
+        hosts.add(host);
+      }
+    }
+  }
+  // Derive frontendApi host from publishableKey: pk_live_<base64(host$)>
+  const pk = process.env["NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY"];
+  if (pk) {
+    const parts = pk.split("_");
+    const b64 = parts.at(-1);
+    if (b64) {
+      try {
+        const padded = b64 + "=".repeat((4 - (b64.length % 4)) % 4);
+        // atob is available in edge; Buffer fallback for node
+        const decoded =
+          typeof atob === "function"
+            ? atob(padded)
+            : Buffer.from(padded, "base64").toString("utf-8");
+        const host = decoded.replace(/\$/g, "").trim();
+        if (host.includes(".")) {
+          hosts.add(host);
+        }
+      } catch {
+        // ignore malformed key
+      }
+    }
+  }
+  // Deterministic fallback for this deployment's custom domain. Even if env
+  // parsing fails, the CSP must allow the known instance. Adding it
+  // unconditionally is safe and idempotent.
+  hosts.add("clerk.chat.visbyr.com");
+  return [...hosts];
+}
+
 function buildCsp(nonce: string): string {
+  const clerkHosts = getClerkFrontendApiHosts();
+  const clerkOrigins = clerkHosts.map((h) => `https://${h}`).join(" ");
+  const clerkWildcards = clerkHosts.map((h) => `https://*.${h}`).join(" ");
+  // Also keep legacy clerk.com wildcards for non-custom deployments.
+  const clerkConnect = [
+    "https://*.clerk.com",
+    "https://*.clerk.accounts.dev",
+    clerkOrigins,
+    clerkWildcards,
+  ]
+    .filter(Boolean)
+    .join(" ");
+  const clerkFrame = clerkConnect;
+  const clerkImg = [
+    "https://img.clerk.com",
+    "https://images.clerk.dev",
+    "https://*.clerk.com",
+    "https://*.clerk.accounts.dev",
+    clerkOrigins,
+    clerkWildcards,
+  ].join(" ");
+  const clerkScript = clerkConnect;
   return [
     "default-src 'self'",
-    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https://cdn.jsdelivr.net https://*.clerk.com https://*.clerk.accounts.dev`,
+    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https://cdn.jsdelivr.net ${clerkScript} 'sha256-eMuh8xiwcX72rRYNAGENurQBAcH7kLlAUQcoOri3BIo='`,
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-    "img-src 'self' data: blob: https://img.clerk.com https://images.clerk.dev https://*.clerk.com https://*.clerk.accounts.dev https://*.googleusercontent.com https://*.githubusercontent.com https://*.gravatar.com https://models.dev",
+    `img-src 'self' data: blob: ${clerkImg} https://*.googleusercontent.com https://*.githubusercontent.com https://*.gravatar.com https://models.dev`,
     "font-src 'self' data:",
-    "connect-src 'self' https://*.clerk.com https://*.clerk.accounts.dev https://cdn.jsdelivr.net",
+    `connect-src 'self' ${clerkConnect} https://cdn.jsdelivr.net`,
     // Clerk prebuilt components (<UserProfile>, <UserButton>) render inside a
     // cross-origin iframe hosted on the Clerk instance domain.
-    "frame-src 'self' https://*.clerk.com https://*.clerk.accounts.dev",
+    `frame-src 'self' ${clerkFrame}`,
     "frame-ancestors 'none'",
     "object-src 'none'",
     "base-uri 'self'",
+    "worker-src 'self' blob:",
   ].join("; ");
 }
 
